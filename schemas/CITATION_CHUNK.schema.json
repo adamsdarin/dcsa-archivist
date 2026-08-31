@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dcsa-library/citation-chunk/1.0",
+  "type": "object",
+  "required": ["chunk_id", "document_id", "authority_role", "authority_priority", "current_status", "answer_eligibility", "locator", "human_source_path", "robot_text_path", "content_sha256", "content"],
+  "properties": {
+    "chunk_id": {"type": "string", "minLength": 1},
+    "human_source_path": {"type": "string", "pattern": "^HUMAN_READABLE_DIRECTORY/"},
+    "robot_text_path": {"type": "string", "pattern": "^ROBOT_READABLE_DIRECTORY/"},
+    "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "content": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

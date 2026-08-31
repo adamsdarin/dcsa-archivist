@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "project_role": "DCSA Library maintenance plane",
+  "default_operation": "read_only_audit",
+  "config": "custodian.config.json",
+  "maintenance_contract": "policies/MAINTENANCE_CONTRACT.json",
+  "readme": "README.md",
+  "metadata_decisions": "decisions/metadata_decisions.json",
+  "skill": "skill/dcsa-library-custodian/SKILL.md",
+  "cli": "python custodian.py",
+  "production_mutation_requires_explicit_approval": true,
+  "consumer_answering_forbidden": true
+}

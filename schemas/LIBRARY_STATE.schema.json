@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dcsa-library/library-state/1.0",
+  "type": "object",
+  "required": ["schema_version", "release_id", "release_status", "generated_utc", "production_integrity_healthy", "production_response_ready", "candidate_response_ready", "candidate_publishable", "publication_blockers", "manifest_records", "answer_eligibility_counts", "quality_blockers", "requires_human_approval"],
+  "properties": {
+    "release_status": {"enum": ["candidate_unapproved", "approved", "published", "rolled_back"]},
+    "production_integrity_healthy": {"type": "boolean"},
+    "production_response_ready": {"type": "boolean"},
+    "candidate_response_ready": {"type": "boolean"},
+    "candidate_publishable": {"type": "boolean"},
+    "publication_blockers": {"type": "array", "items": {"type": "string"}},
+    "requires_human_approval": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

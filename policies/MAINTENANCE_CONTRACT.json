@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "dcsa-library-custodian-v1",
+  "purpose": "Maintain corpus currency, organization, parity, metadata, retrieval indexes, and release health without answering substantive questions.",
+  "default_mode": "read_only",
+  "allowed_read_roots": [
+    "ROBOT_READABLE_DIRECTORY",
+    "HUMAN_READABLE_DIRECTORY",
+    "LOCAL_INDEXES"
+  ],
+  "human_artifact_allowed_uses": [
+    "existence",
+    "size",
+    "format_validation",
+    "cryptographic_hash",
+    "approved_extraction",
+    "parity_verification"
+  ],
+  "human_artifact_forbidden_uses": [
+    "answer_evidence",
+    "answer_synthesis",
+    "automated_compliance_conclusion"
+  ],
+  "candidate_write_root": ".custodian/releases",
+  "publish_requirements": [
+    "read_only_audit_passed",
+    "candidate_validation_passed",
+    "candidate_publishable",
+    "regression_tests_passed",
+    "explicit_approval_receipt",
+    "rollback_snapshot_created"
+  ],
+  "network_rule": "Use only official primary sources after explicit authorization. Never infer download URLs.",
+  "deletion_rule": "Automated publication must not delete production source artifacts."
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dcsa-library/metadata-decisions/1.0",
+  "type": "object",
+  "required": ["schema_version", "decisions"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_document_id", "robot_text_path", "decision", "verified_utc", "verified_by", "evidence", "note"],
+        "properties": {
+          "source_document_id": {"type": "string", "minLength": 1},
+          "robot_text_path": {"type": "string", "pattern": "^ROBOT_READABLE_DIRECTORY/"},
+          "decision": {"enum": ["verified_current", "superseded", "historical", "exclude"]},
+          "verified_utc": {"type": "string", "format": "date-time"},
+          "verified_by": {"type": "string", "minLength": 1},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["url"],
+              "properties": {"url": {"type": "string", "pattern": "^https://"}},
+              "additionalProperties": true
+            }
+          },
+          "note": {"type": "string"},
+          "effective_date": {"type": ["string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "library_root": "..",
+  "state_directory": ".custodian",
+  "metadata_decisions_file": "decisions/metadata_decisions.json",
+  "default_chunk_characters": 3200,
+  "maximum_chunk_characters": 4800,
+  "chunk_overlap_characters": 300,
+  "hash_human_artifacts": true,
+  "default_publish_mode": "derived_artifacts_only",
+  "official_source_network_access": "approval_required"
+}

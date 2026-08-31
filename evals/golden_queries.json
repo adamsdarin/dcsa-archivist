@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {"id": "current-dodi", "intent": "government_or_gca_procedure", "query": "sensitive cryptologic information", "require_hit": true, "expected_first_role": "binding_government_issuance"},
+    {"id": "current-sead", "intent": "government_personnel_vetting", "query": "use of a polygraph", "require_hit": true, "expected_first_role": "binding_government_issuance"},
+    {"id": "current-vetting", "intent": "government_personnel_vetting", "query": "federal personnel vetting core doctrine", "require_hit": true, "expected_first_role": "official_operational_guidance"},
+    {"id": "current-emass", "intent": "system_or_workflow_how_to", "query": "eMASS user account request", "require_hit": true, "expected_first_role": "official_operational_guidance"},
+    {"id": "cui-marking", "intent": "contractor_or_fso_obligation", "query": "contractor generated CUI marking", "expected_first_roles": ["controlling_regulation", "contract_clause"], "allow_abstain": true, "forbidden_first_roles": ["binding_government_issuance", "training_or_context", "historical_reference"]},
+    {"id": "suspicious-contact", "intent": "contractor_or_fso_obligation", "query": "contractor suspicious contact reporting", "expected_first_roles": ["controlling_regulation", "contract_clause"], "allow_abstain": true, "forbidden_first_roles": ["binding_government_issuance", "training_or_context", "historical_reference"]},
+    {"id": "classified-meeting", "intent": "contractor_or_fso_obligation", "query": "classified meeting safeguarding requirements", "expected_first_roles": ["controlling_regulation", "contract_clause"], "allow_abstain": true, "forbidden_first_roles": ["binding_government_issuance", "training_or_context", "historical_reference"]},
+    {"id": "nispom-access", "intent": "contractor_or_fso_obligation", "query": "contractor access to classified information", "expected_first_roles": ["controlling_regulation", "contract_clause"], "allow_abstain": true, "forbidden_first_roles": ["binding_government_issuance", "training_or_context", "historical_reference"]}
+  ]
+}
