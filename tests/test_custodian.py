@@ -53,6 +53,9 @@ class CustodianTests(unittest.TestCase):
         role, binding = classify_authority({"collection_id": "executive_orders", "current_status": "current"}, {"document_type_header": "executive order"})
         self.assertEqual(role, "executive_order")
         self.assertIn("not_automatically_contractor_binding", binding)
+        role, binding = classify_authority({"collection_id": "cdse_resources", "current_status": "current_or_verify"}, {})
+        self.assertEqual(role, "training_or_context")
+        self.assertEqual(binding, "not_independently_binding")
 
     def test_chunks_are_verbatim_and_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

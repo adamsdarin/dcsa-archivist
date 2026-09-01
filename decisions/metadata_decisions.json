@@ -1,4 +1,1237 @@
 {
   "schema_version": "1.0",
-  "decisions": []
+  "decisions": [
+    {
+      "source_document_id": "dcsa-cfr-32-cfr-part-117-up-to-date-as-of-7-24-2026",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/32 CFR Part 117 (up to date as of 7-24-2026).txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:20:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.ecfr.gov/current/title-32/subtitle-A/chapter-I/subchapter-D/part-117",
+          "observation": "Current eCFR Part 117 displayed as up to date through 2026-08-27."
+        }
+      ],
+      "note": "Current codified NISPOM regulation verified directly against the eCFR. Local snapshot date is older than the eCFR display date, so exact section-level amendment drift remains a separate content-refresh check; lifecycle is current.",
+      "effective_date": "2021-02-24"
+    },
+    {
+      "source_document_id": "dcsa-cfr-32cfr-2001-classified-national-security-info",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/32CFR-2001_Classified-National-Security-Info.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:20:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.ecfr.gov/current/title-32/subtitle-B/chapter-XX/part-2001",
+          "observation": "Part 2001 is present in the current eCFR."
+        }
+      ],
+      "note": "Current codified Classified National Security Information regulation verified directly against the eCFR."
+    },
+    {
+      "source_document_id": "dcsa-cfr-32cfr-2002-cui",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/32CFR-2002_CUI.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:20:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.ecfr.gov/current/title-32/subtitle-B/chapter-XX/part-2002",
+          "observation": "Part 2002 is present in the current eCFR."
+        }
+      ],
+      "note": "Current codified Controlled Unclassified Information regulation verified directly against the eCFR."
+    },
+    {
+      "source_document_id": "dcsa-cfr-32cfr-2004-nisp-directive",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/32CFR-2004_NISP-Directive.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:20:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.ecfr.gov/current/title-32/subtitle-B/chapter-XX/part-2004",
+          "observation": "Part 2004 is present in the current eCFR and is cited as authority for Part 117."
+        }
+      ],
+      "note": "Current codified National Industrial Security Program regulation verified directly against the eCFR."
+    },
+    {
+      "source_document_id": "dcsa-cfr-nispom-rule-amendment-2023-12-13",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/NISPOM-Rule_Amendment_2023-12-13.txt",
+      "decision": "historical",
+      "verified_utc": "2026-08-31T23:20:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://public-inspection.federalregister.gov/2023-27171.pdf",
+          "observation": "Federal Register public-inspection document identifies this as a proposed rule."
+        },
+        {
+          "url": "https://www.ecfr.gov/current/title-32/subtitle-A/chapter-I/subchapter-D/part-117",
+          "observation": "Current enforceable text is the codified eCFR Part 117."
+        }
+      ],
+      "note": "Preserved as a proposed-rule history artifact; it is not the current codified regulation and must not lead current obligation answers."
+    },
+    {
+      "source_document_id": "dcsa-cfr-nispom-rule-final-rule-85fr83300-2020-12-21",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/NISPOM-Rule_Final-Rule_85FR83300_2020-12-21.txt",
+      "decision": "historical",
+      "verified_utc": "2026-08-31T23:20:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.federalregister.gov/d/2020-27698",
+          "observation": "Federal Register final rule that established 32 CFR Part 117."
+        },
+        {
+          "url": "https://www.ecfr.gov/current/title-32/subtitle-A/chapter-I/subchapter-D/part-117",
+          "observation": "Current enforceable text is maintained in the codified eCFR."
+        }
+      ],
+      "note": "Preserved as the originating final-rule publication; current obligations must cite the codified eCFR text rather than this historical publication artifact.",
+      "effective_date": "2021-02-24"
+    },
+    {
+      "source_document_id": "dcsa-isl_current-2026-01-insider-threat",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/INDUSTRIAL_SECURITY_LETTERS_(ISL)/CURRENT/2026-01_Insider-Threat.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:35:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's current NISP Tools & Resources page lists ISL 2026-01 under the 2026 Industrial Security Letters heading and links the official PDF."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/ISL%20Insider%20Threat%20Final%202026-01_rev.pdf",
+          "observation": "Official DCSA PDF identifies itself as ISL 2026-01 and provides insider-threat program clarification."
+        }
+      ],
+      "note": "Verified individually from DCSA's current ISL listing and the official source PDF. Classified as current DCSA clarification, not as a regulation with independent force of law."
+    },
+    {
+      "source_document_id": "dcsa-isl_current-2024-02-eqip-to-eapp",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/INDUSTRIAL_SECURITY_LETTERS_(ISL)/CURRENT/2024-02_eQIP-to-eApp.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:35:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's current NISP Tools & Resources page lists ISL 2024-02 under the 2024 Industrial Security Letters heading and links the official PDF."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/ISL_2024_02_eQIP_to_e_APP.pdf",
+          "observation": "Official DCSA PDF identifies itself as ISL 2024-02 and documents the e-QIP to NBIS eApp transition."
+        }
+      ],
+      "note": "Verified individually from DCSA's current ISL listing and official PDF; guidance/clarification status retained."
+    },
+    {
+      "source_document_id": "dcsa-isl_current-isl-2024-01-cloud-service-offerings",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/INDUSTRIAL_SECURITY_LETTERS_(ISL)/CURRENT/ISL_2024-01_Cloud-Service-Offerings.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:35:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's current NISP Tools & Resources page lists and links ISL 2024-01 under the 2024 Industrial Security Letters heading."
+        },
+        {
+          "url": "https://open.defense.gov/Portals/23/Documents/ISL%202024-01%20Use%20of%20Cloud%20Service%20Offerings%201-25-2024.pdf",
+          "observation": "The official Defense Open Government target is the PDF linked by DCSA; automated retrieval timed out during review, so identity is supported by DCSA's exact link text and target."
+        }
+      ],
+      "note": "Verified as currently listed by DCSA. The linked official PDF endpoint timed out in the research client, which is recorded rather than silently treated as a successful byte-level refresh."
+    },
+    {
+      "source_document_id": "dcsa-isl_current-2021-02-sead-3-rev-2024",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/INDUSTRIAL_SECURITY_LETTERS_(ISL)/CURRENT/2021-02_SEAD-3_rev-2024.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:35:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's current NISP Tools & Resources page lists ISL 2021-02 under the active Industrial Security Letters section."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/ISL2021-02_SEAD-3_052024_v2.pdf",
+          "observation": "Official DCSA PDF identifies itself as ISL 2021-02; the current target is the May 2024 revision and states that it cancels, incorporates, and rescinds ISL 2011-04."
+        }
+      ],
+      "note": "Verified individually from the current DCSA listing and revised official PDF. The embedded rescission of ISL 2011-04 is explicit lifecycle evidence for the corresponding legacy record and will be handled separately."
+    },
+    {
+      "source_document_id": "dcsa-isl_legacy-isl-2011-04",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/LEGACY_REFERENCE_INFORMATION/LEGACY_ISL/ISL_2011-04.txt",
+      "decision": "historical",
+      "verified_utc": "2026-08-31T23:36:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/ISL2021-02_SEAD-3_052024_v2.pdf",
+          "observation": "ISL 2021-02 explicitly states that it cancels, incorporates, and rescinds ISL 2011-04."
+        }
+      ],
+      "note": "Explicitly rescinded by current ISL 2021-02; retain only as historical reference."
+    },
+    {
+      "source_document_id": "dcsa-isl_legacy-isl-2011-04-rev",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/LEGACY_REFERENCE_INFORMATION/LEGACY_ISL/ISL_2011-04-Rev.txt",
+      "decision": "historical",
+      "verified_utc": "2026-08-31T23:36:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/ISL2021-02_SEAD-3_052024_v2.pdf",
+          "observation": "ISL 2021-02 explicitly states that it cancels, incorporates, and rescinds ISL 2011-04."
+        }
+      ],
+      "note": "Revised local copy of ISL 2011-04 is also historical because the numbered ISL was explicitly rescinded by ISL 2021-02."
+    },
+    {
+      "source_document_id": "dcsa-forms-dd254-instructions",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/DD254_Instructions.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's current NISP resources page links Instructions for Completing DD Form 254 to the official DoD Forms source."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/forms/dd/dd0254-Inst.pdf",
+          "observation": "Official DoD PDF is the April 2018 instructions updated 2025-07-11, matching the revision marker in the local robot text."
+        }
+      ],
+      "note": "Current operational instructions verified from both DCSA's current listing and the official DoD form endpoint."
+    },
+    {
+      "source_document_id": "dcsa-forms-dd441-dod-security-agreement",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/DD441_DoD-Security-Agreement.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA currently links DD Form 441 as an NISP resource."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/forms/dd/dd0441.pdf",
+          "observation": "Official DoD endpoint provides DD Form 441; local text contains the same March 2020 edition and 2025-11-17 update marker."
+        }
+      ],
+      "note": "Verified current form identity and revision; remains an operational form, not independent regulatory authority."
+    },
+    {
+      "source_document_id": "dcsa-forms-dd441-1-appendage-to-security-agreement",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/DD441-1_Appendage-to-Security-Agreement.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA currently links DD Form 441-1 as an NISP resource."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/forms/dd/dd0441-1.pdf",
+          "observation": "Official DoD endpoint provides the March 2020 DD Form 441-1; local text contains the same edition and 2025-11-17 update marker."
+        }
+      ],
+      "note": "Verified current form identity and revision."
+    },
+    {
+      "source_document_id": "dcsa-forms-form-common-security-services-agreement",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/FORM_Common-Security-Services-Agreement.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA currently lists and links the Common Security Services Agreement."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/Common_Security_Services_Agreement.pdf",
+          "observation": "Official DCSA PDF is the agreement represented by the local human/robot pair."
+        }
+      ],
+      "note": "Verified current DCSA operational agreement template."
+    },
+    {
+      "source_document_id": "dcsa-forms-form-dcsa-147",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/FORM_DCSA-147.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA currently lists DCSA Form 147 as the November 2025 Open Storage Approval Checklist."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/DCSA%20Form%20147%20with%20Comment%20Capability.pdf",
+          "observation": "Official current DCSA PDF; local robot text carries OMB approval through 2028-05-31, matching the newer artifact rather than the April 2022 copy."
+        }
+      ],
+      "note": "Verified as the current November 2025 DCSA Form 147."
+    },
+    {
+      "source_document_id": "dcsa-forms-form-dcsa-147-apr2022",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/FORM_DCSA-147_Apr2022.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's current listing identifies the November 2025 Form 147, while this local record is explicitly the April 2022 edition."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/DCSA%20Form%20147%20with%20Comment%20Capability.pdf",
+          "observation": "Official current replacement is the November 2025 artifact."
+        }
+      ],
+      "note": "Superseded by the November 2025 DCSA Form 147; retain only for historical comparison."
+    },
+    {
+      "source_document_id": "dcsa-forms-form-sf312-classified-info-nda",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/FORM_SF312_Classified-Info-NDA.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.gsa.gov/forms-library",
+          "observation": "The official GSA Forms Library lists SF 312 with current revision 12/2023."
+        },
+        {
+          "url": "https://www.gsa.gov/system/files/2024-06/SF312-23.pdf",
+          "observation": "Official GSA PDF is SF 312 revision 12/2023, matching the local robot text."
+        }
+      ],
+      "note": "Verified current standard form and exact revision from GSA."
+    },
+    {
+      "source_document_id": "dcsa-forms-form-sf328-foreign-interests-certificate",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/FORM_SF328_Foreign-Interests-Certificate.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.gsa.gov/reference/forms/certificate-pertaining-to-foreign-interests",
+          "observation": "The official GSA form page identifies the current SF 328 revision as 07/2026."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/tools/SF328-18b.pdf",
+          "observation": "The DCSA NISP page still targets an 18b-named PDF, demonstrating that its linked local-era copy is older than GSA's current 07/2026 standard form."
+        }
+      ],
+      "note": "The local record corresponds to the 2018 edition and is superseded by GSA's July 2026 SF 328. This also flags a source-site inconsistency: DCSA's page still links the older 18b artifact."
+    },
+    {
+      "source_document_id": "dcsa-forms-dd2875-saar",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FORMS/DD2875_SAAR.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-08-31T23:42:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/forms/dd2500_2999/dd2875/",
+          "observation": "Official DoD Forms page lists DD 2875, System Authorization Access Request, edition 2022-05-06."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/forms/dd/dd2875.pdf",
+          "observation": "Official DoD PDF endpoint for DD Form 2875."
+        }
+      ],
+      "note": "Verified current form listing; identity of the local XFA-based robot representation should still be protected by byte/hash parity checks."
+    },
+    {
+      "source_document_id": "dcsa-executive_orders-eo-12829-nisp",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/EXECUTIVE_ORDERS/EO-12829_NISP.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.archives.gov/isoo/oversight-groups/nisp",
+          "observation": "NARA's current NISP oversight page identifies Executive Order 12829, as amended, and notes the later section 6 amendment by E.O. 13691."
+        },
+        {
+          "url": "https://www.archives.gov/files/isoo/policy-documents/eo-12829.html",
+          "observation": "NARA publishes the amended order text and amendment history."
+        }
+      ],
+      "note": "Current foundational NISP executive order verified from NARA; citations should identify it as amended rather than implying the 1993 text is unmodified."
+    },
+    {
+      "source_document_id": "dcsa-executive_orders-eo-13526-classified-national-security-info",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/EXECUTIVE_ORDERS/EO-13526_Classified-National-Security-Info.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.archives.gov/isoo/policy-documents/cnsi-eo.html",
+          "observation": "NARA's current ISOO policy page publishes Executive Order 13526 as the classified-national-security-information order."
+        },
+        {
+          "url": "https://www.archives.gov/isoo/policy-documents/isoo-implementing-directive.html",
+          "observation": "NARA continues to publish 32 CFR Parts 2001 and 2003 as the implementing directive pursuant to E.O. 13526."
+        }
+      ],
+      "note": "Current classification executive order verified from the responsible NARA/ISOO policy source."
+    },
+    {
+      "source_document_id": "dcsa-nist-fips-199",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/FIPS_199.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/fips/199/final",
+          "observation": "NIST CSRC lists FIPS 199 as Final and includes it in the current FIPS catalog."
+        }
+      ],
+      "note": "Current final FIPS publication; scope is federal information-system categorization."
+    },
+    {
+      "source_document_id": "dcsa-nist-fips-200",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/FIPS_200.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/fips/200/final",
+          "observation": "NIST CSRC lists FIPS 200 as Final and includes it in the current FIPS catalog."
+        }
+      ],
+      "note": "Current final FIPS publication; contractor applicability depends on incorporation into a controlling instrument."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-161-rev1-update1",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-161_Rev1_Update1.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/161/r1/upd1/final",
+          "observation": "NIST CSRC lists SP 800-161 Rev. 1 Update 1 as Final, including updates through 2024-11-01."
+        }
+      ],
+      "note": "Exact current revision/update verified."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-171-rev3",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-171_Rev3.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/171/r3/final",
+          "observation": "NIST CSRC lists SP 800-171 Rev. 3 as Final and states that it supersedes Rev. 2."
+        }
+      ],
+      "note": "Exact current revision verified; requirements bind nonfederal organizations only when incorporated into contracts or other controlling agreements."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-171a-rev3",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-171A_Rev3.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/171/a/r3/final",
+          "observation": "NIST CSRC lists SP 800-171A Rev. 3 as Final and states that it supersedes the 2018 publication."
+        }
+      ],
+      "note": "Exact current assessment publication verified."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-172",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-172.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/172/final",
+          "observation": "NIST explicitly states that SP 800-172 was withdrawn on 2026-05-13 and superseded by SP 800-172 Rev. 3."
+        }
+      ],
+      "note": "Explicitly withdrawn and superseded; retain for historical use only and acquire Rev. 3 separately."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-172a",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-172A.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/172/a/final",
+          "observation": "NIST explicitly states that SP 800-172A was withdrawn on 2026-05-13 and superseded by SP 800-172A Rev. 3."
+        }
+      ],
+      "note": "Explicitly withdrawn and superseded; retain for historical use only and acquire Rev. 3 separately."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-218-ssdf",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-218_SSDF.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+          "observation": "NIST CSRC lists SP 800-218 SSDF Version 1.1 as Final."
+        }
+      ],
+      "note": "Current final SSDF publication verified."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-37-rev2",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-37_Rev2.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/37/r2/final",
+          "observation": "NIST CSRC lists SP 800-37 Rev. 2 as Final and records its superseded predecessors."
+        }
+      ],
+      "note": "Exact current RMF revision verified."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-53-rev5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-53_Rev5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final",
+          "observation": "NIST lists SP 800-53 Rev. 5 as Final and notes a 2025-08-27 Release 5.2.0 minor update."
+        }
+      ],
+      "note": "Revision 5 remains current, but the library copy requires a content-refresh comparison against Release 5.2.0 before claiming byte-level currency for the newest control changes."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-53a-rev5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-53A_Rev5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/53/a/r5/final",
+          "observation": "NIST lists SP 800-53A Rev. 5 as Final and notes a 2025-08-27 Release 5.2.0 minor update."
+        }
+      ],
+      "note": "Revision 5 remains current, with a separate refresh comparison needed for Release 5.2.0 assessment-procedure changes."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-60-vol1-rev1",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-60_Vol1_Rev1.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/60/v1/r1/final",
+          "observation": "NIST CSRC lists SP 800-60 Volume 1 Revision 1 as Final."
+        }
+      ],
+      "note": "Exact final volume/revision verified."
+    },
+    {
+      "source_document_id": "dcsa-nist-nist-sp-800-60-vol2-rev1",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/NIST/NIST_SP_800-60_Vol2_Rev1.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:05:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/60/v2/r1/final",
+          "observation": "NIST CSRC lists SP 800-60 Volume 2 Revision 1 as Final."
+        }
+      ],
+      "note": "Exact final companion volume/revision verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodd-5143-01-usd-is",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDD_5143.01_USD-IS.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "The official current DoD Directives register lists DoDD 5143.01, incorporating Change 2 dated 2020-04-06."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodd/514301p.pdf",
+          "observation": "Official PDF identifies the same directive and change level."
+        }
+      ],
+      "note": "Verified against the current issuance register and exact official PDF."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodd-5205-07-sap-policy",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDD_5205.07_SAP-Policy.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "The official current directives register lists DoDD 5205.07 dated 2024-09-12."
+        },
+        {
+          "url": "https://www.esd.whs.mil/portals/54/documents/dd/issuances/dodd/520507p.pdf",
+          "observation": "Official PDF is the September 12, 2024 Special Access Program Policy."
+        }
+      ],
+      "note": "Exact current policy issuance verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodd-5220-6-industrial-personnel-sec-review",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDD_5220.6_Industrial-Personnel-Sec-Review.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "The official current directives register still lists DoDD 5220.6, incorporating Change 4 dated 1999-04-20."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodd/522006p.pdf",
+          "observation": "Official PDF matches the directive and change level."
+        }
+      ],
+      "note": "Age alone was not treated as supersession; the controlling DoD register still lists it."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodd-5230-20-foreign-national-visits",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDD_5230.20_Foreign-National-Visits.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "The official current directives register lists DoDD 5230.20 dated 2005-06-22."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodd/523020p.pdf",
+          "observation": "Official PDF matches the Visits and Assignments of Foreign Nationals directive."
+        }
+      ],
+      "note": "Verified current in the official register despite its 2005 issuance date."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodd-5240-06-ciar",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDD_5240.06_CIAR.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "The official current directives register lists DoDD 5240.06 with Change 3 dated 2020-08-31."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodd/524006e.pdf",
+          "observation": "Official PDF matches the current change level."
+        }
+      ],
+      "note": "Exact current directive/change verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-5220-31-nisp",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_5220.31_NISP.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "The official current DoD Instructions register lists DoDI 5220.31 dated 2023-05-09."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodi/522031p.PDF",
+          "observation": "Official PDF is the National Industrial Security Program instruction dated May 9, 2023."
+        }
+      ],
+      "note": "Exact current NISP instruction verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sap-dodi-5205-11-2024",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SAP/DoDI_5205.11_2024.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "The official current DoD Instructions register lists DoDI 5205.11 dated 2024-09-12."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodi/520511p.pdf",
+          "observation": "Official PDF is the September 12, 2024 SAP management, administration, and oversight instruction."
+        }
+      ],
+      "note": "Exact current instruction verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5200-01-v1-infosec",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5200.01_V1_InfoSec.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current DoD Manuals register lists DoDM 5200.01 Volume 1 with Change 3 dated 2025-01-17."
+        }
+      ],
+      "note": "Current volume/change verified; local content must match Change 3 before byte-level currency is claimed."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5200-01-v2-marking",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5200.01_V2_Marking.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current DoD Manuals register lists DoDM 5200.01 Volume 2 with Change 4 dated 2020-07-28."
+        }
+      ],
+      "note": "Current volume/change verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5200-01-v3-protection",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5200.01_V3_Protection.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current DoD Manuals register lists DoDM 5200.01 Volume 3 with Change 4 dated 2025-01-17."
+        }
+      ],
+      "note": "Current volume/change verified; local content must match Change 4 before byte-level currency is claimed."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5200-02-personnel-security-procedures",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5200.02_Personnel_Security_Procedures.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current DoD Manuals register lists DoDM 5200.02 with Change 1 dated 2020-10-29."
+        }
+      ],
+      "note": "Current manual/change verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5205-07-sap-security",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5205.07_SAP-Security.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:18:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current manuals register lists DoDM 5205.07 dated 2025-01-17."
+        }
+      ],
+      "note": "Local text inspection confirms this generic-path copy is also the January 17, 2025 manual. It is current by lifecycle; duplicate/canonical handling remains separate."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sap-dodm-5205-07-2025",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SAP/DoDM_5205.07_2025.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current manuals register lists DoDM 5205.07 dated 2025-01-17."
+        }
+      ],
+      "note": "Exact replacement manual verified current."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5205-07-v4-sap-marking",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5205.07_V4_SAP-Marking.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current manuals register lists DoDM 5205.07 Volume 4 with Change 2 dated 2020-09-08."
+        }
+      ],
+      "note": "Current marking volume/change verified."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sap-dodm-5205-07-volume-4-ch2-2020",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SAP/DoDM_5205.07_Volume_4_CH2_2020.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:15:00Z",
+      "verified_by": "Codex source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "The official current manuals register lists DoDM 5205.07 Volume 4 with Change 2 dated 2020-09-08."
+        }
+      ],
+      "note": "Duplicate exact-issuance copy is current by lifecycle but remains subject to canonical duplicate selection."
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-5200-01-infosec-sci",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_5200.01_InfoSec-SCI.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5200.01, \"DoD Information Security Program and Protection of Sensitive Compartmented Information (SCI),\" issued 4/21/2016, listed live with Change 2 (10/1/2020); not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Issuances index with an incorporated Change 2; no cancellation or superseding issuance found.",
+      "effective_date": "2016-04-21"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-5200-02-personnel-security",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_5200.02_Personnel_Security.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5200.02, \"DoD Personnel Security Program (PSP),\" issued 3/21/2014, listed live with Change 3 (9/24/2020); not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Issuances index with an incorporated Change 3; no cancellation or superseding issuance found.",
+      "effective_date": "2014-03-21"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-5200-39-cpi",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_5200.39_CPI.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5200.39, \"Critical Program Information (CPI) Identification and Protection Within RDT&E,\" issued 5/28/2015, listed live with Change 3 (10/1/2020); not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Issuances index with an incorporated Change 3; no cancellation or superseding issuance found.",
+      "effective_date": "2015-05-28"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-5200-48-cui",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_5200.48_CUI.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5200.48, \"Controlled Unclassified Information (CUI),\" issued 3/6/2020, listed live with no change entries; not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Issuances index with no incorporated changes recorded; no cancellation or superseding issuance found. Same title/number also queued under the cui collection as dcsa-cui-dodi-5200-48-cui — same source, single lifecycle fact.",
+      "effective_date": "2020-03-06"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-5205-16-insider-threat",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_5205.16_Insider-Threat.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5205.16, \"The DoD Insider Threat Program,\" issued 12/20/2024, listed live with no change entries; not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Issuances index; recently reissued (Dec 2024) with no incorporated changes yet.",
+      "effective_date": "2024-12-20"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodi-8510-01-rmf",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDI_8510.01_RMF.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 8510.01, \"Risk Management Framework for DoD Systems,\" issued 7/19/2022, listed live with no change entries; not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Issuances index; no cancellation or superseding issuance found.",
+      "effective_date": "2022-07-19"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5100-76-aae-physical-security",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5100.76_AAE-Physical-Security.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "DoDM 5100.76, \"Physical Security of Sensitive Conventional Arms, Ammunition, and Explosives (AA&E),\" issued 4/17/2012, listed live with Change 2 (10/5/2020); not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Manuals index with an incorporated Change 2; no cancellation or superseding issuance found.",
+      "effective_date": "2012-04-17"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5220-32-v1-nisp-gov-procedures",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5220.32_V1_NISP-Gov-Procedures.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "DoDM 5220.32 Volume 1, \"National Industrial Security Program: Industrial Security Procedures for Government Activities,\" issued 8/1/2018, listed live with Change 2 (12/10/2021); not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Manuals index with an incorporated Change 2; no cancellation or superseding issuance found.",
+      "effective_date": "2018-08-01"
+    },
+    {
+      "source_document_id": "dcsa-dodi-dodm-5220-32-v2-foci",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/DoDM_5220.32_V2_FOCI.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "DoDM 5220.32 Volume 2, \"National Industrial Security Program: Procedures for Government Activities Relating to Foreign Ownership, Control, or Influence (FOCI),\" issued 4/17/2014, listed live with Change 2 (12/10/2021); not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Manuals index with an incorporated Change 2; no cancellation or superseding issuance found.",
+      "effective_date": "2014-04-17"
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-dodm-5105-21-volume-1-ch2-2020",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/DoDM_5105.21_Volume_1_CH2_2020.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "DoDM 5105.21 Volume 1, \"SCI Administrative Security Manual: Administration of Information and Information Systems Security,\" issued 10/19/2012, listed live with Change 2 (10/6/2020), matching the library's \"CH2 2020\" copy; not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Manuals index; the library's Change 2 (2020) copy matches the currently listed change.",
+      "effective_date": "2012-10-19"
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-dodm-5105-21-volume-2-ch2-2020",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/DoDM_5105.21_Volume_2_CH2_2020.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "DoDM 5105.21 Volume 2, \"SCI Administrative Security Manual: Administration of Physical Security, Visitor Control, and Technical Security,\" issued 10/19/2012, listed live with Change 2 (11/2/2020), matching the library's \"CH2 2020\" copy; not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Manuals index; the library's Change 2 (2020) copy matches the currently listed change.",
+      "effective_date": "2012-10-19"
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-dodm-5105-21-volume-3-ch2-2020",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/DoDM_5105.21_Volume_3_CH2_2020.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodm/",
+          "observation": "DoDM 5105.21 Volume 3, \"SCI Administrative Security Manual: Administration of Personnel Security, Industrial Security, and Special Activities,\" issued 10/19/2012, listed live with Change 2 (9/14/2020), matching the library's \"CH2 2020\" copy; not cancelled."
+        }
+      ],
+      "note": "Live on the official DoD Manuals index; the library's Change 2 (2020) copy matches the currently listed change.",
+      "effective_date": "2012-10-19"
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-icd-705-scifs",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/ICD_705_SCIFs.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/what-we-do/ic-related-menus/ic-related-links/intelligence-community-directives",
+          "observation": "\"ICD 705\" linked to /files/documents/ICD/ICD-705-SCIFs.pdf on the official Intelligence Community Directives index; filename matches the library copy exactly."
+        }
+      ],
+      "note": "Listed live on ODNI's official ICD index; no rescission notice found."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-ics-705-01",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/ICS_705-01.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"ICS 705-01: Physical and Technical Security Standards for Sensitive Compartmented Information Facilities, 17 September 2010\" listed under Intelligence Community Standards, current."
+        }
+      ],
+      "note": "Listed live on ODNI's official CI & Security Governance/Regulations page; no rescission or superseding ICS 705-01 revision found.",
+      "effective_date": "2010-09-17"
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-ics-705-02",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/ICS_705-02.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"ICS 705-02: Standards for the Accreditation and Reciprocal Use of Sensitive Compartmented Information Facilities, 22 December 2016\" listed under Intelligence Community Standards, current."
+        }
+      ],
+      "note": "Listed live on ODNI's official CI & Security Governance/Regulations page; no rescission or superseding ICS 705-02 revision found.",
+      "effective_date": "2016-12-22"
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-ic-technical-specifications-scifs-v1-5-1",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/IC_Technical_Specifications_SCIFs_v1.5.1.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"IC Technical Specifications for Construction and Management of Sensitive Compartmented Information Facilities, v1.5.1\" is the version currently linked under Additional Links; v1.5 (unversioned suffix) is not separately linked there."
+        }
+      ],
+      "note": "v1.5.1 is the version ODNI currently publishes; the plain v1.5 copy in this same folder (dcsa-dodi-sci-sci-facilities-ic-technical-specifications-scifs-v1-5) is superseded by this one — see that entry."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-ic-technical-specifications-scifs-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/IC_Technical_Specifications_SCIFs_v1.5.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "Only \"IC Technical Specifications ... v1.5.1\" is currently linked on ODNI's governance page; the unversioned v1.5 main tech-spec document is not."
+        }
+      ],
+      "note": "INFERRED, not EXPLICIT: no quotable withdrawal notice for v1.5 was found. ODNI's current governance page publishes only v1.5.1 of the main tech-spec document; v1.5 appears to have been superseded by that revision (govtribe/exwc.navfac mirrors date v1.5.1 to 26 Jul 2022). The individual v1.5 checklists/appendices in this same folder are unaffected — ODNI's page still separately lists and links each of them at v1.5, unchanged."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-aircraft-uav-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/Aircraft_UAV_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"Aircraft UAV Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-cancellation-scif-couse-jointuse-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/Cancellation_SCIF_CoUse_JointUse_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"Cancellation of SCIF Co-Use Joint-Use v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-construction-security-plan-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/Construction_Security_Plan_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"Construction Security Plan v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-inspectable-materials-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/Inspectable_Materials_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"Inspectable Materials Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-scif-ca-fixed-facility-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/SCIF_CA_Fixed_Facility_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"SCIF Compartmented Area (CA) Fixed Facility Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-scif-couse-jointuse-request-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/SCIF_CoUse_JointUse_Request_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"SCIF Co-Use Joint-Use Request v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-scif-couse-jointuse-users-guide-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/SCIF_CoUse_JointUse_Users_Guide_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"SCIF Co-Use Joint-Use Request Users Guide v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-scif-fixed-facility-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/SCIF_Fixed_Facility_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"SCIF Fixed Facility Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-scif-preconstruction-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/SCIF_PreConstruction_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"SCIF Pre-Construction Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-scif-tempest-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/SCIF_TEMPEST_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"SCIF TEMPEST Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-shipboard-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/Shipboard_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"Shipboard Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-dodi-sci-sci-facilities-submarine-checklist-v1-5",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/SCI/SCI Facilities/Submarine_Checklist_v1.5.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T11:44:50Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-ci-security-governance-regulations",
+          "observation": "\"Submarine Checklist v1.5\" is separately and currently linked under Additional Links on ODNI's CI & Security Governance/Regulations page, unaffected by the main tech-spec's v1.5→v1.5.1 revision."
+        }
+      ],
+      "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    }
+  ]
 }

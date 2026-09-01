@@ -57,7 +57,7 @@ def classify_authority(record: dict[str, Any], header: dict[str, Any]) -> tuple[
         return "dcsa_interpretation", "interpretive_not_independently_binding"
     if collection == "nist":
         return "incorporated_framework", "binding_only_when_incorporated"
-    if collection in {"voi", "cdse_pulse"}:
+    if collection in {"voi", "cdse_pulse", "cdse_resources"}:
         return "training_or_context", "not_independently_binding"
     if collection in {
         "job_aids", "cui", "nisp_tools", "forms", "information_security", "rmf", "cmmc",
