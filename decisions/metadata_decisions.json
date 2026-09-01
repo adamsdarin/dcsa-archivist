@@ -1232,6 +1232,1205 @@
         }
       ],
       "note": "Listed live and individually linked on ODNI's official governance page at v1.5; not superseded despite the main tech-spec document moving to v1.5.1."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-1-secea-authorities-responsibilities",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-1_SecEA-Authorities-Responsibilities.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Authorities and Responsibilities (SEAD-1)\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD_1.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-1 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-3-reporting-requirements",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-3_Reporting-Requirements.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-3 (SEAD-3) ... Reporting Requirements\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD-3-Reporting-U.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-3 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-4-adjudicative-guidelines",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-4_Adjudicative-Guidelines.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-4 (SEAD-4) ... National Adjudicative Guidelines\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD-4-Adjudicative-Guidelines-U.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-4 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-5-social-media-collection",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-5_Social-Media-Collection.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-5 (SEAD-5) ... collection, use, and retention of publicly available social media information\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD_5.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-5 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-6-continuous-evaluation",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-6_Continuous-Evaluation.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-6 (SEAD-6) ... Continuous Evaluation\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD-6-continuous%20evaluation-U.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-6 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-7-reciprocity",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-7_Reciprocity.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-7 (SEAD-7) ... Reciprocity of Background Investigations and National Security Adjudications\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD-7_BI_ReciprocityU.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-7 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-8-temporary-eligibility",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-8_Temporary-Eligibility.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-8 (SEAD-8) ... Temporary Eligibility\" listed live under Policy, linking to /files/NCSC/documents/Regulations/SEAD-8_Temporary_Eligibility_U.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page; no rescission or superseding SEAD-8 revision found."
+    },
+    {
+      "source_document_id": "dcsa-sead-sead-9-appeals",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/SECURITY_EXECUTIVE_AGENT_DIRECTIVES_(SEAD)/SEAD-9_Appeals.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:10:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/index.php/ncsc-how-we-work/ncsc-security-executive-agent/ncsc-policy",
+          "observation": "\"Security Executive Agent Directive-9 (SEAD-9) ... Whistleblower Protection: Appellate Review of Retaliation Regarding Security Clearances and Access Determinations (May 2022)\" listed live under Policy, linking to /files/NCSC/documents/Regulations/06-02-22_ODNI_Document_SEAD-9_22-00284_U_SIGNED-FINAL.pdf."
+        }
+      ],
+      "note": "Listed live on ODNI's official Security Executive Agent Policy page. Library filename says \"Appeals\"; the live document's own subject is appellate review under whistleblower protection — same instrument, matching subject."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-101-version-2u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_101-Version-2U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI 101\" linked to .../CTP/CUI/DCSA%20CUI%20101%20Version%202U.pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 2U, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-contractual-considerations-for-industry-version-1",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Contractual-Considerations-for-Industry-Version-1.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Contractual Considerations for Industry\" linked to .../CTP/CUI/DCSA%20CUI%20Contractual%20Considerations%20for%20Industry%20Version%201.pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 1, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-cui-quarterly-newsletter-march-2026",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_CUI-Quarterly-Newsletter---March-2026.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"CUI Quarterly Newsletter (March 2026)\" linked to .../CTP/CUI/CUI Quarterly Newsletter - March 2026.pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page, exact issue match (March 2026)."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-dcsateleworkdosdontsversion2u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_DCSATeleworkDosDontsVersion2U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Industry Do's and Don'ts Version 2\" linked to .../CTP/CUI/DCSATeleworkDosDontsVersion2U.pdf under Resources for Industry; filename matches the library copy exactly."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 2, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-destruction-guidance-version-2u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Destruction-Guidance-Version-2U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Destruction Guidance Version 2\" linked to .../CTP/CUI/DCSA%20CUI%20Destruction%20Guidance%20Version%202U.pdf under both Resources tabs."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 2U, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-dod-cui-resourcesu",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_DoD-CUI-ResourcesU.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Resources\" linked to .../CTP/CUI/DoD%20CUI%20ResourcesU.pdf under both Resources tabs."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-dod-marking-job-aid",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_DoD-Marking-Job-Aid.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/CUI/DOD-CUI_Marking_Job_Aid_for_DOD.pdf",
+          "observation": "The current-path URL (.../Portals/128/Documents/CTP/CUI/DOD-CUI_Marking_Job_Aid_for_DOD.pdf — the same /Portals/128/ folder DCSA uses for every other current CUI resource) resolves and serves the file; it is not currently linked from either tab of the live CUI Resources page or from Policy-and-Training."
+        }
+      ],
+      "note": "Weaker than the other CUI decisions in this batch: confirmed live and hosted at DCSA's current-resource path, but not found linked from the current Resources page itself. No rescission notice found either. Flag for a follow-up check if a stronger primary confirmation becomes available."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-glossary-and-policy-summaries-version-2u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Glossary-and-Policy-Summaries-Version-2U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Glossary & Policy Summaries\" linked to .../CTP/CUI/DCSA%20CUI%20Glossary%20and%20Policy%20Summaries%20Version%202U.pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 2U, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-landscape-version-2u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Landscape-Version-2U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Landscape\" linked to .../CTP/CUI/DCSA%20CUI%20Landscape%20Version%202U.pdf under Resources for DOW."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page (DOW tab) at Version 2U, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-quick-start-guide-version-2u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Quick-Start-Guide-Version-2U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Quick Start Guide\" linked to .../CTP/CUI/DCSA%20CUI%20Quick%20Start%20Guide%20Version%202U.pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 2U, matching the library copy. (A stray search-engine snippet referenced a \"Version3\" quick-start filename, but the live page itself links only Version 2U — trusting the live page over the snippet.)"
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-roadmap-to-compliance-version-3u",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Roadmap-to-Compliance-Version-3U.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Roadmap to Compliance\" linked to .../CTP/CUI/DCSA%20CUI%20Roadmap%20to%20Compliance%20Version%203U.pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 3U, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-aid-cui-training-template-version-3",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/AID_CUI_Training-Template-Version-3.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Training Template\" linked to .../CTP/CUI/DCSA%20CUI%20Training%20Template%20Version%203.pdf under both Resources tabs."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page at Version 3, matching the library copy."
+    },
+    {
+      "source_document_id": "dcsa-cui-dodi-5200-48-cui",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/DoDI_5200.48_CUI.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5200.48, \"Controlled Unclassified Information (CUI),\" issued 3/6/2020, listed live with no change entries on the official DoD Issuances index; not cancelled."
+        }
+      ],
+      "note": "Same source document already verified as dcsa-dodi-dodi-5200-48-cui in the dodi collection; recorded again here under its own robot_text_path in the cui collection."
+    },
+    {
+      "source_document_id": "dcsa-cui-faq-cui-frequently-asked-questions-may-2025",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INFORMATION_AND_CYBERSECURITY/CUI/FAQ_CUI_Frequently-Asked-Questions-(May-2025).txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:25:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Controlled-Unclassified-Information-CUI/Resources/",
+          "observation": "\"DCSA CUI Frequently Asked Questions\" linked to .../CTP/CUI/DCSA CUI Frequently Asked Questions (May 2025).pdf under Resources for Industry."
+        }
+      ],
+      "note": "Live on DCSA's current CUI Resources page, exact date match (May 2025)."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-classified-conferences-guide",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Classified-Conferences-Guide.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Procedural Guidance for Conducting DoD Classified Conferences\" linked live (to cdse.edu) under the FSO Guides tab."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-conditional-eligibility-fact-sheet",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Conditional-Eligibility-Fact-Sheet.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Industry Conditional Eligibility Determinations Fact Sheet\" linked live under the FSO Guides tab."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-daapm-v2-2",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_DAAPM_v2.2.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/NISP-Cybersecurity-Office-NCSO/",
+          "observation": "DCSA's live NISP Cybersecurity Office page: “Cleared contractors processing classified information under the cognizance of DCSA follow the guidance of the DCSA Assessment and Authorization Guide (DAAG) to complete the RMF process and obtain IS authorization... The DAAG is available for download in the NISP Enterprise Mission Assurance Support Service (eMASS).” No mention of DAAPM remains on the page."
+        }
+      ],
+      "note": "EXPLICIT: DCSA's current NCSO page names its replacement (the DAAG) by name and describes it as the guidance cleared contractors now follow — this is a quotable current statement that supersedes DAAPM v2.2, not an inference from the filename. The DAAG itself is not publicly posted (eMASS-gated, or by request to NCSO), so it cannot be substituted into this public corpus; flag for Stage 2/output-doc review that the DAAPM-referencing sections of any reporting-requirements document need updating to point to the DAAG request process instead."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-dcsa-147-completion-guide",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_DCSA-147_Completion-Guide.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"DCSA 147 Process Overview Guide (June 2025)\" linked live under the FSO Guides tab (filename: DCSA_147_June2025_FSO_Guide_to_Complete_Form.pdf)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; June 2025 is the current edition.",
+      "effective_date": "2025-06-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-diss-management",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_DISS-Management.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"DISS Management Guidance Job Aid\" linked live under the FSO Guides tab (filename dated 20250127)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; January 2025 is the current edition.",
+      "effective_date": "2025-01-27"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-fcl-orientation-handbook",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_FCL-Orientation-Handbook.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"FCL Process Orientation Handbook\" linked live under the Facility Clearances tab (filename dated 9 March 2021)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page.",
+      "effective_date": "2021-03-09"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-insider-threat-training-info-paper",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Insider-Threat-Training-Info-Paper.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Insider Threat Training Information Paper\" linked live under the FSO Guides tab (filename dated May2025)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; May 2025 is the current edition.",
+      "effective_date": "2025-05-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-insider-threat-training-slick-sheet",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Insider-Threat-Training-Slick-Sheet.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Insider Threat Training for Cleared Industry Slick Sheet\" linked live under the FSO Guides tab (filename dated May2025)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; May 2025 is the current edition.",
+      "effective_date": "2025-05-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-nato-briefing",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_NATO-Briefing.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"NATO Briefing Job Aid\" linked live under the FSO Guides tab (filename: NATO Briefing Job Aid Final v1.0 (September 2025))."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; v1.0 September 2025 is the current edition.",
+      "effective_date": "2025-09-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-niss-knowledge-base",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_NISS_Knowledge-Base.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/IS/NISS_Knowledge_Base_External_JobAid_20250820_V2.pdf",
+          "observation": "The current-path URL (.../Portals/128/Documents/IS/NISS_Knowledge_Base_External_JobAid_20250820_V2.pdf, filename dated 20250820, \"V2\") resolves and serves the file."
+        }
+      ],
+      "note": "Weaker than most decisions in this batch: confirmed live at DCSA's current-resource path with a recent (Aug 2025) V2 date, but no specific current hub page found linking it directly. No rescission notice found either.",
+      "effective_date": "2025-08-20"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-osa-contractor-request-template",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_OSA_Contractor-Request-Template.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"OSA Self-Approval Contractor Request Template\" linked live under the FSO Guides tab (filename: Contractor Request Template FINAL Version 1January2026)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; Version 1, January 2026 is the current edition.",
+      "effective_date": "2026-01-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-osa-fso-workflow",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_OSA_FSO-Workflow.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"OSA Self-Approval FSO Workflow Job Aid\" linked live under the FSO Guides tab (filename: FSO Workflow Job Aid FINAL Version 1January2026)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; Version 1, January 2026 is the current edition.",
+      "effective_date": "2026-01-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-osa-implementation-roadmap",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_OSA_Implementation-Roadmap.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"OSA Self-Approval DCSA Implementation Roadmap\" linked live under the FSO Guides tab (filename: DCSA Implementation Roadmap FINAL Version 1January2026)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; Version 1, January 2026 is the current edition.",
+      "effective_date": "2026-01-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-sead-3-contact-reporting-exercise",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_SEAD-3_Contact-Reporting-Exercise.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Portals/91/Documents/IS/DISS/FINAL_SEAD%203%20Contact%20and%20Relationship%20Reporting%20Exercise.pdf",
+          "observation": "The URL (.../Portals/91/Documents/IS/DISS/FINAL_SEAD 3 Contact and Relationship Reporting Exercise.pdf) resolves and serves the file."
+        }
+      ],
+      "note": "Weaker than most decisions in this batch: confirmed live, but hosted on the older /Portals/91/ path and not currently linked from the SEAD 3 Unofficial Foreign Travel Reporting page's own Resources list (which this session verified in full). No rescission or superseding version found either. Flag for a follow-up check."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-sead-3-foreign-travel-reporting-diss",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_SEAD-3_Foreign-Travel-Reporting-DISS.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/SEAD-3-Unofficial-Foreign-Travel-Reporting/",
+          "observation": "\"Foreign Travel Reporting in DISS for SEAD 3\" linked live under Resources on the SEAD 3 Unofficial Foreign Travel Reporting page."
+        }
+      ],
+      "note": "Live and linked from DCSA's current SEAD 3 page."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-sead-3-reporting-desktop-aid-2022-04",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_SEAD-3_Reporting-Desktop-Aid_2022-04.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/SEAD-3-Unofficial-Foreign-Travel-Reporting/",
+          "observation": "The SEAD 3 page's current \"SEAD 3 Reporting Desktop Aid for Cleared Industry\" link points to .../SEAD-3_Reporting_Desktop_Aid_for_Cleared_Industry-revisedMay2024.pdf — a May 2024 revision, not the library's April 2022 edition."
+        }
+      ],
+      "note": "INFERRED, not EXPLICIT: no quotable withdrawal notice for the 2022-04 edition specifically, but DCSA now serves a \"revisedMay2024\" edition of the same desktop aid from the same current page, and a March-2022-dated copy of this same aid was also found still sitting at the legacy /Portals/91/ path — consistent with DCSA revising this aid in place over time. The library's 2022-04 copy is superseded by the May 2024 revision."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-security-incident",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Security-Incident.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Security Incident Job Aid\" linked live under the FSO Guides tab (both a cdse.edu copy and a DCSA-hosted copy)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-self-inspection-handbook",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Self-Inspection-Handbook.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Self-Inspection Handbook for Contractors\" (and its print edition) linked live under the FSO Guides tab."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-small-business-guide-fcl-via-niss",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_Small-Business-Guide_FCL-via-NISS.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Small Business Guide Facility Clearance Process pamphlet\" linked live under the Facility Clearances tab (filename: SB_Guide_Facility_Clearance_Process_NISS.pdf)."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page."
+    },
+    {
+      "source_document_id": "dcsa-job_aids-aid-smo-slick-sheet",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID_SMO-Slick-Sheet.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "\"Senior Management Official Slick Sheet\" linked live under the FSO Guides tab (filename: SMO Slick Sheet Final v 2.0 (November 2025))."
+        }
+      ],
+      "note": "Live and linked from DCSA's current NISP Tools & Resources page; v2.0 November 2025 is the current edition.",
+      "effective_date": "2025-11-01"
+    },
+    {
+      "source_document_id": "dcsa-job_aids-faq-nispom-rule-2021-05-25",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/FAQ_NISPOM-Rule_2021-05-25.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:45:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/32-CFR-Part-117-NISPOM-Rule/",
+          "observation": "\"Frequently Asked Questions\" linked live under the FAQs tab, filename NISPOM_Rule_FAQs-25May21.pdf — exact date match."
+        }
+      ],
+      "note": "Live and linked from DCSA's current 32 CFR Part 117 NISPOM Rule page; exact date match (25 May 2021).",
+      "effective_date": "2021-05-25"
+    },
+    {
+      "source_document_id": "dcsa-dodi-cnssi-7003-pds-2015",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/DODI/CNSSI_7003_PDS_2015.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T12:50:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
+          "observation": "DCSA's live NISP Tools & Resources page (Policy and Guidance tab) links \"PDS Distribution System, CNSSI 7003\" to CNSSI_7003_PDS_September_2015.pdf as of today."
+        },
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/NAO/CNSSI_7003_PDS_September_2015.pdf",
+          "observation": "The linked PDF itself is titled \"CNSSI No.7003, September 2015, PROTECTED DISTRIBUTION SYSTEMS (PDS)\" and states it supersedes NSTISSI 7003 (Dec 1996), with no reference to any later revision."
+        }
+      ],
+      "note": "cnss.gov itself was unreachable from this environment (TLS cert error via WebFetch, connection blocked via browser) throughout this session. Darin independently obtained a copy of the document (title page: \"CNSSI No.7003, September 2015\") and supplied it directly, confirming it matches the version DCSA currently cites and hosts. Combined with DCSA's own live citation, this closes the lifecycle question even though the primary cnss.gov source could not be reached directly by this session.",
+      "effective_date": "2015-09-01"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_143806p",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/143806p.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 1438.06, \"DoD Workplace Violence Prevention and Response Policy,\" issued 1/16/2014, listed live with Change 1 (5/4/2020); not cancelled."
+        }
+      ],
+      "note": "Cited on CDSE's Insider Threat Toolkit (Targeted Violence tab); live on the official DoD Issuances index.",
+      "effective_date": "2014-01-16"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_302040p",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/302040p.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "DoDD 3020.40, \"Mission Assurance (MA),\" issued 11/29/2016, listed live with Change 1 (9/11/2018); not cancelled."
+        }
+      ],
+      "note": "Cited on CDSE's Insider Threat Toolkit (Targeted Violence tab); live on the official DoD Directives index.",
+      "effective_date": "2016-11-29"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_512402p",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/512402p.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodd/",
+          "observation": "DoDD 5124.02, \"Under Secretary of Defense for Personnel and Readiness (USD(P&R)),\" issued 6/23/2008, listed live with Change 2 (7/23/2025); not cancelled."
+        }
+      ],
+      "note": "Cited on CDSE's Insider Threat Toolkit (Targeted Violence tab); live on the official DoD Directives index, recently changed (Jul 2025).",
+      "effective_date": "2008-06-23"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_524026p",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/524026p.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 5240.26, \"Countering Espionage, International Terrorism, and the Counterintelligence (CI) Insider Threat,\" issued 5/4/2012, listed live with Change 3 (12/7/2020); not cancelled."
+        }
+      ],
+      "note": "Cited implicitly by the toolkit's insider-threat/CI framing; live on the official DoD Issuances index.",
+      "effective_date": "2012-05-04"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_649003p",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/649003p.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 6490.03, \"Deployment Health,\" issued 6/19/2019, listed live with no incorporated changes; not cancelled."
+        }
+      ],
+      "note": "Cited on CDSE's Insider Threat Toolkit (Targeted Violence tab); live on the official DoD Issuances index.",
+      "effective_date": "2019-06-19"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_705001_dodi_2017",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/705001_dodi_2017.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dodi/",
+          "observation": "DoDI 7050.01, \"DoD Hotline Program,\" issued 10/17/2017, listed live with no incorporated changes; not cancelled."
+        }
+      ],
+      "note": "Cited on CDSE's Insider Threat Toolkit (Fraud tab, \"DOD Instruction 7050.01, 17 October 2017\"); exact date match on the official DoD Issuances index.",
+      "effective_date": "2017-10-17"
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_AIRE-Professionalization-Catalog",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/AIRE-Professionalization-Catalog.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"AIRE Professionalization Catalog\" linked live under the Training and Awareness tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Artifical-Intelligence-and-the-Insider-Threat",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Artifical-Intelligence-and-the-Insider-Threat.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Artificial Intelligence and the Insider Threat\" linked live under the Training and Awareness tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_OnlineTargetingUSGEmployees",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/OnlineTargetingUSGEmployees.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Online Targeting of Current & Former U.S. Government Employees\" linked live under the Training and Awareness tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Insider-Threat-to-Supply-Chains",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Insider-Threat-to-Supply-Chains.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat to Supply Chains\" linked live under the Cyber Insider Threat/User Activity Monitoring tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Insider-Threat-Indicators-in-UAM",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Insider-Threat-Indicators-in-UAM.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat Indicators in User Activity Monitoring\" linked live under the Cyber Insider Threat/User Activity Monitoring tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_INTJ0242_CyberEsp_JobAid",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/INTJ0242_CyberEsp_JobAid.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Cyber Espionage job aid\" linked live under the Cyber Insider Threat/User Activity Monitoring tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_National_Insider_Threat_Policy__Minimum_Standards",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/National_Insider_Threat_Policy__Minimum_Standards.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"National Insider Threat Policy and Minimum Standards\" linked live under the Policy/Legal tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_ISL2021-02_SEAD-3",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/ISL2021-02_SEAD-3.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Industrial Security Letter (ISL) 2021-02\" linked live under the Policy/Legal tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_INT_CIAuth_JobAid",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/INT_CIAuth_JobAid.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Counterintelligence (CI) Authorities for Insider Threat\" linked live under the Establishing a Program tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_INT_FOIA_Exemptions",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/INT_FOIA_Exemptions.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Freedom of Information Act (FOIA) Exemptions\" linked live under the Establishing a Program tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_INT250-critical-thinking-techniques",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/INT250-critical-thinking-techniques.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Critical Thinking Techniques for Insider Threat Analyst\" linked live under the Establishing a Program tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_INT250-critical-thinking-tools",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/INT250-critical-thinking-tools.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Critical Thinking Tools for Insider Threat Analyst\" linked live under the Establishing a Program tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Insider-Threat-Inquiry",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Insider-Threat-Inquiry.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat Inquiry\" linked live under the Establishing a Program tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Honor-in-Hindsight-facilitated-discussion-guide",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Honor-in-Hindsight-facilitated-discussion-guide.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Honor in Hindsight - Facilitated Discussion Guide\" linked live under the Vigilance tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_INTJ0170-Virtual-InT-Forum-Guidance",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/INTJ0170-Virtual-InT-Forum-Guidance.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat Virtual Forum Guidance\" linked live under the Vigilance tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Insider-Threat-and-Extremist-Activity-DOD",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Insider-Threat-and-Extremist-Activity-DOD.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat and Extremism Within the DOD\" linked live under the Targeted Violence tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Mobilization_Indicators_Booklet_2021",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Mobilization_Indicators_Booklet_2021.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"U.S Violent Extremist Mobilization Indicators 2021 Edition\" linked live under the Targeted Violence tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Lessons-Learned-from-School-Safety-Programs",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Lessons-Learned-from-School-Safety-Programs.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat Program Kinetic Violence Self-Assessment: Lessons Learned from School Safety\" linked live under the Targeted Violence tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Behavioral-Science-and-Insider-Threat",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Behavioral-Science-and-Insider-Threat.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Behavioral Science and Insider Threat Job Aid\" linked live under the Targeted Violence tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Deadlines_and_Deliverables_Game",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Deadlines_and_Deliverables_Game.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Deadlines and Deliverables Card Game\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Instruction_Manual",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Instruction_Manual.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Instruction Manual (Deadlines and Deliverables)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Instruction_Cards",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Instruction_Cards.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Instruction Cards (Deadlines and Deliverables)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_CardTokenPrintout",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/CardTokenPrintout.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Card Token Printout (Deadlines and Deliverables)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_InsiderThreatDataAnalysisWorkbook",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/InsiderThreatDataAnalysisWorkbook.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Data Analysis Workbook for the Insider Threat Community (November 2023)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Evaluation_Plan",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Evaluation_Plan.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Preventing Targeted Violence at Your Installation Evaluation Plan (October 2023)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_EnsuringFairness_EnhancingPrivacy_StudyGuide",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/EnsuringFairness_EnhancingPrivacy_StudyGuide.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Ensuring Fairness and Enhancing the Protection of Privacy in Counter-Insider Threat Programs\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Bystander-Intervention-Brochure",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Bystander-Intervention-Brochure.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Preventing Targeted Violent Attacks: Best Practices for Bystander Intervention (Standard Version)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Bystander-Intervention-Brochure-Trifold",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Bystander-Intervention-Brochure-Trifold.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Preventing Targeted Violent Attacks: Best Practices for Bystander Intervention (Trifold Version)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Facilitator-Guide",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Facilitator-Guide.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Facilitator Guide (Problem-Based Learning Experience for Leaders)\" linked live under the Research tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_20210319-Insider-Threat-Mitigation-for-US-Critical-Infrastru-March-2021",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/20210319-Insider-Threat-Mitigation-for-US-Critical-Infrastru-March-2021.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat Mitigation for U.S. Critical Infrastructure Entities (NCSC)\" linked live under the Critical Infrastructure tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_Insider-threats-to-Food-and-Agriculture",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/Insider-threats-to-Food-and-Agriculture.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat to the Food and Agriculture Sector\" linked live under the Critical Infrastructure tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_CDSE-Insider-Threat-Definitions",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/CDSE-Insider-Threat-Definitions.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"Insider Threat Definitions Job Aid\" linked live under the Leadership tab of CDSE's Insider Threat Toolkit (all 13 category tabs checked in full this session)."
+        }
+      ],
+      "note": "Live and linked from CDSE's current Insider Threat Toolkit page."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_InsiderThreatDataAnalysisWorkbookResearchNote",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/InsiderThreatDataAnalysisWorkbookResearchNote.txt",
+      "decision": "verified_current",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "The Research tab of CDSE's Insider Threat Toolkit links two items titled plainly \"Research Note\" (one under the Deadlines and Deliverables game, one under the Case Studies section); this library item is one of the two but the tab text alone doesn't disambiguate which."
+        }
+      ],
+      "note": "Weaker than the other Research-tab decisions in this batch: confirmed a \"Research Note\" resource is live and current on this page, but which of the two could not be pinned down from link text alone."
+    },
+    {
+      "source_document_id": "CDSE_INSIDER_THREAT_230109-FORT%20STEWART%20SOLDIER%20SENTENCED%20TO%20PRISON",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/TRAINING_AND_AWARENESS/CDSE_RESOURCES/INSIDER_THREAT/230109-FORT%20STEWART%20SOLDIER%20SENTENCED%20TO%20PRISON.txt",
+      "decision": "historical",
+      "verified_utc": "2026-09-01T13:20:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://www.cdse.edu/Training/Toolkits/Insider-Threat-Toolkit/",
+          "observation": "\"DOJ Press Release - Fort Stewart Soldier Sentenced to Prison for Fraud Scheme, 9 Jan 2023\" linked live under the Fraud tab of CDSE's Insider Threat Toolkit; date matches the library filename (230109) exactly."
+        }
+      ],
+      "note": "Classified historical rather than verified_current: this is a dated DOJ press release about a closed criminal case, used as a static training case study, not guidance that could become \"more current.\" Still live and referenced on CDSE's current page, i.e. not withdrawn."
     }
   ]
 }
