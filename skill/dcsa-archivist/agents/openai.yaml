@@ -1,0 +1,6 @@
+interface:
+  display_name: "DCSA Archivist"
+  short_description: "Organize and release the DCSA library"
+  default_prompt: "Use $dcsa-archivist to organize and audit my DCSA Library and prepare a preview-only release candidate."
+policy:
+  allow_implicit_invocation: true

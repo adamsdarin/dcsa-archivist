@@ -1,6 +1,6 @@
-# DCSA Library Custodian project contract
+# DCSA Archivist operating contract
 
-This project is the maintenance plane for the adjacent DCSA Library. It does not answer FSO or compliance questions.
+This project is the model-agnostic archival and release framework for the adjacent DCSA Library. The DCSA Archivist organizes, preserves, indexes, and stages governed library data. These instructions apply to any model, agent host, or automation runner. It does not answer FSO or compliance questions.
 
 1. Resolve the library root from configuration or an explicit CLI argument; never hardcode a producer-specific path.
 2. Run `audit` before any candidate build.

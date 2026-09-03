@@ -6,7 +6,7 @@
   "maintenance_contract": "policies/MAINTENANCE_CONTRACT.json",
   "readme": "README.md",
   "metadata_decisions": "decisions/metadata_decisions.json",
-  "skill": "skill/dcsa-library-custodian/SKILL.md",
+  "skill": "skill/dcsa-archivist/SKILL.md",
   "cli": "python custodian.py",
   "production_mutation_requires_explicit_approval": true,
   "consumer_answering_forbidden": true

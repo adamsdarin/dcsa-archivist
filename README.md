@@ -1,8 +1,8 @@
-# DCSA Library Custodian
+# DCSA Archivist
 
-This is the DCSA Library maintenance plane. It audits parity and integrity, classifies authority, deduplicates exact robot content, produces citation-safe chunks, builds intent-routed indexes, runs retrieval regressions, and stages approval-gated releases. It does not answer FSO or compliance questions.
+This is the model-agnostic archival and release framework for the DCSA Library. The DCSA Archivist audits parity and integrity, organizes metadata, preserves provenance and lifecycle history, deduplicates exact robot content, produces citation-safe chunks, builds intent-routed indexes, runs retrieval regressions, and stages approval-gated releases. It accepts validated intake candidates from the DCSA Librarian and does not answer FSO or compliance questions.
 
-Start with `MAINTAINER_START_HERE.json` or the portable skill at `skill/dcsa-library-custodian/SKILL.md`.
+Start with `MAINTAINER_START_HERE.json` or the portable skill at `skill/dcsa-archivist/SKILL.md`. The legacy Python package and `dcsa-custodian` command names remain stable for compatibility; they do not define the agent's role.
 
 ## Commands
 

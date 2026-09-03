@@ -1,9 +1,11 @@
 ---
-name: dcsa-library-custodian
-description: Audit, organize, deduplicate, enrich, chunk, index, validate, stage, and publish approved releases of a local DCSA retrieval library. Use for library currency, parity, metadata, retrieval-quality, or release maintenance; do not use to answer substantive FSO or compliance questions.
+name: dcsa-archivist
+description: Organize, preserve, deduplicate, enrich, index, validate, and release a governed DCSA retrieval library. Use for corpus organization, lifecycle metadata, provenance, retrieval quality, and approval-gated releases; do not use for source intake or substantive FSO questions.
 ---
 
-# DCSA Library Custodian
+# DCSA Archivist
+
+Operate as the archivist for a governed DCSA retrieval library. The framework is model-agnostic: apply these rules regardless of the model, agent host, or automation runner. Accept only validated intake candidates from the DCSA Librarian; never treat untrusted discovery results as production records.
 
 Maintain the DCSA Library as a trustworthy, portable retrieval dataset. This skill is the maintenance plane; it does not answer questions from the corpus.
 
