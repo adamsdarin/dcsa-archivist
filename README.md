@@ -29,3 +29,8 @@ Official-source lifecycle reviews are recorded in `decisions/metadata_decisions.
 ## Current library observation
 
 The initial full audit found healthy file/index integrity and complete parity relationships, but unresolved metadata remains. The latest staged candidate is intentionally not publishable because there are no verified current contractor-controlling chunks. See its variance report and remediation queue under `.custodian/releases/initial-20260828-v7/reports/`.
+
+## Related projects
+
+- **DCSA Librarian** — discovers official-source material and delivers validated quarantine candidates to this project.
+- **DCSA Comparison Bot** — pairs a newly released document against this project's manifest, orders the two editions from official document numbers and version tokens, diffs their robot text, and emits a proposed `metadata_decisions.json` fragment for human review. It never writes into `decisions/`; applying a proposal remains this project's approval-gated job. Currently staged at `staging/dcsa-comparison-bot/` on the `claude/dcsa-comparison-bot-k0ttop` branch of `dcsa-librarian`, pending its own repository.

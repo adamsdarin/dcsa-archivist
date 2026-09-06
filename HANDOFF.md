@@ -1,6 +1,6 @@
 # HANDOFF — dcsa-library-custodian-v2
 
-Last updated: 2026-09-01T17:10:00Z by Claude
+Last updated: 2026-09-06T22:50:00Z by Claude
 
 ## Current State
 Maintenance plane for the DCSA Library: parity and integrity audit, authority classification, exact-content dedup, citation-safe chunking, intent-routed indexes, retrieval regressions, and **approval-gated releases**. The full-corpus source-currency review launched this session is complete — **`v28` was approved (Darin Adams, 2026-09-01T17:09:42Z) and published to the live library** (`C:\Users\darin\Documents\DCSA Library`) at 2026-09-01T17:10:00Z. A rollback snapshot was taken automatically at `.custodian/rollback/20260901T171000Z` before the write. This is the first publish from this repo against the live corpus this session — everything before this was staged candidate-review work.
@@ -56,13 +56,31 @@ Maintenance plane for the DCSA Library: parity and integrity audit, authority cl
 
 Copied on 2026-08-31 from inside the corpus at `Documents\DCSA Library\DCSA_LIBRARY_CUSTODIAN`, which its own AGENTS.md says is where custodian code does not belong. The original is untouched. `.custodian/` — 698 MB of release and report state including the staged candidate `initial-20260828-v7` — was **not** copied and still sits inside the library. See `PROVENANCE.md` for the full comparison against `src\dcsa-library-custodian`.
 
+**The nine/ten supersession findings below now have somewhere to go.** A third project,
+the **DCSA Comparison Bot**, was built on 2026-09-06 to do mechanically what this
+session did by hand: pair a newly released document against the library manifest on
+official document numbers and edition tokens, diff the robot text, and emit a proposed
+`metadata_decisions.json` fragment. Four of the ten findings are its regression fixtures
+and reproduce automatically (NIST SP 800-61r2→r3, IC Tech Spec v1.5→v1.5.1, SEAD 3
+desktop aid 2022-04→revisedMay2024, Cleared CUI QRG Dec 2020→October 2024); the first
+three are `deterministic`, the fourth is labelled `inferred` because the title carries no
+official document number.
+
+It proposes; it never writes. Every proposed decision carries
+`requires_official_lifecycle_evidence: true` and states in its own note that a version
+token is not evidence of withdrawal — this project's rule is not weakened by the
+proposal arriving in machine-readable form. It is staged at
+`staging/dcsa-comparison-bot/` on the `claude/dcsa-comparison-bot-k0ttop` branch of
+`dcsa-librarian` because repository creation was refused by the GitHub integration.
+
 ## Next
 1. Decide whether findings 1-2 (DAAPM→DAAG, SEAD-3 desktop aid) need Stage 2 routing in a reporting-requirements document — these are the only two findings this session judged as things a reporting-requirements doc would actually cite. Not yet routed anywhere.
 2. Commit the pending diff (`HANDOFF.md`, `decisions/metadata_decisions.json`, `src/dcsa_custodian/decisions.py`) — prepared as a commit-message file for Darin to sign (repo requires GPG signing this session's Claude instance can't do unattended).
 3. Keep using explicit `--library-root` because the default config path is not the live corpus.
 4. Separately: acquire and process the August 2026 DCSA VOI (confirmed missing from the corpus — series ends at `2026-07_VOI.pdf`) through this Custodian's own acquisition path, not `fso-guidance-watch`'s — that repo must never write into the governed library directly (per Darin's explicit direction this session). Then trigger `fso-guidance-watch`'s own monthly cycle against the updated library.
 5. If someone wants to push the last 7 unresolved `currency_verification` items to zero: needs a real, unblocked browser session walking CDSE toolkit tabs manually (see prior Current State detail in git history / log below) — not more WebSearch/WebFetch attempts.
-6. Verify the published state: `python custodian.py status` (or read `ROBOT_READABLE_DIRECTORY/STATE/LIBRARY_STATE.json` in the live library) to confirm the pointer looks right from a fresh read, independent of this session's own belief that it worked.
+6. Run the Comparison Bot's `baseline --deep` against the live manifest. Its token rules were exercised on fixtures only; 14,431 real documents will expose title patterns they do not cover.
+7. Verify the published state: `python custodian.py status` (or read `ROBOT_READABLE_DIRECTORY/STATE/LIBRARY_STATE.json` in the live library) to confirm the pointer looks right from a fresh read, independent of this session's own belief that it worked.
 
 ## Open Questions
 Merge with `dcsa-library-custodian` (v1) or keep separate? And does the staged candidate initial-20260828-v7 still matter?
@@ -82,3 +100,4 @@ Merge with `dcsa-library-custodian` (v1) or keep separate? And does the staged c
 2026-09-01T11:52:55Z Claude — Verified 28/30 remaining DoD/SCI records; found the IC Tech Spec v1.5→v1.5.1 supersession. Candidate v10 validates and evaluates clean; queue reduced 584→555. CNSSI 7003 left undecided at this point (cnss.gov unreachable).
 2026-09-01T11:02:00Z Codex — Recorded 51 exact lifecycle decisions across CFR, ISLs, forms, executive orders, NIST, and the first 15 DoD issuances. Candidate v7 validates and remains publishable; queue reduced 627→584.
 2026-08-31T16:47:01Z Claude — Copied out of the corpus and committed; documented the two-implementation split.
+2026-09-06T22:50:00Z Claude — Scoped and built the **DCSA Comparison Bot**, a third plane between the Librarian and this project, to mechanise the edition-pairing step this session did by hand. Deliberately scoped to corpus/edition level rather than obligation level: `fso-guidance-watch` already owns the FSO supersession register, and a second register would leave no way to tell which was right. It emits proposals conforming to this project's METADATA_DECISIONS schema and never writes `decisions/`.
