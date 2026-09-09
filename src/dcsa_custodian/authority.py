@@ -61,7 +61,8 @@ def classify_authority(record: dict[str, Any], header: dict[str, Any]) -> tuple[
         return "training_or_context", "not_independently_binding"
     if collection in {
         "job_aids", "cui", "nisp_tools", "forms", "information_security", "rmf", "cmmc",
-        "trusted_workforce_2_0", "nisp_cybersecurity", "personnel_vetting_forms", "foci", "export_control"
+        "trusted_workforce_2_0", "nisp_cybersecurity", "personnel_vetting_forms", "foci", "export_control",
+        "industrial_security"
     }:
         return "official_operational_guidance", "implementation_guidance_scope_check_required"
     return "unclassified_role", "unresolved"
@@ -69,7 +70,7 @@ def classify_authority(record: dict[str, Any], header: dict[str, Any]) -> tuple[
 
 def lifecycle_eligibility(record: dict[str, Any], doha_eligible: bool | None) -> tuple[str, str]:
     status = str(record.get("current_status") or "").lower()
-    if status == "current":
+    if status in {"current", "active"}:
         return "answer_eligible", "manifest_current"
     if status == "current_or_verify":
         return "unresolved_currency", "requires_official_currency_verification"

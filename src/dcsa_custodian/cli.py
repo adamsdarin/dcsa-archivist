@@ -6,9 +6,11 @@ import sys
 from pathlib import Path
 
 from .audit import audit_library
-from .common import read_json, resolve_library_root, utc_now, write_json
+from .common import iter_jsonl, read_json, resolve_library_root, utc_now, write_json
 from .evals import evaluate_candidate
 from .release import approve_candidate, build_candidate, publish_candidate, validate_candidate
+from .semantic import semantic_search
+from .wiki import build_graph, lint_report
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -52,7 +54,19 @@ def parser() -> argparse.ArgumentParser:
     publish = commands.add_parser("publish")
     publish.add_argument("--library-root")
     publish.add_argument("--release-id", required=True)
+    publish.add_argument("--dry-run", action="store_true", help="Stage and show publication changes without modifying the library")
     commands.add_parser("status")
+    lint = commands.add_parser("lint", help="Lint the derived knowledge graph for corpus-wide contradictions")
+    lint.add_argument("--library-root")
+    lint.add_argument("--release-id", help="lint a candidate release; omit to lint the published library")
+    lint.add_argument("--output", help="write the full report and derived graph to this path")
+    lint.add_argument("--fail-on-priority", type=int, help="exit 2 when any finding is at or below this priority")
+    lint.add_argument("--check", action="append", help="restrict output to these checks; repeatable")
+    search = commands.add_parser("search")
+    search.add_argument("--release-id", required=True)
+    search.add_argument("--index", required=True, help="index filename, e.g. DCSA_CONTROLLING_AUTHORITY_CHUNKS_FTS.sqlite")
+    search.add_argument("--query", required=True)
+    search.add_argument("--top-k", type=int, default=5)
     return root
 
 
@@ -62,9 +76,9 @@ def main() -> int:
         config, library_root = _settings(args)
         if args.command == "doctor":
             report = audit_library(library_root, deep=False)
-            result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"]}
+            result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"], "release_metadata_errors": report["release_metadata_errors"], "verified_indexes": len(report["approved_indexes"])}
             print(json.dumps(result, indent=2))
-            return 0 if result["integrity_healthy"] else 2
+            return 0 if result["integrity_healthy"] and result["production_response_ready"] else 2
         if args.command == "audit":
             report = audit_library(library_root, deep=args.deep)
             output = Path(args.output).resolve() if args.output else PROJECT_ROOT / config.get("state_directory", ".custodian") / "reports" / f"audit_{utc_now().replace(':', '').replace('+00:00', 'Z')}.json"
@@ -89,8 +103,40 @@ def main() -> int:
             print(json.dumps(result, indent=2))
             return 0
         if args.command == "publish":
-            result = publish_candidate(PROJECT_ROOT, library_root, config, _release_dir(config, args.release_id))
+            result = publish_candidate(PROJECT_ROOT, library_root, config, _release_dir(config, args.release_id), dry_run=args.dry_run)
             print(json.dumps(result, indent=2))
+            return 0
+        if args.command == "lint":
+            enriched_relative = "ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl"
+            if args.release_id:
+                manifest = _release_dir(config, args.release_id) / "production" / enriched_relative
+                source = f"candidate:{args.release_id}"
+            else:
+                manifest = library_root / enriched_relative
+                source = "published"
+            if not manifest.is_file():
+                print(f"ERROR: enriched manifest not found: {manifest}", file=sys.stderr)
+                return 2
+            records = [record for _, record in iter_jsonl(manifest)]
+            report = lint_report(records, source)
+            if args.check:
+                selected = set(args.check)
+                report["findings"] = [item for item in report["findings"] if item["check"] in selected]
+                report["filtered_to_checks"] = sorted(selected)
+            if args.output:
+                write_json(Path(args.output).resolve(), {**report, "graph": build_graph(records)})
+            summary = {key: value for key, value in report.items() if key != "findings"}
+            print(json.dumps({**summary, "findings": report["findings"]}, indent=2))
+            if args.fail_on_priority is not None:
+                return 2 if any(item["priority"] <= args.fail_on_priority for item in report["findings"]) else 0
+            return 0
+        if args.command == "search":
+            db_path = _release_dir(config, args.release_id) / "indexes" / args.index
+            if not db_path.is_file():
+                print(f"ERROR: index not found: {db_path}", file=sys.stderr)
+                return 2
+            results = semantic_search(db_path, args.query, args.top_k)
+            print(json.dumps({"query": args.query, "index": args.index, "results": results}, indent=2))
             return 0
         if args.command == "status":
             releases_root = PROJECT_ROOT / config.get("state_directory", ".custodian") / "releases"

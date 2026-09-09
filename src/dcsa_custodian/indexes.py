@@ -92,6 +92,12 @@ CREATE VIRTUAL TABLE corpus USING fts5(
     content,
     tokenize='unicode61 remove_diacritics 2'
 );
+CREATE TABLE vectors(
+    chunk_id TEXT PRIMARY KEY,
+    model TEXT NOT NULL,
+    dim INTEGER NOT NULL,
+    vector BLOB NOT NULL
+);
 """
 
 
@@ -101,7 +107,14 @@ def _matches(chunk: dict[str, Any], rule: dict[str, Any]) -> bool:
     return rule["roles"] is None or chunk["authority_role"] in rule["roles"]
 
 
-def build_indexes(output_dir: Path, records: list[dict[str, Any]], chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def build_indexes(
+    output_dir: Path,
+    records: list[dict[str, Any]],
+    chunks: list[dict[str, Any]],
+    vectors: dict[str, bytes] | None = None,
+    vector_model: str | None = None,
+    vector_dim: int | None = None,
+) -> list[dict[str, Any]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     records_by_id = {record["document_id"]: record for record in records}
     catalog: list[dict[str, Any]] = []
@@ -132,6 +145,14 @@ def build_indexes(output_dir: Path, records: list[dict[str, Any]], chunks: list[
             )) for chunk in selected
         ])
         conn.execute("INSERT INTO corpus(corpus) VALUES('optimize')")
+        vectors_written = 0
+        if vectors:
+            vector_rows = [
+                (chunk["chunk_id"], vector_model, vector_dim, vectors[chunk["chunk_id"]])
+                for chunk in selected if chunk["chunk_id"] in vectors
+            ]
+            conn.executemany("INSERT INTO vectors VALUES(?,?,?,?)", vector_rows)
+            vectors_written = len(vector_rows)
         conn.commit()
         integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
         conn.close()
@@ -149,5 +170,10 @@ def build_indexes(output_dir: Path, records: list[dict[str, Any]], chunks: list[
             "chunks": len(selected),
             "authority_first": True,
             "human_source_path_mode": "unindexed_citation_metadata_only",
+            "semantic_index": {
+                "model": vector_model,
+                "dim": vector_dim,
+                "vectors": vectors_written,
+            } if vectors else None,
         })
     return catalog

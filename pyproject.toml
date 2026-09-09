@@ -7,7 +7,9 @@ name = "dcsa-library-custodian"
 version = "0.1.0"
 description = "Preview-first maintenance and release tooling for a portable DCSA retrieval library"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "fastembed>=0.8.0",
+]
 
 [project.scripts]
 dcsa-custodian = "dcsa_custodian.cli:main"

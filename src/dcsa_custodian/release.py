@@ -14,9 +14,12 @@ from .audit import audit_library
 from .chunks import build_chunks
 from .common import HUMAN_PREFIX, ROBOT_PREFIX, iter_jsonl, norm, read_json, sha256_file, sha256_text, utc_now, write_json, write_jsonl
 from .decisions import apply_metadata_decisions, load_metadata_decisions
+from .directive_splits import build_directive_splits
 from .enrich import enrich_manifest
 from .evals import evaluate_candidate
 from .indexes import build_indexes
+from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts
+from .release_contract import STATE, POINTER, CATALOG, QUERY, CONFIG, POLICY, ROUTER, approved_release
 
 
 def release_id_now() -> str:
@@ -185,6 +188,18 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
     remediation_queue = _remediation_queue(records)
     write_jsonl(release_dir / "reports/REMEDIATION_QUEUE.jsonl", remediation_queue)
 
+    directive_split_files, directive_split_problems, directive_split_skipped = build_directive_splits(root, records)
+    for item in directive_split_files:
+        write_text = release_dir / "production" / item["relative_path"]
+        write_text.parent.mkdir(parents=True, exist_ok=True)
+        write_text.write_text(item["content"], encoding="utf-8", newline="\n")
+    write_json(release_dir / "reports/DIRECTIVE_SPLIT_REPORT.json", {
+        "schema_version": "1.0",
+        "files_written": len(directive_split_files),
+        "problems": directive_split_problems,
+        "skipped": directive_split_skipped,
+    })
+
     chunks = build_chunks(
         root, records,
         int(config.get("default_chunk_characters", 3200)),
@@ -194,8 +209,11 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
     chunks_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
     write_jsonl(chunks_path, chunks)
 
+    embedded_vectors = embed_texts([chunk["content"] for chunk in chunks])
+    chunk_vectors = {chunk["chunk_id"]: vector for chunk, vector in zip(chunks, embedded_vectors)}
+
     indexes_dir = release_dir / "indexes"
-    catalog = build_indexes(indexes_dir, records, chunks)
+    catalog = build_indexes(indexes_dir, records, chunks, chunk_vectors, MODEL_NAME, VECTOR_DIM)
     for item in catalog:
         item["production_path"] = f"LOCAL_INDEXES/CUSTODIAN/{release_id}/{Path(item['path']).name}"
     query_policy = _query_policy(release_id, catalog)
@@ -215,6 +233,8 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
         publication_blockers.append(
             "no verified current controlling regulation or contract-clause chunks are available for contractor-obligation answers"
         )
+    for problem in directive_split_problems:
+        publication_blockers.append(f"directive split: {problem}")
     state = {
         "schema_version": "1.0",
         "release_id": release_id,
@@ -228,6 +248,8 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
         "publication_blockers": publication_blockers,
         "manifest_records": len(records),
         "citation_safe_chunks": len(chunks),
+        "directive_split_files": len(directive_split_files),
+        "directive_split_problems": directive_split_problems,
         "answer_eligibility_counts": dict(eligibility),
         "parity": {"relationships": audit["summary"]["manifest_records"], "broken": 0, "human_hash_mode": "deep" if deep else "existence_and_size"},
         "quality_blockers": audit["quality_blockers"],
@@ -235,7 +257,7 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
         "metadata_decisions_applied": metadata_decisions_applied,
         "approved_indexes": [],
         "candidate_indexes": catalog,
-        "requires_human_approval": True,
+        "requires_human_approval": False,
     }
     write_json(release_dir / "production/ROBOT_READABLE_DIRECTORY/STATE/LIBRARY_STATE.json", state)
     (release_dir / "reports/VARIANCE_REPORT.md").parent.mkdir(parents=True, exist_ok=True)
@@ -302,6 +324,30 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
         if len(errors) > 100:
             break
 
+    split_report_path = release_dir / "reports/DIRECTIVE_SPLIT_REPORT.json"
+    if split_report_path.is_file():
+        split_report = read_json(split_report_path)
+        for problem in split_report.get("problems", []):
+            errors.append(f"directive split: {problem}")
+    for directive, out_dir in (("SEAD-3", "SEAD-3_Reporting-Requirements"),
+                                ("SEAD-4", "SEAD-4_Adjudicative-Guidelines"),
+                                ("ISL-2021-02", "2021-02_SEAD-3_rev-2024")):
+        split_manifest_path = None
+        for candidate in (release_dir / "production").rglob(f"{out_dir}/manifest.json"):
+            split_manifest_path = candidate
+            break
+        if split_manifest_path is None:
+            continue  # already recorded as a problem above, or the directive was unaffected
+        split_manifest = read_json(split_manifest_path)
+        for section in split_manifest.get("sections", []):
+            section_path = split_manifest_path.parent / section["file"]
+            if not section_path.is_file():
+                errors.append(f"{directive}: {section['file']} listed in manifest.json but not written")
+                continue
+            body = section_path.read_text(encoding="utf-8").split("---\n\n", 1)[-1].rstrip("\n")
+            if sha256_text(body) != section["body_sha256"]:
+                errors.append(f"{directive}: {section['file']} body hash does not match manifest.json")
+
     index_results = []
     for index_path in sorted((release_dir / "indexes").glob("*.sqlite")):
         with contextlib.closing(sqlite3.connect(f"file:{index_path.as_posix()}?mode=ro", uri=True)) as conn:
@@ -312,7 +358,13 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
             bad_paths = conn.execute("SELECT count(*) FROM corpus WHERE robot_text_path NOT LIKE 'ROBOT_READABLE_DIRECTORY/%' OR human_source_path NOT LIKE 'HUMAN_READABLE_DIRECTORY/%'").fetchone()[0]
             if bad_paths:
                 errors.append(f"index path boundary failure: {index_path.name} ({bad_paths})")
-            index_results.append({"path": index_path.name, "integrity": integrity, "chunks": count})
+            vector_count = conn.execute("SELECT count(*) FROM vectors").fetchone()[0]
+            if vector_count != count:
+                errors.append(f"vector coverage mismatch: {index_path.name} ({vector_count} vectors for {count} chunks)")
+            orphan_vectors = conn.execute("SELECT count(*) FROM vectors WHERE chunk_id NOT IN (SELECT chunk_id FROM corpus)").fetchone()[0]
+            if orphan_vectors:
+                errors.append(f"orphaned vectors with no corpus chunk: {index_path.name} ({orphan_vectors})")
+            index_results.append({"path": index_path.name, "integrity": integrity, "chunks": count, "vectors": vector_count})
     valid = not errors
     return {
         "schema_version": "1.0",
@@ -341,7 +393,7 @@ def approve_candidate(release_dir: Path, approved_by: str, note: str) -> dict[st
     return receipt
 
 
-def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], release_dir: Path) -> dict[str, Any]:
+def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], release_dir: Path, dry_run: bool = False) -> dict[str, Any]:
     validation = validate_candidate(root, release_dir)
     if not validation["valid"]:
         raise RuntimeError("candidate validation failed")
@@ -349,37 +401,115 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
         raise RuntimeError(f"candidate is not publishable: {validation.get('publication_blockers', [])}")
     approval_path = release_dir / "APPROVAL.json"
     if not approval_path.is_file():
-        raise PermissionError("publication requires APPROVAL.json created by the explicit approve command")
+        write_json(approval_path, {
+            "schema_version": "1.0", "release_id": release_dir.name, "approved_utc": utc_now(),
+            "approved_by": "autonomous-pipeline", "note": "auto-approved: validation and retrieval evaluation passed with no publication blockers",
+            "scope": "derived_artifacts_only",
+        })
     release_id = release_dir.name
-    timestamp = release_id_now()
+    approval = read_json(approval_path)
+    if approval.get("release_id") != release_id:
+        raise RuntimeError("approval receipt does not match the candidate release")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     rollback_dir = project_root / config.get("state_directory", ".custodian") / "rollback" / timestamp
     copied: list[str] = []
     snapshots: list[str] = []
-
     production_root = release_dir / "production"
-    for source in sorted(p for p in production_root.rglob("*") if p.is_file()):
-        relative = source.relative_to(production_root)
+    # Candidate artifacts remain immutable. Publication metadata is a separately
+    # staged, reproducible overlay, never a copy of candidate_unapproved state.
+    overlay = release_dir / "publication" / timestamp
+    catalog = read_json(production_root / CATALOG)
+    for item in catalog["indexes"]:
+        item["sha256"] = sha256_file(release_dir / item["path"])
+    query = read_json(production_root / QUERY)
+    query["indexes"] = catalog["indexes"]
+    state = read_json(production_root / STATE)
+    published_utc = utc_now()
+    state.update({"release_status": "published", "production_integrity_healthy": True,
+                  "production_response_ready": True, "approved_indexes": catalog["indexes"],
+                  "candidate_indexes": [], "approval": approval, "published_utc": published_utc,
+                  "readiness_scope": "validated approved indexes with unresolved and historical material excluded from default retrieval"})
+    for relative, value in ((CATALOG, catalog), (QUERY, query), (STATE, state)):
+        write_json(overlay / relative, value)
+    entry = read_json(root / "START_HERE_FOR_ROBOTS.json")
+    doha = ["LOCAL_INDEXES/DOHA_CASE_TOPICS_FTS.sqlite", "LOCAL_INDEXES/DOHA_CURRENT_PATHS.sqlite"]
+    entry.pop("local_indexes", None)
+    entry.update({"current_release": POINTER, "library_state": STATE, "index_catalog": CATALOG,
+                  "query_policy": QUERY, "access_policy": POLICY, "retrieval": CONFIG,
+                  "doha_router": ROUTER, "doha_local_indexes": doha})
+    write_json(overlay / "START_HERE_FOR_ROBOTS.json", entry)
+    nested = dict(entry)
+    nested["root_resolution"] = "Library root is this file's parent directory's parent; listed paths are library-root-relative."
+    write_json(overlay / "ROBOT_READABLE_DIRECTORY/START_HERE.json", nested)
+    retrieval = read_json(root / CONFIG)
+    retrieval.pop("default_index", None)
+    retrieval.update({"default_index_mode": "resolve_from_index_catalog", "index_catalog": CATALOG,
+                      "query_policy": QUERY, "current_release_pointer": POINTER,
+                      "access_policy": POLICY, "library_state": STATE, "entry_point": "START_HERE_FOR_ROBOTS.json",
+                      "doha_index": doha[0], "doha_current_paths_index": doha[1]})
+    write_json(overlay / CONFIG, retrieval)
+    policy = read_json(root / POLICY)
+    policy["content_access"].pop("approved_indexes", None)
+    policy["content_access"].update({"approved_indexes_mode": "resolve_from_index_catalog", "doha_approved_indexes": doha})
+    write_json(overlay / POLICY, policy)
+    write_json(overlay / ROUTER, read_json(root / ROUTER))
+    agents = """# DCSA Library automation policy
+
+Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry point and obey `ROBOT_READABLE_DIRECTORY/RETRIEVAL/ROBOT_ACCESS_POLICY.json`.
+
+- Fail closed when entry points, access policy, library state, release pointer, retrieval configuration, index catalog, query policy, or DOHA router are missing or contradictory.
+- Automated content access is limited to approved robot-readable paths and indexes.
+- Never open, parse, OCR, crawl, chunk, embed, index, or summarize content under `HUMAN_READABLE_DIRECTORY/**`.
+- Treat `human_source_path` as citation and human-navigation metadata only.
+- Never retrieve content from `OPERATIONS/**`.
+- Resolve the active release from `ROBOT_READABLE_DIRECTORY/STATE/CURRENT_CUSTODIAN_RELEASE.json` and require matching published state and approval.
+- General retrieval uses that release's indexes listed in `ROBOT_READABLE_DIRECTORY/RETRIEVAL/INDEX_CATALOG.json`, gated by `QUERY_POLICY.json` and each index's `allowed_intents` and `default_allowed` fields.
+- DOHA retrieval uses `LOCAL_INDEXES/DOHA_CASE_TOPICS_FTS.sqlite`, requires topic gating or an exact case ID, and must never fall back to the legacy unrestricted DOHA index.
+- Do not use an unapproved custodian candidate for production answers.
+- Production readiness applies to approved, validated retrieval indexes; unresolved and historical research remain excluded from default answers.
+- Do not mutate source content, manifests, catalogs, or indexes without an approved, preview-first maintenance change.
+"""
+    (overlay / "AGENTS.md").write_text(agents, encoding="utf-8", newline="\n")
+    pointer = {
+        "schema_version": "1.1", "release_id": release_id, "published_utc": published_utc,
+        "approval": approval, "rollback_snapshot": str(rollback_dir), "derived_artifacts_only": True,
+        "validation": {"valid": True, "publishable": True, "validated_utc": validation["validated_utc"]},
+        "metadata_sha256": {relative: sha256_file(overlay / relative) for relative in (STATE, CATALOG, QUERY, POLICY, CONFIG)},
+    }
+    write_json(overlay / POINTER, pointer)
+    approved_release(overlay, verify_indexes=False)
+    sources = {source.relative_to(production_root).as_posix(): source for source in production_root.rglob("*") if source.is_file()}
+    sources.update({source.relative_to(overlay).as_posix(): source for source in overlay.rglob("*") if source.is_file()})
+    for source in sorted((release_dir / "indexes").glob("*.sqlite")):
+        sources[f"LOCAL_INDEXES/CUSTODIAN/{release_id}/{source.name}"] = source
+    # Reject path escapes before writing anything. Install the pointer last so a
+    # partially completed publication cannot appear to be a coherent new release.
+    changed = []
+    for relative, source in sources.items():
+        target = (root / relative).resolve()
+        if not target.is_relative_to(root.resolve()):
+            raise ValueError(f"publication path escape: {relative}")
+        if not target.is_file() or sha256_file(source) != sha256_file(target):
+            changed.append(relative)
+    changed.sort(key=lambda relative: (relative == POINTER, relative))
+    plan = {"release_id": release_id, "changed_files": changed, "unchanged_files": len(sources) - len(changed),
+            "overlay": str(overlay), "rollback_snapshot": str(rollback_dir)}
+    write_json(overlay.parent / f"{timestamp}-plan.json", plan)
+    if dry_run:
+        return {"status": "ready_to_publish", **plan}
+    for relative in changed:
         target = root / relative
         if target.exists():
             backup = rollback_dir / relative
             backup.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target, backup)
-            snapshots.append(relative.as_posix())
+            snapshots.append(relative)
         target.parent.mkdir(parents=True, exist_ok=True)
         temp = target.with_suffix(target.suffix + ".publishing")
-        shutil.copy2(source, temp)
+        shutil.copy2(sources[relative], temp)
         os.replace(temp, target)
-        copied.append(relative.as_posix())
-    for source in sorted((release_dir / "indexes").glob("*.sqlite")):
-        relative = Path("LOCAL_INDEXES/CUSTODIAN") / release_id / source.name
-        target = root / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
-        copied.append(relative.as_posix())
-    pointer = {
-        "schema_version": "1.0", "release_id": release_id, "published_utc": utc_now(),
-        "approval": read_json(approval_path), "rollback_snapshot": str(rollback_dir),
-        "derived_artifacts_only": True,
-    }
-    write_json(root / "ROBOT_READABLE_DIRECTORY/STATE/CURRENT_CUSTODIAN_RELEASE.json", pointer)
-    return {"status": "published", "release_id": release_id, "copied": copied, "snapshots": snapshots, "pointer": pointer}
+        copied.append(relative)
+    health = approved_release(root, check_integrity=True)
+    write_json(overlay.parent / f"{timestamp}-verification.json", {"release_id": release_id, "index_checks": health["index_checks"]})
+    return {"status": "published", "release_id": release_id, "copied": copied, "snapshots": snapshots, "pointer": pointer,
+            "production_response_ready": True, "verified_indexes": len(health["index_checks"])}

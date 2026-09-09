@@ -9,6 +9,7 @@ from typing import Any
 
 from .authority import parse_authority_header
 from .common import HUMAN_PREFIX, ROBOT_PREFIX, iter_jsonl, norm, read_json, safe_relative, sha256_file, utc_now
+from .release_contract import approved_release, bounded_path
 
 
 REQUIRED_FIELDS = {
@@ -118,8 +119,22 @@ def audit_library(root: Path, deep: bool = False) -> dict[str, Any]:
         errors.append({"code": "broken_relationship_metadata", "count": len(broken_relationships), "sample": broken_relationships[:25]})
 
     index_results: list[dict[str, Any]] = []
-    for rel in entry.get("local_indexes", []):
-        index_path = root / norm(rel)
+    release_metadata_errors: list[str] = []
+    modern_release = bool(entry.get("current_release") or entry.get("index_catalog"))
+    index_paths = list(entry.get("local_indexes", []))
+    if modern_release:
+        try:
+            catalog = read_json(bounded_path(root, entry["index_catalog"], ROBOT_PREFIX))
+            index_paths = [item["production_path"] for item in catalog["indexes"]] + list(entry.get("doha_local_indexes", []))
+            approved_release(root)
+        except (OSError, ValueError, KeyError, sqlite3.Error) as exc:
+            release_metadata_errors.append(str(exc))
+    for rel in index_paths:
+        try:
+            index_path = bounded_path(root, rel, "LOCAL_INDEXES/")
+        except ValueError as exc:
+            errors.append({"code": "index_path_boundary", "message": str(exc)})
+            continue
         result: dict[str, Any] = {"path": norm(rel), "exists": index_path.is_file()}
         if result["exists"]:
             try:
@@ -149,7 +164,8 @@ def audit_library(root: Path, deep: bool = False) -> dict[str, Any]:
         "human_artifacts_used_as_answer_evidence": False,
         "summary": {
             "integrity_healthy": not errors,
-            "production_response_ready": not errors and not any(quality_blockers.values()),
+            "production_response_ready": not errors and not release_metadata_errors and (modern_release or not any(quality_blockers.values())),
+            "source_quality_complete": not any(quality_blockers.values()),
             "manifest_records": len(records),
             "relationships": relationships,
             "errors": len(errors),
@@ -163,6 +179,7 @@ def audit_library(root: Path, deep: bool = False) -> dict[str, Any]:
         "authority_tier_conflicts": tier_conflicts,
         "human_hashes": human_hashes if deep else {},
         "approved_indexes": index_results,
+        "release_metadata_errors": release_metadata_errors,
         "errors": errors,
         "warnings": warnings,
     }

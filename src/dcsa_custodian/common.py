@@ -20,6 +20,18 @@ def norm(value: object) -> str:
     return str(value or "").replace("\\", "/").lstrip("./")
 
 
+def normalize_domain(value: object) -> str:
+    """Case-fold a domain value.
+
+    The source manifest carries two casings for three domains (TRAINING_AND_AWARENESS vs
+    training_and_awareness, and likewise for personnel_vetting and
+    information_and_cybersecurity), which silently splits every domain-keyed grouping.
+    Enrichment folds them so derived artifacts are consistent, while the raw manifest keeps
+    its original values -- the same treatment authority_role gets: derived, not trusted.
+    """
+    return str(value or "unknown").strip().casefold()
+
+
 def safe_relative(value: object, prefix: str) -> str:
     path = norm(value)
     if not path.startswith(prefix) or ".." in PurePosixPath(path).parts:

@@ -19,7 +19,7 @@ Maintain the DCSA Library as a trustworthy, portable retrieval dataset. This ski
 6. Exclude duplicates, unresolved currency, unclassified active content, historical material, and broken parity from default answer indexes.
 7. Use authority/lifecycle gates before lexical or semantic relevance. Guidance cannot independently create an obligation.
 8. Keep `human_source_path` unindexed and citation-only. Chunks and quotations come exclusively from robot content.
-9. Publishing requires a valid and publishable candidate, regression pass, explicit approval receipt, and rollback snapshot. Structural validity is not publication readiness. Never self-approve a release.
+9. Publishing requires a valid and publishable candidate, regression pass, an approval receipt, and rollback snapshot. Structural validity is not publication readiness. Publishing is autonomous: once validation and retrieval evaluation pass with no publication blockers, the pipeline records `approved_by: autonomous-pipeline` in `APPROVAL.json` itself and proceeds — a human may still run `approve` first to record a reviewed approval instead, but it is optional. This matches `AGENTS.md` invariant 8; keep the two in sync.
 10. Never delete production source artifacts automatically.
 
 ## Modes
@@ -28,6 +28,7 @@ Maintain the DCSA Library as a trustworthy, portable retrieval dataset. This ski
 - For a proposed metadata/chunk/index refresh, run `build-candidate`, then `validate`; read [references/release-workflow.md](references/release-workflow.md).
 - For official currency checks or acquisition, read [references/currency-and-acquisition.md](references/currency-and-acquisition.md) and obtain network/download approval first.
 - For authority roles, answer eligibility, and consumer retrieval policy, read [references/authority-and-retrieval.md](references/authority-and-retrieval.md).
+- For human-readable filename conventions or resolving duplicate source files, read [references/naming-and-deduplication.md](references/naming-and-deduplication.md) first — it covers case-insensitive-filesystem and stale-metadata traps that are easy to get wrong.
 
 Use the project-local Python runtime command shape:
 

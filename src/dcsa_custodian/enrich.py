@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .authority import ROLE_PRIORITY, classify_authority, lifecycle_eligibility, parse_authority_header
-from .common import iter_jsonl, norm, sha256_file, sha256_text
+from .common import iter_jsonl, norm, normalize_domain, sha256_file, sha256_text
 
 
 def _doha_metadata(root: Path) -> dict[str, dict[str, Any]]:
@@ -29,6 +29,7 @@ def _canonical_sort(item: dict[str, Any]) -> tuple[Any, ...]:
         item["authority_priority"],
         item["answer_eligibility"] != "answer_eligible",
         "LEGACY" in item["robot_text_path"].upper(),
+        not bool(item.get("rename_history")),
         len(item["robot_text_path"]),
         item["robot_text_path"].casefold(),
     )
@@ -57,6 +58,11 @@ def enrich_manifest(root: Path, manifest_path: Path, human_hashes: dict[str, str
         record.update({
             "document_id": proposed_id,
             "source_document_id": original_id,
+            # Folded here rather than in the source manifest: the raw value stays intact for
+            # provenance, and every derived artifact (chunks, index `domain` column, the
+            # knowledge graph) sees one spelling instead of two.
+            "domain": normalize_domain(record.get("domain")),
+            "source_domain": record.get("domain"),
             "source_manifest_ordinal": ordinal,
             "robot_content_sha256": digest,
             "human_artifact_sha256": human_hashes.get(original_id),
@@ -79,9 +85,17 @@ def enrich_manifest(root: Path, manifest_path: Path, human_hashes: dict[str, str
             record["doha_case_metadata"] = {key: value for key, value in doha_item.items() if key not in {"content_sha256", "answer_eligible"}}
         enriched.append(record)
 
+    # Group by the real source artifact's hash when we have one (human_artifact_sha256, from
+    # audit_library's deep pass over the actual human file bytes), not robot_content_sha256.
+    # robot_content_sha256 is itself sourced from two different places depending on the record
+    # (a DOHA SQLite side-table's content_sha256 when present, otherwise a hash of the extracted
+    # robot text) -- two byte-identical source PDFs can end up on opposite sides of that split
+    # and never collide there even though they're the same document. human_artifact_sha256 is
+    # always computed the same way (sha256 of the actual file), so it doesn't have that split.
     groups: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
     for record in enriched:
-        groups[record["robot_content_sha256"]].append(record)
+        dedup_digest = record["human_artifact_sha256"] or record["robot_content_sha256"]
+        groups[dedup_digest].append(record)
     for group in groups.values():
         if len(group) < 2:
             continue
@@ -92,5 +106,7 @@ def enrich_manifest(root: Path, manifest_path: Path, human_hashes: dict[str, str
             duplicate["duplicate_of"] = canonical["document_id"]
             duplicate["canonical_document_id"] = canonical["document_id"]
             duplicate["answer_eligibility"] = "excluded_duplicate"
-            duplicate["answer_eligibility_basis"] = "identical_robot_content_sha256"
+            duplicate["answer_eligibility_basis"] = (
+                "identical_human_artifact_sha256" if duplicate["human_artifact_sha256"] else "identical_robot_content_sha256"
+            )
     return enriched
