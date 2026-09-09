@@ -732,18 +732,24 @@ default lexical-first retrieval order is unchanged; semantic search is on-demand
 `search` CLI command. Verified on the real library (11,405 docs, 15,518 chunks, every index shows
 `vectors == chunks`) with a real paraphrase-query demo lexical search missed entirely.
 
-**Known outstanding item, unrelated to library content**: staged-but-uncommitted code changes in
-this repo — the semantic-search layer above, plus earlier fixes (`enrich.py` dedup, `release.py`
-autonomous-publish policy, `classify_authority` industrial_security branch, `SKILL.md`,
-`naming-and-deduplication.md`, `AGENTS.md`) — still can't commit from this tool. Confirmed again
-this session: `git commit` hangs indefinitely (no output, no error) rather than failing fast —
-consistent with the SSH-agent bridge to Darin's Windows `ssh-agent` not resolving from here.
-Stopped the hung process rather than letting it run; nothing was lost or partially committed,
-everything remains staged (`.gitignore`, `AGENTS.md`, `HANDOFF.md`, `README.md`,
-`decisions/metadata_decisions.json`, `pyproject.toml`, `skill/dcsa-archivist/SKILL.md` +new
-`references/naming-and-deduplication.md`, `src/dcsa_custodian/{authority,cli,enrich,indexes,
-release}.py` +new `semantic.py`, `tests/test_custodian.py`). Needs a commit from Darin's own
-terminal.
+**The long-standing uncommitted backlog is cleared.** Darin committed everything from his own
+terminal on 2026-09-09 as `dbfacd7` — 22 files, 3,539 insertions, working tree now clean. That
+single commit carries roughly a week of accumulated work from both assistants: the semantic-search
+layer, `enrich.py` dedup, the autonomous-publish policy, `classify_authority` fixes, Codex's
+`directive_splits.py` / `release_contract.py` / dry-run publish / publication-metadata tests, and
+this session's knowledge layer. A clean thematic split was not available because both assistants
+had edits in the same files (`cli.py`, `enrich.py`).
+
+Two notes for whoever hits this next. The commit did **not** hang — earlier entries in this log
+record `git commit` hanging from the assistant tool and attribute it to the SSH-agent bridge, but
+`origin` is HTTPS (`github.com/adamsdarin/dcsa-archivist.git`), so that diagnosis may have been
+wrong or the condition may be gone. Do not assume committing is blocked without retesting. And no
+"dubious ownership" error appeared despite Codex-created files being in the commit, so
+`Repair-Ownership.ps1` was not needed this time.
+
+**Push status:** as of `dbfacd7` the branch was 2 commits ahead of `origin/main` (`dbfacd7` and
+the earlier `4b3baca`) — the GitHub backup had silently fallen behind before this session started.
+Worth checking `git log '@{u}..HEAD'` rather than assuming a commit means a backup.
 
 **Derived knowledge layer (new, 2026-09-09)**: `wiki.py` + `lint` CLI command build an issuance/
 subject graph from manifest metadata and check it for corpus-wide contradictions that per-answer
@@ -753,8 +759,8 @@ wired into `build_candidate`, and consumers still cite chunks rather than topics
 
 ## Next
 
-1. **The staged commit above — needs Darin's own terminal** (SSH signing works there); nothing
-   else blocks it, all tests pass (6/6) and a real build against the live library validated clean.
+1. **Push `dbfacd7` (and `4b3baca`) to `origin/main`** — committed 2026-09-09, not yet pushed, so
+   the off-machine copy is behind. All 41 tests pass and lint runs clean against the live library.
 2. The 16 remaining `unresolved_currency` records — would need either more research budget
    (per-document web verification) or Darin's own SME judgment on the CDSE toolkits/international
    forms; not more speculative searching.
