@@ -136,3 +136,31 @@ def approved_release(root: Path, check_integrity: bool = False, verify_indexes: 
         checks.append({"path": relative, "records": count, "integrity": "ok" if check_integrity else "not_requested"})
     return {"release_id": release_id, "indexes": indexes, "index_checks": checks,
             "state": state, "query_policy": query, "approval": approval}
+
+
+def readiness(root: Path, check_integrity: bool = False) -> dict:
+    """Same fail-closed readiness vocabulary for every consumer."""
+    result = {"ready": False, "release_id": None, "errors": [],
+              "capabilities": {"approved_retrieval": False, "doha_search": False}}
+    try:
+        release = approved_release(root, check_integrity=check_integrity)
+        result.update(ready=True, release_id=release["release_id"])
+        result["capabilities"]["approved_retrieval"] = True
+        result["capabilities"]["doha_search"] = any(
+            "DOHA_CASE_TOPICS" in item["path"] and item["records"] > 0
+            for item in release["index_checks"]
+        )
+    except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as exc:
+        result["errors"].append(str(exc))
+    return result
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Check approved library readiness without modifying the library")
+    parser.add_argument("--library-root", type=Path, required=True)
+    parser.add_argument("--check-integrity", action="store_true")
+    args = parser.parse_args()
+    result = readiness(args.library_root, args.check_integrity)
+    print(json.dumps(result, indent=2))
+    raise SystemExit(0 if result["ready"] else 1)

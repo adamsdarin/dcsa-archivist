@@ -11,6 +11,7 @@ from .evals import evaluate_candidate
 from .release import approve_candidate, build_candidate, publish_candidate, validate_candidate
 from .semantic import semantic_search
 from .wiki import build_graph, lint_report
+from .events import CONSUMERS, reconcile_event, pending_events, comparison_report, acknowledge
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -25,6 +26,9 @@ def _settings(args: argparse.Namespace) -> tuple[dict, Path]:
 
 
 def _release_dir(config: dict, release_id: str) -> Path:
+    import re
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", release_id):
+        raise ValueError("invalid release ID")
     return PROJECT_ROOT / config.get("state_directory", ".custodian") / "releases" / release_id
 
 
@@ -41,6 +45,7 @@ def parser() -> argparse.ArgumentParser:
             cmd.add_argument("--output")
         if name == "build-candidate":
             cmd.add_argument("--release-id")
+            cmd.add_argument("--intake-plan", type=Path, help="Reviewed, hash-bound quarantine additions; stage before publication")
     validate = commands.add_parser("validate")
     validate.add_argument("--library-root")
     validate.add_argument("--release-id", required=True)
@@ -56,6 +61,15 @@ def parser() -> argparse.ArgumentParser:
     publish.add_argument("--release-id", required=True)
     publish.add_argument("--dry-run", action="store_true", help="Stage and show publication changes without modifying the library")
     commands.add_parser("status")
+    events = commands.add_parser("events", help="Recover and list pending verified release handoffs")
+    events.add_argument("--library-root", required=True)
+    events.add_argument("--consumer", choices=CONSUMERS, required=True)
+    events.add_argument("--output", type=Path)
+    ack = commands.add_parser("ack-event", help="Record completed agent review with hashed output artifacts")
+    ack.add_argument("--library-root", required=True)
+    ack.add_argument("--consumer", choices=CONSUMERS, required=True)
+    ack.add_argument("--event-id", required=True)
+    ack.add_argument("--receipt", type=Path, required=True)
     lint = commands.add_parser("lint", help="Lint the derived knowledge graph for corpus-wide contradictions")
     lint.add_argument("--library-root")
     lint.add_argument("--release-id", help="lint a candidate release; omit to lint the published library")
@@ -86,7 +100,7 @@ def main() -> int:
             print(json.dumps({"output": str(output), "summary": report["summary"], "quality_blockers": report["quality_blockers"]}, indent=2))
             return 0 if report["summary"]["integrity_healthy"] else 2
         if args.command == "build-candidate":
-            result = build_candidate(PROJECT_ROOT, library_root, config, args.release_id, args.deep)
+            result = build_candidate(PROJECT_ROOT, library_root, config, args.release_id, args.deep, args.intake_plan)
             print(json.dumps(result, indent=2))
             return 0 if result["validation"]["valid"] else 2
         if args.command == "validate":
@@ -104,6 +118,27 @@ def main() -> int:
             return 0
         if args.command == "publish":
             result = publish_candidate(PROJECT_ROOT, library_root, config, _release_dir(config, args.release_id), dry_run=args.dry_run)
+            print(json.dumps(result, indent=2))
+            return 0
+        if args.command == "events":
+            from .release_contract import approved_release
+            current = approved_release(library_root)["release_id"]
+            release = _release_dir(config, current)
+            if (release / "reports/RELEASE_CHANGES.json").is_file():
+                reconcile_event(PROJECT_ROOT, config, library_root, release)
+            packets = pending_events(PROJECT_ROOT, config, library_root, args.consumer)
+            if args.consumer == "dcsa-compare":
+                for packet in packets:
+                    packet["comparison"] = comparison_report(packet["changes"])
+            result = {"consumer": args.consumer, "pending": packets,
+                      "status": "review_required" if packets else "no_pending_events",
+                      "legacy_release_without_event": not (release / "reports/RELEASE_CHANGES.json").is_file()}
+            if args.output:
+                write_json(args.output.resolve(), result)
+            print(json.dumps(result, indent=2))
+            return 0
+        if args.command == "ack-event":
+            result = acknowledge(PROJECT_ROOT, config, library_root, args.consumer, args.event_id, args.receipt.resolve())
             print(json.dumps(result, indent=2))
             return 0
         if args.command == "lint":

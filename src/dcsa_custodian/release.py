@@ -6,6 +6,8 @@ import json
 import os
 import shutil
 import sqlite3
+import tempfile
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -19,6 +21,9 @@ from .enrich import enrich_manifest
 from .evals import evaluate_candidate
 from .indexes import build_indexes
 from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts
+from .events import build_changes, reconcile_event
+from .wiki import build_graph, lint_report
+from .intake import stage_intake
 from .release_contract import STATE, POINTER, CATALOG, QUERY, CONFIG, POLICY, ROUTER, approved_release
 
 
@@ -158,13 +163,34 @@ def _remediation_queue(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(queue, key=lambda item: (item["priority"], item["issue"], item["document_id"], item["robot_text_path"]))
 
 
-def build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False) -> dict[str, Any]:
+def build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False, intake_plan: Path | None = None) -> dict[str, Any]:
+    if intake_plan is not None:
+        audit = audit_library(root, deep=True)
+        if audit["errors"]:
+            raise RuntimeError("production audit failed before intake staging")
+        state_root = project_root / config.get("state_directory", ".custodian")
+        state_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix="intake-", dir=state_root) as temporary:
+            staged = Path(temporary) / "library"
+            changed = stage_intake(root.resolve(), staged, intake_plan.resolve())
+            return _build_candidate(project_root, staged, config, release_id, True, changed, root)
+    return _build_candidate(project_root, root, config, release_id, deep)
+
+
+def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False,
+                     source_files: list[str] | None = None, target_root: Path | None = None) -> dict[str, Any]:
     release_id = release_id or release_id_now()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", release_id):
+        raise ValueError("invalid release ID")
     state_root = project_root / config.get("state_directory", ".custodian")
     release_dir = state_root / "releases" / release_id
     if release_dir.exists():
         raise FileExistsError(f"release already exists: {release_id}")
     release_dir.mkdir(parents=True)
+    for relative in source_files or []:
+        target = release_dir / "production" / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(root / relative, target)
 
     audit = audit_library(root, deep=deep)
     if audit["errors"]:
@@ -208,6 +234,13 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
     )
     chunks_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
     write_jsonl(chunks_path, chunks)
+    write_json(release_dir / "reports/RELEASE_CHANGES.json", build_changes(root, records, chunks, release_id))
+    write_json(release_dir / "production/ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json", {
+        "schema_version": "1.0", "release_id": release_id, "use": "navigation_only_not_answer_evidence",
+        "graph": build_graph(records),
+        "documents": [{key: r.get(key) for key in ("document_id", "title", "robot_text_path", "human_source_path", "answer_eligibility")} for r in records],
+    })
+    write_json(release_dir / "reports/WIKI_LINT.json", lint_report(records, f"candidate:{release_id}"))
 
     embedded_vectors = embed_texts([chunk["content"] for chunk in chunks])
     chunk_vectors = {chunk["chunk_id"]: vector for chunk, vector in zip(chunks, embedded_vectors)}
@@ -240,7 +273,8 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
         "release_id": release_id,
         "release_status": "candidate_unapproved",
         "generated_utc": utc_now(),
-        "library_root_at_build": str(root),
+        "library_root_at_build": str((target_root or root).resolve()),
+        "source_intake_files": source_files or [],
         "production_integrity_healthy": audit["summary"]["integrity_healthy"],
         "production_response_ready": audit["summary"]["production_response_ready"],
         "candidate_response_ready": not publication_blockers,
@@ -316,7 +350,8 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
         chunk_count += 1
         robot_rel = norm(chunk["robot_text_path"])
         if robot_rel not in source_cache:
-            source_cache[robot_rel] = (root / robot_rel).read_text(encoding="utf-8", errors="replace")
+            staged_source = release_dir / "production" / robot_rel
+            source_cache[robot_rel] = (staged_source if staged_source.is_file() else root / robot_rel).read_text(encoding="utf-8", errors="replace")
         if chunk["content"] not in source_cache[robot_rel]:
             errors.append(f"chunk not found verbatim in robot source: {chunk['chunk_id']}")
         if sha256_text(chunk["content"]) != chunk["content_sha256"]:
@@ -399,14 +434,23 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
         raise RuntimeError("candidate validation failed")
     if not validation["publishable"]:
         raise RuntimeError(f"candidate is not publishable: {validation.get('publication_blockers', [])}")
+    # An old passing report must not bypass stronger current acceptance cases.
+    fresh_evaluation = evaluate_candidate(release_dir, project_root / "evals/golden_queries.json")
+    if not fresh_evaluation["passed"]:
+        raise RuntimeError("candidate fails the current retrieval evaluation; build a corrected candidate")
     approval_path = release_dir / "APPROVAL.json"
     if not approval_path.is_file():
         write_json(approval_path, {
             "schema_version": "1.0", "release_id": release_dir.name, "approved_utc": utc_now(),
             "approved_by": "autonomous-pipeline", "note": "auto-approved: validation and retrieval evaluation passed with no publication blockers",
-            "scope": "derived_artifacts_only",
+            "scope": "source_intake_and_derived" if read_json(release_dir / "production" / STATE).get("source_intake_files") else "derived_artifacts_only",
         })
     release_id = release_dir.name
+    changes_path = release_dir / "reports/RELEASE_CHANGES.json"
+    changes = read_json(changes_path)
+    current_id = read_json(root / POINTER).get("release_id") if (root / POINTER).is_file() else None
+    if current_id not in (changes["previous_release_id"], release_id):
+        raise RuntimeError("library advanced since this candidate was built; rebuild against the current release")
     approval = read_json(approval_path)
     if approval.get("release_id") != release_id:
         raise RuntimeError("approval receipt does not match the candidate release")
@@ -424,6 +468,8 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
     query = read_json(production_root / QUERY)
     query["indexes"] = catalog["indexes"]
     state = read_json(production_root / STATE)
+    if Path(state["library_root_at_build"]).resolve() != root.resolve():
+        raise ValueError("candidate was built for another library root")
     published_utc = utc_now()
     state.update({"release_status": "published", "production_integrity_healthy": True,
                   "production_response_ready": True, "approved_indexes": catalog["indexes"],
@@ -437,6 +483,7 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
     entry.update({"current_release": POINTER, "library_state": STATE, "index_catalog": CATALOG,
                   "query_policy": QUERY, "access_policy": POLICY, "retrieval": CONFIG,
                   "doha_router": ROUTER, "doha_local_indexes": doha})
+    entry["navigation_wiki"] = "ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json"
     write_json(overlay / "START_HERE_FOR_ROBOTS.json", entry)
     nested = dict(entry)
     nested["root_resolution"] = "Library root is this file's parent directory's parent; listed paths are library-root-relative."
@@ -453,6 +500,13 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
     policy["content_access"].update({"approved_indexes_mode": "resolve_from_index_catalog", "doha_approved_indexes": doha})
     write_json(overlay / POLICY, policy)
     write_json(overlay / ROUTER, read_json(root / ROUTER))
+    wiki_relative = "ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json"
+    write_json(overlay / wiki_relative, read_json(production_root / wiki_relative))
+    evidence_metadata = ("ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl",
+                         "ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl")
+    for relative in evidence_metadata:
+        (overlay / relative).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(production_root / relative, overlay / relative)
     agents = """# DCSA Library automation policy
 
 Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry point and obey `ROBOT_READABLE_DIRECTORY/RETRIEVAL/ROBOT_ACCESS_POLICY.json`.
@@ -472,9 +526,9 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
     (overlay / "AGENTS.md").write_text(agents, encoding="utf-8", newline="\n")
     pointer = {
         "schema_version": "1.1", "release_id": release_id, "published_utc": published_utc,
-        "approval": approval, "rollback_snapshot": str(rollback_dir), "derived_artifacts_only": True,
+        "approval": approval, "rollback_snapshot": str(rollback_dir), "derived_artifacts_only": not bool(state.get("source_intake_files")),
         "validation": {"valid": True, "publishable": True, "validated_utc": validation["validated_utc"]},
-        "metadata_sha256": {relative: sha256_file(overlay / relative) for relative in (STATE, CATALOG, QUERY, POLICY, CONFIG)},
+        "metadata_sha256": {relative: sha256_file(overlay / relative) for relative in (STATE, CATALOG, QUERY, POLICY, CONFIG, wiki_relative, *evidence_metadata)},
     }
     write_json(overlay / POINTER, pointer)
     approved_release(overlay, verify_indexes=False)
@@ -511,5 +565,7 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
         copied.append(relative)
     health = approved_release(root, check_integrity=True)
     write_json(overlay.parent / f"{timestamp}-verification.json", {"release_id": release_id, "index_checks": health["index_checks"]})
+    write_json(overlay.parent / f"{timestamp}-retrieval-evaluation.json", fresh_evaluation)
+    event = reconcile_event(project_root, config, root, release_dir)
     return {"status": "published", "release_id": release_id, "copied": copied, "snapshots": snapshots, "pointer": pointer,
-            "production_response_ready": True, "verified_indexes": len(health["index_checks"])}
+            "production_response_ready": True, "verified_indexes": len(health["index_checks"]), "handoff": event}

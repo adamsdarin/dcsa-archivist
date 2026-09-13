@@ -35,3 +35,7 @@ other's conversations. **`HANDOFF.md` in this directory is the shared state.**
 Full rules: `C:\Users\darin\src\HANDOFF-PROTOCOL.md`
 Pre-restructure path translation: `C:\Users\darin\src\path-map.json`
 <!-- HANDOFF-PROTOCOL:END -->
+
+<!-- SHARED-POLICY:BEGIN -->
+The Custodian publishes autonomously after validation and retrieval evaluation pass. Guidance Watch writes findings and catalog entries autonomously after citation and coverage checks pass. Automated consumers read approved robot content only; human paths are citation/navigation metadata. Consumers never promote their own answers into the governed library.
+<!-- SHARED-POLICY:END -->

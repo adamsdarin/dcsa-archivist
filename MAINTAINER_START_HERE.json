@@ -8,6 +8,8 @@
   "metadata_decisions": "decisions/metadata_decisions.json",
   "skill": "skill/dcsa-archivist/SKILL.md",
   "cli": "python custodian.py",
-  "production_mutation_requires_explicit_approval": true,
-  "consumer_answering_forbidden": true
+  "production_mutation_requires_explicit_approval": false,
+  "consumer_answering_forbidden": true,
+  "production_mutation_requires_validation_and_evaluation": true,
+  "cycle_agent": "agents/conductor.md"
 }

@@ -15,7 +15,7 @@ python custodian.py evaluate --release-id <id>
 python custodian.py search --release-id <id> --index <index_filename> --query "<text>"
 ```
 
-`approve` and `publish` are separate commands. Approval is refused unless a candidate is both structurally valid and publishable; publication also requires the explicit approval receipt.
+`approve` and `publish` are separate commands. Approval is refused unless a candidate is both structurally valid and publishable; publication creates an autonomous approval receipt after validation and current retrieval evaluation pass if no manual receipt exists.
 
 Official-source lifecycle reviews are recorded in `decisions/metadata_decisions.json`. They are applied only to staged candidates and copied into the candidate report for provenance.
 
@@ -26,8 +26,12 @@ Official-source lifecycle reviews are recorded in `decisions/metadata_decisions.
 - Historical, unresolved, duplicate, context, and DOHA precedent material cannot enter ordinary controlling-answer retrieval.
 - Human paths remain unindexed citation metadata. All chunks and quotations are exact robot text with hashes and stable locators.
 - DOHA retrieval continues through the dedicated topic-gated A-M case index rather than the general corpus.
-- Each per-tier SQLite index carries a `vectors` table (one embedding per chunk, same eligibility/role gating as `corpus`) alongside the existing FTS5 table, so semantic search never crosses an authority-tier boundary the lexical index wouldn't also respect. Embeddings run locally (`BAAI/bge-small-en-v1.5` via `fastembed`, ONNX, CPU) — chunk text never leaves the machine. Currently additive/query-on-demand (`search` command); not yet wired into `evaluate`'s default lexical-first retrieval order.
+- Each per-tier SQLite index carries a `vectors` table (one embedding per chunk, same eligibility/role gating as `corpus`) alongside the existing FTS5 table, so semantic search never crosses an authority-tier boundary the lexical index wouldn't also respect. Embeddings run locally (`BAAI/bge-small-en-v1.5` via `fastembed`, ONNX, CPU) â€” chunk text never leaves the machine. The release evaluation includes explicitly labeled semantic cases alongside lexical cases, using the same intent and authority gates.
 
-## Current library observation
+## Current state
 
-The initial full audit found healthy file/index integrity and complete parity relationships, but unresolved metadata remains. The latest staged candidate is intentionally not publishable because there are no verified current contractor-controlling chunks. See its variance report and remediation queue under `.custodian/releases/initial-20260828-v7/reports/`.
+Read `HANDOFF.md` for decisions and run the read-only `doctor` for the configured library. Historical candidate observations are not current readiness evidence.
+
+## Integrated library cycle
+
+Start an agent at `agents/conductor.md`. Staged source additions use `build-candidate --intake-plan`; successful publication emits durable events for comparison and Guidance Watch. See `docs/INTAKE-AND-EVENTS.md` for runnable commands and receipt formats. The published wiki is a navigation graph, not synthesized answer evidence.
