@@ -6,6 +6,11 @@ Start with `MAINTAINER_START_HERE.json` or the portable skill at `skill/dcsa-arc
 
 ## Commands
 
+For new reconstruction into an empty destination, use the standalone
+`../dcsa-library-rebuilder/agents/rebuilder.md`. Its output is not maintained
+autonomously. The older `custodian.py regenerate` command remains a compatibility
+utility, documented in `docs/REGENERATION.md`; it is not the canonical rebuild agent.
+
 ```powershell
 python custodian.py doctor
 python custodian.py audit
@@ -34,4 +39,16 @@ Read `HANDOFF.md` for decisions and run the read-only `doctor` for the configure
 
 ## Integrated library cycle
 
-Start an agent at `agents/conductor.md`. Staged source additions use `build-candidate --intake-plan`; successful publication emits durable events for comparison and Guidance Watch. See `docs/INTAKE-AND-EVENTS.md` for runnable commands and receipt formats. The published wiki is a navigation graph, not synthesized answer evidence.
+Start the **Library Coordinator** at `agents/conductor.md`. It assigns source
+preparation and lifecycle review to **Evidence Reviewer** (`agents/evidence-reviewer.md`)
+and audits, candidate builds and publication to **Release Manager**
+(`agents/release-manager.md`). See [agent roles](docs/AGENT-ROLES.md) for handoffs.
+Hosts with delegation use separate specialist contexts; other hosts follow the
+roles sequentially. The stable conductor path preserves existing host entry points.
+
+Staged source additions use `build-candidate --intake-plan`; successful publication
+emits durable events for comparison and Guidance Watch. Publication enforces a
+per-library OS lock across preflight, writes and verification, including dry runs.
+The persistent lock file sits beside the library and must not be deleted while
+workflows are active. See `docs/INTAKE-AND-EVENTS.md` for commands and receipts.
+The published wiki is a navigation graph, not synthesized answer evidence.

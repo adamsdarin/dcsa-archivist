@@ -13,6 +13,16 @@ This project is the model-agnostic archival and release framework for the adjace
 9. Never delete a production source during automated publication. Quarantine or deprecate through metadata and retain rollback information.
 
 
+## Agent routing
+
+Start full cycles at `agents/conductor.md` (Library Coordinator). Assign source
+identity, extraction, normalization and lifecycle work to `agents/evidence-reviewer.md`;
+assign audits, candidates, publication and receipt verification to
+`agents/release-manager.md`. Read `docs/AGENT-ROLES.md` for handoff boundaries.
+One release workflow owns a library at a time. Only the coordinator updates this
+repository's HANDOFF during delegated work; sole-role runs update it themselves.
+Librarian owns acquisition; Guidance Watch owns substantive interpretation.
+
 <!-- HANDOFF-PROTOCOL:BEGIN -->
 ## Session handoff — read this first
 

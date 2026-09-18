@@ -36,6 +36,9 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description="DCSA Library Custodian")
     root.add_argument("--config")
     commands = root.add_subparsers(dest="command", required=True)
+    regenerate = commands.add_parser('regenerate', help='Legacy recipe utility; new standalone rebuilds belong to dcsa-library-rebuilder')
+    regenerate.add_argument('--recipe', type=Path, required=True)
+    regenerate.add_argument('--destination', type=Path, required=True)
     for name in ("doctor", "audit", "build-candidate"):
         cmd = commands.add_parser(name)
         cmd.add_argument("--library-root")
@@ -87,6 +90,11 @@ def parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = parser().parse_args()
     try:
+        if args.command == 'regenerate':
+            from .regenerate import regenerate
+            print('Legacy Custodian recipe utility. For a new standalone rebuild use dcsa-library-rebuilder/agents/rebuilder.md. Creating a library does not install ongoing maintenance.', file=sys.stderr)
+            print(json.dumps(regenerate(args.recipe, args.destination), indent=2))
+            return 0
         config, library_root = _settings(args)
         if args.command == "doctor":
             report = audit_library(library_root, deep=False)

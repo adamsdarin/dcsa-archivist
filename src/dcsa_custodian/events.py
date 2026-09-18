@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import difflib
 import json
+import hashlib
+import re
 from pathlib import Path
 
 from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json
@@ -92,13 +94,17 @@ def pending_events(project: Path, config: dict, root: Path, consumer: str) -> li
     result = []
     for path in sorted(event_directory(project, config, root).glob("*/event.json")):
         event = read_json(path)
-        if not event["actionable"] or (path.parent / f"{consumer}.receipt.json").exists():
+        if not event["actionable"]:
             continue
         source = Path(event["changes_path"])
         if sha256_file(source) != event["changes_sha256"]:
             raise ValueError("queued change packet changed")
+        receipt_path = path.parent / f"{consumer}.receipt.json"
+        if verified_receipt(receipt_path, event, consumer):
+            continue
         changes = read_json(source)
-        result.append({"event": event, "changes": changes})
+        result.append({"event": event, "changes": changes,
+                       "receipt_issue": "missing_or_unverifiable_receipt" if receipt_path.exists() else "not_acknowledged"})
     return sorted(result, key=lambda packet: packet["changes"].get("created_utc", ""))
 
 
@@ -118,25 +124,62 @@ def comparison_report(changes: dict) -> dict:
             "supersession_verified": False, "limitations": "Chunk deltas are navigation aids. Read full approved robot sources and close citations before findings.", "comparisons": diffs}
 
 
+def validate_receipt(receipt, event, consumer):
+    if not isinstance(receipt, dict):
+        raise ValueError('Receipt must be an object')
+    if receipt.get('event_id') != event['event_id'] or receipt.get('consumer') != consumer or receipt.get('changes_sha256') != event['changes_sha256']:
+        raise ValueError('receipt does not match the consumer/event/change packet')
+    if receipt.get('status') not in ('completed', 'no_relevant_change') or not receipt.get('reviewed_by'):
+        raise ValueError('receipt needs reviewed completion or a reasoned no-change disposition')
+    for key in ('full_source_review', 'citation_closure', 'coverage_complete'):
+        if receipt.get(key) is not True:
+            raise ValueError(f'incomplete consumer gate: {key}')
+    artifacts = receipt.get('artifacts')
+    if not receipt.get('summary') or not isinstance(artifacts, list) or not artifacts:
+        raise ValueError('receipt requires a summary and hashed review/output artifacts')
+    for artifact in artifacts:
+        if not isinstance(artifact, dict) or not isinstance(artifact.get('path'), str) or not re.fullmatch(r'[a-f0-9]{64}', str(artifact.get('sha256', ''))):
+            raise ValueError('Invalid receipt artifact')
+
+
+def verified_receipt(path, event, consumer):
+    try:
+        receipt = read_json(path)
+        validate_receipt(receipt, event, consumer)
+        if receipt.get('artifact_storage') != 'event_local_v1':
+            return False
+        for artifact in receipt['artifacts']:
+            source = bounded_path(path.parent, artifact['path'], f'{consumer}.artifacts/')
+            if sha256_file(source) != artifact['sha256']:
+                return False
+        return True
+    except (OSError, ValueError, TypeError, KeyError):
+        return False
+
+
 def acknowledge(project: Path, config: dict, root: Path, consumer: str, event_id: str, receipt_path: Path) -> dict:
     if consumer not in CONSUMERS:
         raise ValueError("unknown consumer")
     directory = bounded_path(event_directory(project, config, root), event_id, "")
     event = read_json(directory / "event.json")
+    if sha256_file(Path(event['changes_path'])) != event['changes_sha256']:
+        raise ValueError('queued change packet changed')
     receipt = read_json(receipt_path)
-    if receipt.get("event_id") != event_id or receipt.get("consumer") != consumer or receipt.get("changes_sha256") != event["changes_sha256"]:
-        raise ValueError("receipt does not match the consumer/event/change packet")
-    if receipt.get("status") not in ("completed", "no_relevant_change") or not receipt.get("reviewed_by"):
-        raise ValueError("receipt needs reviewed completion or a reasoned no-change disposition")
-    for key in ("full_source_review", "citation_closure", "coverage_complete"):
-        if receipt.get(key) is not True:
-            raise ValueError(f"incomplete consumer gate: {key}")
-    if not receipt.get("summary") or not receipt.get("artifacts"):
-        raise ValueError("receipt requires a summary and hashed review/output artifacts")
+    validate_receipt(receipt, event, consumer)
+    retained = []
     for artifact in receipt["artifacts"]:
         path = bounded_path(receipt_path.parent, artifact["path"], "")
-        if sha256_file(path) != artifact["sha256"]:
+        payload = path.read_bytes()
+        if hashlib.sha256(payload).hexdigest() != artifact["sha256"]:
             raise ValueError("consumer artifact hash mismatch")
+        retained.append((artifact, payload))
+    stored = []
+    for artifact, payload in retained:
+        relative = f"{consumer}.artifacts/{artifact['sha256']}.bin"
+        target = bounded_path(directory, relative, f'{consumer}.artifacts/')
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(payload)
+        stored.append({'path': relative, 'sha256': artifact['sha256']})
     target = directory / f"{consumer}.receipt.json"
-    write_json(target, {**receipt, "recorded_utc": utc_now()})
+    write_json(target, {**receipt, 'artifacts': stored, 'artifact_storage': 'event_local_v1', "recorded_utc": utc_now()})
     return {"receipt": str(target), "status": receipt["status"]}

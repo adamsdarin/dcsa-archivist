@@ -151,6 +151,28 @@
       ],
       "require_locator": true,
       "expected_first_role": "controlling_regulation"
+    },
+    {
+      "id": "dd254-dec1999-not-current-guidance",
+      "intent": "system_or_workflow_how_to",
+      "query": "requirements of the DoD Industrial Security Manual apply to all security aspects of this effort",
+      "require_abstain": true
+    },
+    {
+      "id": "dd254-dec1999-not-general-current",
+      "intent": "general_current",
+      "query": "requirements of the DoD Industrial Security Manual apply to all security aspects of this effort",
+      "require_abstain": true
+    },
+    {
+      "id": "dd254-current-materials-retrievable",
+      "intent": "system_or_workflow_how_to",
+      "query": "DD Form 254 contract security classification specification",
+      "require_hit": true,
+      "expected_document_ids": [
+        "dcsa-forms-dd254-instructions",
+        "dcsa-forms-dd254-contract-security-classification-spec"
+      ]
     }
   ]
 }

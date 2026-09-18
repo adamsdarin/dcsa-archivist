@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from .common import iter_jsonl, read_json, sha256_file, write_jsonl
 from .release_contract import bounded_path
+from .doha import append_cases, review_metadata, validate_cases, TAXONOMY
 
 
 def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
@@ -19,6 +20,13 @@ def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
     plan = read_json(plan_path)
     if plan.get("schema_version") != "1.0" or not plan.get("items"):
         raise ValueError("intake plan requires schema_version 1.0 and nonempty items")
+    cases = [item['record'] for item in plan['items'] if item.get('record', {}).get('collection_id') == 'doha_decisions']
+    taxonomy = plan.get('doha_taxonomy')
+    if cases:
+        if taxonomy is None and (root / TAXONOMY).exists():
+            taxonomy = read_json(root / TAXONOMY)
+        for record in cases:
+            review_metadata(record, taxonomy)
     entry = read_json(root / "START_HERE_FOR_ROBOTS.json")
     manifest = bounded_path(root, entry["documents"], "ROBOT_READABLE_DIRECTORY/MANIFESTS/")
     relationships = bounded_path(root, entry["relationships"], "ROBOT_READABLE_DIRECTORY/MANIFESTS/")
@@ -85,4 +93,10 @@ def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
                       "robot_text_path": record["robot_text_path"], "relation": "machine_readable_representation_of"})
     write_jsonl(destination / changed[0], records)
     write_jsonl(destination / changed[1], pairs)
+    added = [record for record, _, _ in additions]
+    changed.extend(append_cases(destination, added, taxonomy))
+    if cases:
+        errors = validate_cases(destination, added, taxonomy)
+        if errors:
+            raise ValueError('; '.join(errors))
     return changed

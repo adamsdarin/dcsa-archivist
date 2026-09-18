@@ -24,6 +24,7 @@ from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts
 from .events import build_changes, reconcile_event
 from .wiki import build_graph, lint_report
 from .intake import stage_intake
+from .publication_lock import publication_lock
 from .release_contract import STATE, POINTER, CATALOG, QUERY, CONFIG, POLICY, ROUTER, approved_release
 
 
@@ -234,7 +235,7 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     )
     chunks_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
     write_jsonl(chunks_path, chunks)
-    write_json(release_dir / "reports/RELEASE_CHANGES.json", build_changes(root, records, chunks, release_id))
+    write_json(release_dir / "reports/RELEASE_CHANGES.json", build_changes(target_root or root, records, chunks, release_id))
     write_json(release_dir / "production/ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json", {
         "schema_version": "1.0", "release_id": release_id, "use": "navigation_only_not_answer_evidence",
         "graph": build_graph(records),
@@ -429,6 +430,11 @@ def approve_candidate(release_dir: Path, approved_by: str, note: str) -> dict[st
 
 
 def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], release_dir: Path, dry_run: bool = False) -> dict[str, Any]:
+    with publication_lock(root):
+        return _publish_candidate(project_root, root, config, release_dir, dry_run)
+
+
+def _publish_candidate(project_root: Path, root: Path, config: dict[str, Any], release_dir: Path, dry_run: bool = False) -> dict[str, Any]:
     validation = validate_candidate(root, release_dir)
     if not validation["valid"]:
         raise RuntimeError("candidate validation failed")
@@ -498,8 +504,12 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
     policy = read_json(root / POLICY)
     policy["content_access"].pop("approved_indexes", None)
     policy["content_access"].update({"approved_indexes_mode": "resolve_from_index_catalog", "doha_approved_indexes": doha})
+    policy["content_access"]["doha_index_sha256"] = {
+        relative: sha256_file(production_root / relative if (production_root / relative).is_file() else root / relative)
+        for relative in doha
+    }
     write_json(overlay / POLICY, policy)
-    write_json(overlay / ROUTER, read_json(root / ROUTER))
+    write_json(overlay / ROUTER, read_json(production_root / ROUTER if (production_root / ROUTER).is_file() else root / ROUTER))
     wiki_relative = "ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json"
     write_json(overlay / wiki_relative, read_json(production_root / wiki_relative))
     evidence_metadata = ("ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl",
@@ -507,6 +517,14 @@ def publish_candidate(project_root: Path, root: Path, config: dict[str, Any], re
     for relative in evidence_metadata:
         (overlay / relative).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(production_root / relative, overlay / relative)
+    doha_metadata = []
+    for relative in ("ROBOT_READABLE_DIRECTORY/MANIFESTS/DOHA_CURRENT_PATHS.jsonl",
+                     "ROBOT_READABLE_DIRECTORY/RETRIEVAL/DOHA_TOPIC_TAXONOMY.json"):
+        source = production_root / relative if (production_root / relative).is_file() else root / relative
+        if source.is_file():
+            (overlay / relative).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, overlay / relative)
+            doha_metadata.append(relative)
     agents = """# DCSA Library automation policy
 
 Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry point and obey `ROBOT_READABLE_DIRECTORY/RETRIEVAL/ROBOT_ACCESS_POLICY.json`.
@@ -528,7 +546,7 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
         "schema_version": "1.1", "release_id": release_id, "published_utc": published_utc,
         "approval": approval, "rollback_snapshot": str(rollback_dir), "derived_artifacts_only": not bool(state.get("source_intake_files")),
         "validation": {"valid": True, "publishable": True, "validated_utc": validation["validated_utc"]},
-        "metadata_sha256": {relative: sha256_file(overlay / relative) for relative in (STATE, CATALOG, QUERY, POLICY, CONFIG, wiki_relative, *evidence_metadata)},
+        "metadata_sha256": {relative: sha256_file(overlay / relative) for relative in (STATE, CATALOG, QUERY, POLICY, CONFIG, ROUTER, wiki_relative, *evidence_metadata, *doha_metadata)},
     }
     write_json(overlay / POINTER, pointer)
     approved_release(overlay, verify_indexes=False)

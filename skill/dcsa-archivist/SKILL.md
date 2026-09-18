@@ -1,6 +1,6 @@
 ---
 name: dcsa-archivist
-description: Organize, preserve, deduplicate, enrich, index, validate, and release a governed DCSA retrieval library. Use for corpus organization, lifecycle metadata, provenance, retrieval quality, and approval-gated releases; do not use for source intake or substantive FSO questions.
+description: Review quarantined DCSA sources, organize and maintain library evidence, and validate and publish governed releases. Use for archival preparation, provenance, lifecycle and retrieval quality; acquisition belongs to Librarian and substantive FSO questions belong to Question Bot.
 ---
 
 # DCSA Archivist
@@ -24,9 +24,17 @@ Maintain the DCSA Library as a trustworthy, portable retrieval dataset. This ski
 
 ## Modes
 
+In the repository, route full cycles through `agents/conductor.md` (Library
+Coordinator), source preparation and normalization through `agents/evidence-reviewer.md`,
+and audits/builds/publication through `agents/release-manager.md`. These paths are
+relative to the Archivist repository root. `MAINTAINER_START_HERE.json` declares
+the entries; `docs/AGENT-ROLES.md` defines their handoffs. If using a standalone
+copy of this skill, resolve the repository before invoking these agents. Do not
+claim separate agents ran when the host executed their roles sequentially.
+
 - For health, parity, duplicates, metadata conflicts, or index integrity, run `audit`; read [references/audit-and-remediation.md](references/audit-and-remediation.md).
 - For a proposed metadata/chunk/index refresh, run `build-candidate`, then `validate`; read [references/release-workflow.md](references/release-workflow.md).
-- For official currency checks or acquisition, read [references/currency-and-acquisition.md](references/currency-and-acquisition.md) and obtain network/download approval first.
+- For official currency checks or missing evidence, read [references/currency-and-acquisition.md](references/currency-and-acquisition.md). Route acquisition to Librarian within existing authorization.
 - For authority roles, answer eligibility, and consumer retrieval policy, read [references/authority-and-retrieval.md](references/authority-and-retrieval.md).
 - For human-readable filename conventions or resolving duplicate source files, read [references/naming-and-deduplication.md](references/naming-and-deduplication.md) first â€” it covers case-insensitive-filesystem and stale-metadata traps that are easy to get wrong.
 

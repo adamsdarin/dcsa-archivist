@@ -11,5 +11,11 @@
   "production_mutation_requires_explicit_approval": false,
   "consumer_answering_forbidden": true,
   "production_mutation_requires_validation_and_evaluation": true,
-  "cycle_agent": "agents/conductor.md"
+  "cycle_agent": "agents/conductor.md",
+  "agent_roles": {
+    "library_coordinator": "agents/conductor.md",
+    "evidence_reviewer": "agents/evidence-reviewer.md",
+    "release_manager": "agents/release-manager.md"
+  },
+  "role_contract": "docs/AGENT-ROLES.md"
 }

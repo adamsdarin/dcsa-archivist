@@ -59,6 +59,43 @@ class HandoffTests(unittest.TestCase):
             self.assertEqual([c['document_id'] for c in packet['changes']['changes']], ['new-voi'])
             self.assertFalse(comparison_report(packet['changes'])['supersession_verified'])
 
+    def test_unreviewed_doha_intake_is_refused_before_staging(self):
+        from dcsa_custodian.intake import stage_intake
+        plan, _ = self.plan()
+        data = read_json(plan)
+        data['items'][0]['record']['collection_id'] = 'doha_decisions'
+        write_json(plan, data)
+        destination = self.project / 'unsupported-stage'
+        with self.assertRaisesRegex(ValueError, 'DOHA requires'):
+            stage_intake(self.root, destination, plan)
+        self.assertFalse(destination.exists())
+
+    def test_reviewed_doha_intake_publishes_case_indexes_and_bound_metadata(self):
+        import sqlite3
+        from contextlib import closing
+        from dcsa_custodian.doha import CONTENT, MANIFEST
+        self.publish()
+        plan, record = self.plan()
+        data = read_json(plan)
+        item = data['items'][0]
+        item['record'].update(collection_id='doha_decisions', authority_tier=5,
+            current_status='historical_case_research', doha_review=dict(case_id='26-12345',
+                decision_level='h1', decision_date='2026-08-01', current_group='POST_SEAD_4',
+                outcome='approved', guidelines=['F'], answer_eligible=True, reviewed_by='test',
+                reviewed_utc='2026-09-16T00:00:00Z', metadata_basis='Synthetic review'))
+        data['doha_taxonomy'] = {'guidelines': {'F': {'aliases': ['financial considerations']}}}
+        write_json(plan, data)
+        before = sha256_file(self.root / CONTENT)
+        result = self.build(plan, 'doha-intake-test')
+        self.assertTrue(result['validation']['publishable'], result['validation'])
+        self.assertEqual(sha256_file(self.root / CONTENT), before)
+        publish_candidate(self.project, self.root, self.config, Path(result['release_directory']))
+        self.assertTrue(readiness(self.root, check_integrity=True)['ready'])
+        with closing(sqlite3.connect(self.root / CONTENT)) as db:
+            self.assertEqual(db.execute('SELECT case_id,answer_eligible FROM decisions').fetchall(), [('26-12345', 1)])
+        (self.root / MANIFEST).write_text('{}\n')
+        self.assertFalse(readiness(self.root, check_integrity=True)['ready'])
+
     def test_unreviewed_or_tampered_intake_cannot_modify_library(self):
         plan, _ = self.plan()
         original = read_json(plan)
@@ -95,6 +132,21 @@ class HandoffTests(unittest.TestCase):
         acknowledge(self.project, self.config, self.root, 'dcsa-compare', self.release.name, receipt_path)
         self.assertFalse(pending_events(self.project, self.config, self.root, 'dcsa-compare'))
         self.assertTrue(pending_events(self.project, self.config, self.root, 'fso-guidance-watch'))
+        artifact.unlink()
+        self.assertFalse(pending_events(self.project, self.config, self.root, 'dcsa-compare'))
+        stored_path = directory / 'dcsa-compare.receipt.json'
+        original = stored_path.read_bytes()
+        stored = read_json(stored_path)
+        stored['full_source_review'] = False
+        write_json(stored_path, stored)
+        self.assertEqual(pending_events(self.project, self.config, self.root, 'dcsa-compare')[0]['receipt_issue'],
+                         'missing_or_unverifiable_receipt')
+        stored_path.write_bytes(original)
+        retained = directory / read_json(stored_path)['artifacts'][0]['path']
+        retained.write_text('Corrupted retained output')
+        self.assertTrue(pending_events(self.project, self.config, self.root, 'dcsa-compare'))
+        stored_path.write_text('{incomplete')
+        self.assertTrue(pending_events(self.project, self.config, self.root, 'dcsa-compare'))
 
     def test_failed_publication_emits_no_event_and_wiki_tamper_fails_readiness(self):
         import os

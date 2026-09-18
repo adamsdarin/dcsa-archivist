@@ -1,5 +1,12 @@
 # Human-readable naming and deduplication
 
+Evidence Reviewer owns normalization proposals. New intake uses normalized paths
+in its reviewed plan and Release Manager installs them through staged publication.
+The historical remediation notes below describe pitfalls, not permission to edit
+production directly. Existing-file renames/replacements unsupported by release
+tooling remain explicit tooling blockers with proposed old/new paths and required
+reference updates. AGENTS.md's publication-only invariant takes precedence.
+
 This reference exists because every rule below was learned the hard way in one long session
 (2026-09-03, see `HANDOFF.md` for the full narrative) and would otherwise only live in that
 transcript. Read this before touching `HUMAN_READABLE_DIRECTORY` filenames or resolving
@@ -56,8 +63,9 @@ explicit authorization.
   rename through a temp filename, since Windows treats the direct form as a no-op/conflict.
 - **Orphan files exist**: a physical PDF + robot `.txt` pair with *no* manifest record at all
   (found several: `DoDM_1000.13`, plus EAR/ITAR/a duplicate CUI file in `AUTHORITIES/CFR`).
-  Don't fabricate a manifest record to fix this — that's Librarian (intake) scope, not
-  Archivist. Flag and leave untouched.
+  Do not fabricate a manifest record. Route acquisition/provenance recovery to
+  Librarian, then let Evidence Reviewer prepare reviewed intake for staged release.
+  Leave production untouched until that workflow supports the proposed change.
 - **`machine_text_exists: true` does not mean the text is right.** Found both a broken scrape
   (a GovInfo "Page Not Found" page saved as the extraction) and actively wrong content (an
   unrelated SEC filing saved under an Executive Order's record). Read the source PDF directly

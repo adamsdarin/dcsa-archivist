@@ -5333,6 +5333,21 @@
         }
       ],
       "note": "Certified current via a fresh byte-identical re-download from the confirmed original source."
+    },
+    {
+      "source_document_id": "dcsa-forms-dd254_january_2026",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FOCI/DD 254 January 2026.txt",
+      "decision": "historical",
+      "effective_date": "1999-12",
+      "verified_utc": "2026-09-15T17:00:00Z",
+      "verified_by": "Claude Custodian session for Darin (local byte, PDF-metadata and robot-text review; defect reported by the DD-254 product session 2026-09-15)",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/forms/dd/dd0254.pdf",
+          "observation": "Official DoD Forms repository copy of DD Form 254, recorded by the 2026-09-01 verified_current review of dcsa-forms-dd254-contract-security-classification-spec as the current April 2018 edition. Not re-fetched in this session (network access not authorized); cited as the recorded official identification of the current edition, which this file is not."
+        }
+      ],
+      "note": "Mislabelled edition, not a January 2026 form. The source PDF (sha256 264e2155a1f37e627ff62ae92fda6b230c9ad739630b1a0e8a421f3a95c810bf, 379768 bytes) is byte-identical to dcsa-forms-dd254-contract-security-classification-spec-dec1999 (FORMS/Expired_For_Reference_Only, already historical). Embedded PDF title: 'DD Form 254, Department of Defense Contract Security Classification Specification, December 1999' (Author WHS/ESD/IMD, ModDate 2014-03-24); static AcroForm with 74 fields and no XFA; 2 pages. Robot text is the 1999 layout ('The requirements of the DoD Industrial Security Manual apply...') and matches the expired copy apart from line endings and one blank line. The current edition is the April 2018 XFA form (dcsa-forms-dd254-contract-security-classification-spec). Disposition: historical, effective 1999-12, excluded from default current retrieval. Source bytes, path and manifest record are preserved; no deletion. The 'January 2026' title and filename remain in source metadata pending a separate naming-remediation decision."
     }
   ]
 }

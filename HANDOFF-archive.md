@@ -797,3 +797,102 @@ wired into `build_candidate`, and consumers still cite chunks rather than topics
    output. Publishing derived supersession as authoritative is the one move that could damage
    consumer trust in the corpus.
 
+
+
+## Snapshot before 2026-09-16T11:53:36.420292+00:00
+
+# HANDOFF — dcsa-archivist
+
+Last updated: 2026-09-15T17:40:00Z by Claude
+
+## Current State
+Published release: `dd254-dec1999-lifecycle-fix-20260915` (derived_artifacts_only,
+autonomous approval). Validate valid/publishable with no blockers; evaluate 16/16
+(13 prior cases + 3 new DD 254 cases); post-publish doctor `integrity_healthy: true`,
+`production_response_ready: true`, 0 duplicate IDs/content groups/tier conflicts,
+3 unresolved-currency records, 8 verified indexes. Rollback snapshot
+`.custodian/rollback/20260915T173232423413Z`. Release event emitted for
+`dcsa-compare` and `fso-guidance-watch`; not acknowledged (no consumer review done).
+
+`dcsa-forms-dd254_january_2026` is now `historical` / `historical_only`, effective
+1999-12, removed from the default current-guidance index and present only in
+historical research. Its source bytes, paths, title and documents.jsonl record are
+unchanged. The title and filename still read "January 2026" (see Open Questions).
+
+The release also carried, unavoidably, two source-manifest edits a 2026-09-13 Claude
+FOCI cleanup session made directly to documents.jsonl (backup
+`.custodian/rollback/foci-cleanup-20260913T124445Z`) whose candidate
+`foci-folder-review-20260913` was built but never published or logged: removal of
+`dcsa-foci-dcsa-foci-operational-guidelines` (judged fabricated, no real source) and a
+dated retitle/path of `dcsa-forms-submitting_a_sponsorship_request_external`. Until
+this release the published indexes still served the removed record.
+
+Codex's uncommitted conductor/request/receipt/regenerator work is untouched (60 tests
+pass). Earlier state: intake path live since `nist-172-r3-intake-20260911`; DOHA
+reconstruction unsupported. Live Git state: `python ../workspace_health.py status`.
+
+## Next
+1. Owner decision on the residual "January 2026" label (Open Questions).
+2. Deploy agents/conductor.md in a local agent host to process quarantine and pending
+   events (including this release's two events); an event does not launch a model.
+3. Complete portable DOHA reconstruction and source acquisition integration; see
+   docs/REGENERATION.md and ../WORKFLOW-GAP-AUDIT.md.
+
+## Open Questions
+- DD 254 relabel: metadata decisions cannot change `title`, and the documented naming
+  remediation writes production files and manifests outside publish, which AGENTS.md
+  invariant 3 forbids; renaming also breaks existing consumer citation paths. Options:
+  (a) authorize a rename of the FOCI copy to the DEC 1999 name with rename_history,
+  (b) authorize removal of the byte-identical FOCI copy, keeping the expired copy, or
+  (c) add a reviewed title override to metadata decisions (code change).
+- Tool gap: `_canonical_sort` still makes the mislabelled FOCI record canonical and the
+  correctly named expired copy `excluded_duplicate`, because the ordering favours
+  role priority and a shorter path over lifecycle review. Duplicate marks written by
+  hand into documents.jsonl are also reset by `enrich_manifest`.
+
+## Log
+2026-09-15 Claude — Corrected mislabelled DD 254 record through the lifecycle process:
+chose a `historical` metadata decision (effective 1999-12) over a rename, retirement or
+deletion as the least destructive option the contract permits. Evidence: PDF byte-identical
+(sha256 264e2155…) to the historical DEC 1999 expired copy; embedded title says December
+1999; the recorded official current edition is APR 2018. Added three golden-query cases,
+which fail against the prior release and pass against the new one. Published
+`dd254-dec1999-lifecycle-fix-20260915`. The first build hung in fastembed workers
+(WinError 6 when run under the Git Bash background shell), so I killed it, removed the
+partial candidate and rebuilt under PowerShell. The release included the unpublished
+2026-09-13 FOCI manifest edits. No source files were changed or deleted. Not committed.
+2026-09-15 Codex — Integrated shared source inbox and reviewed-period watch
+confirmation into the conductor. Missing evidence now has durable owner routing;
+DOHA reconstruction and final role audit remain open.
+2026-09-14 Codex — Closed receipt-existence bypass; retained evidence and hash/
+gate checks prevent false completion. Supervisor live polling sees one pending
+comparison and one guidance event; no new source publication or acknowledgment.
+2026-09-14 Codex — Added general-source Library Regenerator after verifying the
+existing-framework dependency. Preserved reviewed intake and publication gates;
+isolated offline tests verify real indexes and release metadata, with embeddings
+stubbed in the new fixture. Broader audit and DOHA reconstruction remain active.
+2026-09-11 Claude — Ingested and published NIST SP 800-172 Rev 3 + 800-172A Rev 3 via the new
+intake path (release `nist-172-r3-intake-20260911`). Both prior editions were withdrawn
+2026-05-13; Codex's own 2026-09-01 decision had said "acquire Rev. 3 separately" and it had never
+happened — the `superseded_without_successor` lint check rediscovered it independently, which is
+the first time that layer paid for itself. Used `stage_intake` rather than hand-editing manifests:
+checked repo state first and found Codex had built exactly the path I was about to improvise.
+Deliberate departure from sibling convention: extracted **page-located** robot text (form-feed
+separators), so these two cite as `page:49;chars:0-2160` while older NIST files still cite as
+`block:1;chars:296580-301348` into a 1.6M-character blob. Chunks landed page-aligned, 119 and 124.
+No `metadata_decisions.json` entries added — the hash-bound `intake_review`/`intake_provenance`
+blocks are stronger evidence than a decision row, and a second identity-matching surface would add
+risk for no gain; revisit if sibling consistency matters more than that. Validate clean, evaluate
+13/13, dry-run reviewed before publishing, rollback snapshot taken. Lint 10 -> 8 findings: both
+NIST supersession gaps closed. 243 Rev 3 chunks are in `DCSA_CURRENT_GUIDANCE_CHUNKS_FTS` which is
+default-allowed, so enhanced-CUI questions are answerable for the first time; the withdrawn
+editions correctly sit in historical-research, off the default path. Consumer packets written to
+the release `reports/` at `status: review_required` — not acked, since acking would falsely assert
+a review happened. Note for whoever reads the packets: the edition pair is labelled
+`unverified_issuance_family_lead`, which is the `confidence: derived` guardrail on graph edges
+surfacing correctly downstream — treat it as a lead, not a fact.
+
+2026-09-11 Codex — Completed cross-system role/handoff implementation and process map. Tests: 65 Librarian, 52 Archivist; three cross-system acceptance cases and shared-policy checks pass. No live publication, acquisition, scheduling, or guidance product changes. Portable regenerator assessed as a proposed recipe-driven CLI, not implemented.
+2026-09-11 Codex — Cross-system workflow audit in progress. User selected Librarian -> Archivist -> approved release -> comparison and Guidance Watch. Implementing staged source intake, published navigation graph, and durable release packets with completion receipts. Existing dirty files preserved. No live library changes; installed Windows task inspection found no DCSA/FSO/Custodian-named tasks.
+2026-09-10 Codex — Completed authorized implementation. 47 tests pass, including three offline cross-system acceptance cases. Expanded staged-release evaluation passes 13/13 with a real local semantic query. Publication re-runs current evaluations so older reports cannot bypass new cases. Changes remain uncommitted, including preserved prior edits.
+2026-09-10 Codex — Implementing the five authorized workspace improvements and accepted-answer wiki. Preserved the entire prior handoff in the archive, including pre-existing edits. Validation is in progress; do not interpret implementation as a live library release.

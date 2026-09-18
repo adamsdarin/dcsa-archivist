@@ -1,5 +1,10 @@
 # Staged intake and release handoffs
 
+The Library Coordinator routes this workflow to Evidence Reviewer (reviewed plans)
+and Release Manager (candidates, publication and receipt verification). Their
+entry points and ownership are in [AGENT-ROLES.md](AGENT-ROLES.md). Existing plan
+and event schemas remain the specialist handoff formats.
+
 Librarian writes original bytes plus `<filename>.intake.json` in quarantine.
 Archivist reviews them, prepares a page-located robot representation, and writes
 this plan beside the package and extraction. All referenced input paths are
@@ -90,6 +95,14 @@ After actual review, place this receipt beside hashed review/output artifacts:
 
 Use `no_relevant_change` instead of `completed` only with a documented review
 explaining why. A generated packet alone is not completion.
+
+Acknowledgment retains verified output bytes beside the event and records their
+hashes in the receipt. Pending-event checks validate the receipt's gates, event
+binding and retained artifact hashes each time. Damaged receipts or output files
+return the event to pending work. Legacy receipts without retained artifacts are
+unverifiable and also return to pending; re-acknowledge them using the original
+reviewed outputs rather than inventing a new completion. Deleting an original
+scratch output after acknowledgment does not lose the retained review evidence.
 
 ```powershell
 python custodian.py ack-event --library-root "<library>" --consumer fso-guidance-watch --event-id <id> --receipt "<receipt.json>"
