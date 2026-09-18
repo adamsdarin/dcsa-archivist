@@ -1,61 +1,44 @@
 # HANDOFF — dcsa-archivist
 
-Last updated: 2026-09-17T12:00:26.704784+00:00 by Codex
+Last updated: 2026-09-18 by Claude
 
 ## Current State
-Archivist split implemented (2026-09-17): Library Coordinator remains at agents/conductor.md;
-Evidence Reviewer owns preparation/normalization/lifecycle; Release Manager owns audits,
-candidates and publication. Entry points and portable skill route to these roles. Existing
-hosts keep the conductor path; delegation is host-dependent with sequential fallback.
-Publish/dry-run now hold a cross-process OS lock beside the library through verification
-and event emission. One active release workflow remains required. 73 tests and workspace
-consistency/skill checks pass. No live library changes or production cycle run in this work.
-Existing production rename/title and duplicate-selection gaps below remain unresolved.
+Published `dd254-canonical-title-20260918` (2026-09-18, autonomous after gates):
+validate valid/publishable, evaluate 16/16, doctor integrity_healthy and
+production_response_ready, 0 duplicate IDs/groups/tier conflicts, 3 unresolved
+currency, 8 verified indexes. Change set: exactly two records. The correctly named
+Expired_For_Reference_Only DEC 1999 DD 254 is now canonical (historical_only, 2
+historical chunks); the byte-identical FOCI copy is excluded_duplicate with a
+reviewed display title. No source bytes, paths or IDs changed.
 
-Published release: `dd254-dec1999-lifecycle-fix-20260915` (derived_artifacts_only,
-autonomous approval). Validate valid/publishable with no blockers; evaluate 16/16
-(13 prior cases + 3 new DD 254 cases); post-publish doctor `integrity_healthy: true`,
-`production_response_ready: true`, 0 duplicate IDs/content groups/tier conflicts,
-3 unresolved-currency records, 8 verified indexes. Rollback snapshot
-`.custodian/rollback/20260915T173232423413Z`. Release event emitted for
-`dcsa-compare` and `fso-guidance-watch`; not acknowledged (no consumer review done).
+New metadata decision options (tests cover each): `canonical: true` (reviewed
+duplicate-group choice), `title` (reviewed display title), and the `provenance`
+disposition (official URL only on reacquired-bytes = retained-bytes). New CLI
+`import-provenance --ledger` loads the Librarian's byte-verified ledger.
 
-`dcsa-forms-dd254_january_2026` is now `historical` / `historical_only`, effective
-1999-12, removed from the default current-guidance index and present only in
-historical research. Its source bytes, paths, title and documents.jsonl record are
-unchanged. The title and filename still read "January 2026" (see Open Questions).
-
-The release also carried, unavoidably, two source-manifest edits a 2026-09-13 Claude
-FOCI cleanup session made directly to documents.jsonl (backup
-`.custodian/rollback/foci-cleanup-20260913T124445Z`) whose candidate
-`foci-folder-review-20260913` was built but never published or logged: removal of
-`dcsa-foci-dcsa-foci-operational-guidelines` (judged fabricated, no real source) and a
-dated retitle/path of `dcsa-forms-submitting_a_sponsorship_request_external`. Until
-this release the published indexes still served the removed record.
-
-Reviewed DOHA intake now builds dedicated case/topic stores in staging and binds
-published indexes and metadata to integrity verification. New rebuilds route to
-dcsa-library-rebuilder; regenerate remains a legacy compatibility utility.
-73 tests pass. No live corpus changes made in this Codex checkpoint. Live Git state: `python ../workspace_health.py status`.
+Roles: Library Coordinator (agents/conductor.md), Evidence Reviewer, Release
+Manager, with a cross-process publication lock. New rebuilds route to
+dcsa-library-rebuilder; regenerate is legacy. 81 tests pass. All work committed.
 
 ## Next
-1. Preserve the earlier live-release/lifecycle decisions and unresolved label issue.
-2. Process pending release events through the existing conductor/Guidance Watch.
-3. Continue the shared audit; DOHA implementation is documented in docs/DOHA-INTAKE.md.
+1. Guidance Watch and comparison still owe reviews for three release events
+   (nist-172-r3-intake-20260911, dd254-dec1999-lifecycle-fix-20260915,
+   dd254-canonical-title-20260918); acknowledge only with their hashed receipts.
+2. When the Librarian's ledger has verified provenance rows, run import-provenance,
+   then build/validate/evaluate/publish. That is how the Rebuilder's 749
+   retained-bytes-only records gain official URLs.
+3. Continue the shared audit; DOHA implementation is in docs/DOHA-INTAKE.md.
 
 ## Open Questions
-- DD 254 relabel: metadata decisions cannot change `title`, and the documented naming
-  remediation writes production files and manifests outside publish, which AGENTS.md
-  invariant 3 forbids; renaming also breaks existing consumer citation paths. Options:
-  (a) authorize a rename of the FOCI copy to the DEC 1999 name with rename_history,
-  (b) authorize removal of the byte-identical FOCI copy, keeping the expired copy, or
-  (c) add a reviewed title override to metadata decisions (code change).
-- Tool gap: `_canonical_sort` still makes the mislabelled FOCI record canonical and the
-  correctly named expired copy `excluded_duplicate`, because the ordering favours
-  role priority and a shorter path over lifecycle review. Duplicate marks written by
-  hand into documents.jsonl are also reset by `enrich_manifest`.
+None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-18
+with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-18 Claude — Resolved the DD 254 relabel and the _canonical_sort gap with
+reviewed decisions rather than a heuristic change, so no other duplicate group's
+canonical pick moved (verified: 2 records changed). Added provenance decisions so
+URLs recovered by byte match can reach the published manifest and the Rebuilder
+census. Committed and pushed the Sept 10-17 Codex work first.
 2026-09-17 Codex — Implemented the user-approved role split with scoped specialist inputs,
 outputs, retry ownership and one coordinator writing the handoff. Kept the existing host
 entry path and all gate/receipt formats. Reconciled stale skill approval/intake/naming

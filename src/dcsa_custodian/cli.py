@@ -39,6 +39,10 @@ def parser() -> argparse.ArgumentParser:
     regenerate = commands.add_parser('regenerate', help='Legacy recipe utility; new standalone rebuilds belong to dcsa-library-rebuilder')
     regenerate.add_argument('--recipe', type=Path, required=True)
     regenerate.add_argument('--destination', type=Path, required=True)
+    provenance = commands.add_parser("import-provenance", help="Add reviewed provenance decisions from the Librarian's byte-verified ledger")
+    provenance.add_argument("--library-root")
+    provenance.add_argument("--ledger", type=Path, required=True)
+    provenance.add_argument("--dry-run", action="store_true")
     for name in ("doctor", "audit", "build-candidate"):
         cmd = commands.add_parser(name)
         cmd.add_argument("--library-root")
@@ -96,6 +100,21 @@ def main() -> int:
             print(json.dumps(regenerate(args.recipe, args.destination), indent=2))
             return 0
         config, library_root = _settings(args)
+        if args.command == "import-provenance":
+            from .decisions import provenance_decisions
+            entry = read_json(library_root / "START_HERE_FOR_ROBOTS.json")
+            records = {str(r["document_id"]): r for _, r in iter_jsonl(library_root / entry["documents"])}
+            rows = [row for _, row in iter_jsonl(args.ledger)]
+            path = PROJECT_ROOT / config.get("metadata_decisions_file", "decisions/metadata_decisions.json")
+            payload = read_json(path)
+            added = provenance_decisions(rows, records, payload["decisions"])
+            if added and not args.dry_run:
+                payload["decisions"].extend(added)
+                # Keep the reviewed file's existing non-ASCII text readable in diffs.
+                path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+            print(json.dumps({"ledger_rows": len(rows), "decisions_added": len(added), "dry_run": args.dry_run,
+                              "next": "build-candidate --deep, validate, evaluate, publish" if added else None}, indent=2))
+            return 0
         if args.command == "doctor":
             report = audit_library(library_root, deep=False)
             result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"], "release_metadata_errors": report["release_metadata_errors"], "verified_indexes": len(report["approved_indexes"])}

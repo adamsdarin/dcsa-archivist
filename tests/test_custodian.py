@@ -100,6 +100,89 @@ class CustodianTests(unittest.TestCase):
         self.assertEqual(apply_metadata_decisions([record], [decision]), 1)
         self.assertEqual(record["answer_eligibility"], "answer_eligible")
 
+    def _duplicate_pair(self) -> list[dict]:
+        # Byte-identical copies as enrich_manifest leaves them: the copy filed under a
+        # higher-authority folder won canonical, the correctly named one did not.
+        winner = {"document_id": "form-mislabelled", "source_document_id": "form-mislabelled",
+                  "robot_text_path": "TEXT/FOCI/Form January 2026.txt", "collection_id": "forms",
+                  "authority_role": "dcsa_form", "title": "Form January 2026",
+                  "answer_eligibility": "unresolved_currency", "duplicate_of": None,
+                  "canonical_document_id": "form-mislabelled"}
+        loser = {"document_id": "form-dec1999", "source_document_id": "form-dec1999",
+                 "robot_text_path": "TEXT/FORMS/Expired/Form DEC 1999.txt", "collection_id": "forms",
+                 "authority_role": "dcsa_form", "title": "Form DEC 1999",
+                 "answer_eligibility": "excluded_duplicate", "duplicate_of": "form-mislabelled",
+                 "canonical_document_id": "form-mislabelled"}
+        return [winner, loser]
+
+    def _decision(self, record: dict, **extra) -> dict:
+        return {"source_document_id": record["source_document_id"], "robot_text_path": record["robot_text_path"],
+                "decision": "historical", "verified_utc": "2026-09-18T00:00:00Z", "verified_by": "test",
+                "evidence": [{"url": "https://example.gov/form"}], "note": "test", **extra}
+
+    def test_reviewed_canonical_choice_overrides_folder_priority(self) -> None:
+        winner, loser = records = self._duplicate_pair()
+        apply_metadata_decisions(records, [self._decision(winner), self._decision(loser, canonical=True)])
+        self.assertIsNone(loser["duplicate_of"])
+        self.assertEqual(loser["answer_eligibility"], "historical_only")
+        self.assertEqual(winner["duplicate_of"], "form-dec1999")
+        self.assertEqual(winner["answer_eligibility"], "excluded_duplicate")
+        self.assertEqual({r["canonical_document_id"] for r in records}, {"form-dec1999"})
+
+    def test_canonical_choice_holds_whatever_the_decision_order(self) -> None:
+        winner, loser = records = self._duplicate_pair()
+        apply_metadata_decisions(records, [self._decision(loser, canonical=True), self._decision(winner)])
+        self.assertEqual(winner["answer_eligibility"], "excluded_duplicate")
+        self.assertEqual(loser["answer_eligibility"], "historical_only")
+
+    def test_canonical_choice_needs_a_duplicate_group(self) -> None:
+        winner, _ = self._duplicate_pair()
+        winner["canonical_document_id"] = winner["document_id"]
+        with self.assertRaisesRegex(ValueError, "no duplicate group"):
+            apply_metadata_decisions([winner], [self._decision(winner, canonical=True)])
+
+    def test_title_override_keeps_paths_and_source_title(self) -> None:
+        winner, loser = records = self._duplicate_pair()
+        apply_metadata_decisions(records, [self._decision(winner, title="Form (December 1999 edition)")])
+        self.assertEqual(winner["title"], "Form (December 1999 edition)")
+        self.assertEqual(winner["source_title"], "Form January 2026")
+        self.assertEqual(winner["title_basis"], "official_source_review")
+        self.assertEqual(winner["robot_text_path"], "TEXT/FOCI/Form January 2026.txt")
+
+    def test_title_override_requires_evidence(self) -> None:
+        winner, _ = records = self._duplicate_pair()
+        decision = self._decision(winner, title="Renamed", decision="exclude", evidence=[])
+        with self.assertRaisesRegex(ValueError, "requires official-source evidence"):
+            apply_metadata_decisions(records, [decision])
+
+    def test_provenance_records_url_only_on_identical_bytes(self) -> None:
+        winner, _ = self._duplicate_pair()
+        winner["human_artifact_sha256"] = "a" * 64
+        decision = self._decision(winner, decision="provenance", source_url="https://example.gov/form.pdf",
+                                  source_sha256="a" * 64)
+        apply_metadata_decisions([winner], [decision])
+        self.assertEqual(winner["source_url"], "https://example.gov/form.pdf")
+        self.assertEqual(winner["answer_eligibility"], "unresolved_currency")  # lifecycle untouched
+
+    def test_provenance_rejects_different_bytes(self) -> None:
+        winner, _ = self._duplicate_pair()
+        winner["human_artifact_sha256"] = "a" * 64
+        decision = self._decision(winner, decision="provenance", source_url="https://example.gov/form.pdf",
+                                  source_sha256="b" * 64)
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            apply_metadata_decisions([winner], [decision])
+
+    def test_ledger_becomes_decisions_for_verified_rows_only(self) -> None:
+        from dcsa_custodian.decisions import provenance_decisions
+        winner, loser = self._duplicate_pair()
+        rows = [{"document_id": "form-mislabelled", "status": "verified", "requested_url": "https://example.gov/a.pdf",
+                 "source_sha256": "a" * 64, "checked_utc": "2026-09-18T00:00:00Z", "run_id": "r1"},
+                {"document_id": "form-dec1999", "status": "bytes_differ", "requested_url": "https://example.gov/b.pdf",
+                 "source_sha256": "b" * 64, "checked_utc": "2026-09-18T00:00:00Z"}]
+        made = provenance_decisions(rows, {r["document_id"]: r for r in (winner, loser)}, [])
+        self.assertEqual([d["source_document_id"] for d in made], ["form-mislabelled"])
+        self.assertEqual(provenance_decisions(rows, {r["document_id"]: r for r in (winner, loser)}, made), [])
+
     def test_dedup_uses_human_artifact_hash_not_doha_sqlite_side_table(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

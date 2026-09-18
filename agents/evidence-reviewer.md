@@ -22,7 +22,14 @@ Use the published catalog for collection paths and taxonomy. Preserve originals.
    explicitly; exclude unresolved material from ordinary current-answer retrieval.
    Existing supported lifecycle corrections use `decisions/metadata_decisions.json`
    with official evidence and exact identity/path binding. See
-   `skill/dcsa-archivist/references/currency-and-acquisition.md`.
+   `skill/dcsa-archivist/references/currency-and-acquisition.md`. Three options
+   sit beside the disposition: `"canonical": true` picks the canonical copy of a
+   content-duplicate group when folder priority chose wrongly; `"title"` sets a
+   reviewed display title without renaming files or breaking citations; and the
+   `provenance` disposition records an official URL only when its reacquired
+   bytes equal the retained file. Load the Librarian's byte-verified ledger with
+   `python custodian.py import-provenance --ledger <librarian>/state/provenance/provenance.jsonl`;
+   `bytes_differ` rows stay with you for review.
 4. Return the hash-bound plan in `docs/INTAKE-AND-EVENTS.md`, with real reviewer
    identity/time and evidence for identity, provenance, extraction, parity,
    taxonomy and lifecycle. Keep each batch in a separate staging directory under

@@ -48,6 +48,15 @@ authority_priority, `answer_eligible` status, non-`LEGACY` path, a record with `
 present (a deliberately curated name should win over an untouched raw one), shorter path,
 then casefold — check this order still makes sense before trusting an automatic pick.
 
+When the automatic pick is wrong (the classic case: a mislabelled copy filed under a
+higher-authority folder beats the correctly named copy), do not hand-edit
+`duplicate_of` in documents.jsonl — the next enrich resets it. Add a metadata decision
+with `"canonical": true` on the correct record; it must match exactly one record in a
+real duplicate group. A misleading title is fixed the same way with a reviewed
+`"title"` (evidence required); paths and IDs stay, so consumer citations still resolve.
+Both were first used for the DD 254 December 1999 copies (release
+`dd254-canonical-title-20260918`).
+
 Actual deletion happened this session only via explicit, scoped, per-case human authorization
 (never a blanket default) — DOHA case pairs with fabricated placeholder metadata, and library-
 wide confirmed byte-identical pairs — always backed up first. Don't delete without that same
