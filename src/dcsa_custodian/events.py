@@ -14,6 +14,45 @@ from .wiki import build_edges
 ENRICHED = "ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl"
 CHUNKS = "ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
 CONSUMERS = ("dcsa-compare", "fso-guidance-watch")
+# Published, hash-bound, per-release change summaries. Consumers use them to tell a
+# release that touched nothing an answer depends on from one that did; they carry
+# identities and eligibility only, never content.
+SUMMARY_DIR = "ROBOT_READABLE_DIRECTORY/STATE/RELEASE_CHANGES"
+
+
+def compact_summary(changes: dict) -> dict:
+    return {
+        "schema_version": "1.0", "release_id": changes["release_id"],
+        "previous_release_id": changes.get("previous_release_id"), "baseline": bool(changes.get("baseline")),
+        "created_utc": changes.get("created_utc"),
+        "changes": [{
+            "document_id": c["document_id"], "kind": c["kind"], "changed_fields": c.get("changed_fields", []),
+            "before_eligibility": (c.get("before") or {}).get("answer_eligibility"),
+            "after_eligibility": (c.get("after") or {}).get("answer_eligibility"),
+        } for c in changes.get("changes", [])],
+    }
+
+
+def summary_history(library: Path, releases_dir: Path, changes: dict, limit: int = 200) -> dict[str, dict]:
+    """Summaries this candidate should publish: its own, plus earlier ones the library lacks.
+
+    Walks previous_release_id through this project's retained release reports and
+    stops at the first release the library already summarizes or that has no report.
+    """
+    output = {changes["release_id"]: compact_summary(changes)}
+    previous = changes.get("previous_release_id")
+    for _ in range(limit):
+        if not previous or (library / SUMMARY_DIR / f"{previous}.json").is_file():
+            break
+        report = releases_dir / previous / "reports/RELEASE_CHANGES.json"
+        if not report.is_file():
+            break
+        earlier = read_json(report)
+        if earlier.get("release_id") != previous:
+            break
+        output[previous] = compact_summary(earlier)
+        previous = earlier.get("previous_release_id")
+    return output
 
 
 def _rows(path: Path) -> list[dict]:

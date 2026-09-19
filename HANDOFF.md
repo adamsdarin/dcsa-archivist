@@ -3,6 +3,12 @@
 Last updated: 2026-09-18 by Claude
 
 ## Current State
+2026-09-19: Published `release-change-summaries-20260919` (no document changes;
+validate ok, evaluate 16/16, doctor healthy). Every publication now writes a compact
+per-release change summary to ROBOT_READABLE_DIRECTORY/STATE/RELEASE_CHANGES/ and
+binds all of them in the pointer's metadata_sha256; history reaches back to
+nist-172-r3-intake-20260911. Question Bot uses them for scoped wiki revalidation.
+
 Published `dd254-canonical-title-20260918` (2026-09-18, autonomous after gates):
 validate valid/publishable, evaluate 16/16, doctor integrity_healthy and
 production_response_ready, 0 duplicate IDs/groups/tier conflicts, 3 unresolved
@@ -34,6 +40,8 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-19 Claude — Added published, hash-bound release change summaries (owner-approved
+scoped wiki revalidation). Test covers publication, cumulative history and tamper.
 2026-09-18 Claude — Resolved the DD 254 relabel and the _canonical_sort gap with
 reviewed decisions rather than a heuristic change, so no other duplicate group's
 canonical pick moved (verified: 2 records changed). Added provenance decisions so

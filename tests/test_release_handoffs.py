@@ -59,6 +59,23 @@ class HandoffTests(unittest.TestCase):
             self.assertEqual([c['document_id'] for c in packet['changes']['changes']], ['new-voi'])
             self.assertFalse(comparison_report(packet['changes'])['supersession_verified'])
 
+    def test_change_summaries_are_published_bound_and_cumulative(self):
+        self.publish()
+        plan, record = self.plan()
+        publish_candidate(self.project, self.root, self.config, Path(self.build(plan)['release_directory']))
+        folder = self.root / 'ROBOT_READABLE_DIRECTORY/STATE/RELEASE_CHANGES'
+        summary = read_json(folder / 'intake-test.json')
+        self.assertEqual([(c['document_id'], c['kind'], c['before_eligibility']) for c in summary['changes']],
+                         [('new-voi', 'added', None)])
+        # the earlier release's summary is kept and both are hash-bound in the pointer
+        self.assertTrue((folder / f"{summary['previous_release_id']}.json").is_file())
+        pointer = read_json(self.root / 'ROBOT_READABLE_DIRECTORY/STATE/CURRENT_CUSTODIAN_RELEASE.json')
+        bound = [k for k in pointer['metadata_sha256'] if k.startswith('ROBOT_READABLE_DIRECTORY/STATE/RELEASE_CHANGES/')]
+        self.assertEqual(len(bound), 2)
+        self.assertTrue(readiness(self.root)['ready'])
+        (folder / 'intake-test.json').write_text('{}')
+        self.assertFalse(readiness(self.root)['ready'])
+
     def test_unreviewed_doha_intake_is_refused_before_staging(self):
         from dcsa_custodian.intake import stage_intake
         plan, _ = self.plan()

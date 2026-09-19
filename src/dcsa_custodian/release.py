@@ -21,7 +21,7 @@ from .enrich import enrich_manifest
 from .evals import evaluate_candidate
 from .indexes import build_indexes
 from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts
-from .events import build_changes, reconcile_event
+from .events import SUMMARY_DIR, build_changes, reconcile_event, summary_history
 from .wiki import build_graph, lint_report
 from .intake import stage_intake
 from .publication_lock import publication_lock
@@ -235,7 +235,10 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     )
     chunks_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
     write_jsonl(chunks_path, chunks)
-    write_json(release_dir / "reports/RELEASE_CHANGES.json", build_changes(target_root or root, records, chunks, release_id))
+    changes = build_changes(target_root or root, records, chunks, release_id)
+    write_json(release_dir / "reports/RELEASE_CHANGES.json", changes)
+    for summarized, summary in summary_history(target_root or root, release_dir.parent, changes).items():
+        write_json(release_dir / "production" / SUMMARY_DIR / f"{summarized}.json", summary)
     write_json(release_dir / "production/ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json", {
         "schema_version": "1.0", "release_id": release_id, "use": "navigation_only_not_answer_evidence",
         "graph": build_graph(records),
@@ -548,6 +551,14 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
         "validation": {"valid": True, "publishable": True, "validated_utc": validation["validated_utc"]},
         "metadata_sha256": {relative: sha256_file(overlay / relative) for relative in (STATE, CATALOG, QUERY, POLICY, CONFIG, ROUTER, wiki_relative, *evidence_metadata, *doha_metadata)},
     }
+    # Bind every change summary the library will hold after this publication, so a
+    # consumer deciding whether an answer survived a release reads verified history.
+    summaries = {p.name: p for p in (root / SUMMARY_DIR).glob("*.json")} if (root / SUMMARY_DIR).is_dir() else {}
+    summaries.update({p.name: p for p in (production_root / SUMMARY_DIR).glob("*.json")})
+    for name, path in sorted(summaries.items()):
+        (overlay / SUMMARY_DIR).mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, overlay / SUMMARY_DIR / name)
+        pointer["metadata_sha256"][f"{SUMMARY_DIR}/{name}"] = sha256_file(overlay / SUMMARY_DIR / name)
     write_json(overlay / POINTER, pointer)
     approved_release(overlay, verify_indexes=False)
     sources = {source.relative_to(production_root).as_posix(): source for source in production_root.rglob("*") if source.is_file()}
