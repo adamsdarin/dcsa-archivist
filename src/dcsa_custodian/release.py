@@ -17,6 +17,7 @@ from .chunks import build_chunks
 from .common import HUMAN_PREFIX, ROBOT_PREFIX, iter_jsonl, norm, read_json, sha256_file, sha256_text, utc_now, write_json, write_jsonl
 from .decisions import apply_metadata_decisions, load_metadata_decisions
 from .directive_splits import build_directive_splits
+from . import doha_release
 from .enrich import enrich_manifest
 from .evals import evaluate_candidate
 from .indexes import build_indexes
@@ -164,6 +165,29 @@ def _remediation_queue(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(queue, key=lambda item: (item["priority"], item["issue"], item["document_id"], item["robot_text_path"]))
 
 
+DOHA_INPUTS = "reports/doha_inputs"
+DOHA_REVIEWS = "doha_era_reviews.json"
+DOHA_PROVENANCE = "doha_source_urls.jsonl"
+
+
+def _build_doha_eras(project_root: Path, config: dict[str, Any], root: Path, release_dir: Path,
+                     records: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Rewrite DOHA eras and provenance in the candidate; snapshot the reviewed inputs for validation."""
+    if not (root / doha_release.PATH_MANIFEST).is_file() or not (root / doha_release.CONTENT).is_file():
+        return None
+    inputs = release_dir / DOHA_INPUTS
+    inputs.mkdir(parents=True, exist_ok=True)
+    for name, key in ((DOHA_REVIEWS, "doha_era_reviews_file"), (DOHA_PROVENANCE, "doha_provenance_file")):
+        source = project_root / config.get(key, f"decisions/{name}")
+        if source.is_file():
+            shutil.copy2(source, inputs / name)
+    report = doha_release.build(root, release_dir / "production", doha_release.load_reviews(inputs / DOHA_REVIEWS),
+                                doha_release.load_provenance(inputs / DOHA_PROVENANCE))
+    doha_release.apply_to_records(records, release_dir / "production", root)
+    write_json(release_dir / "reports/DOHA_ERA_REPORT.json", report)
+    return report
+
+
 def build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False, intake_plan: Path | None = None) -> dict[str, Any]:
     if intake_plan is not None:
         audit = audit_library(root, deep=True)
@@ -210,6 +234,7 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
         "applied": metadata_decisions_applied,
         "decisions": metadata_decisions,
     })
+    doha_report = _build_doha_eras(project_root, config, root, release_dir, records)
     enriched_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl"
     write_jsonl(enriched_path, records)
     remediation_queue = _remediation_queue(records)
@@ -293,6 +318,7 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
         "quality_blockers": audit["quality_blockers"],
         "remediation_queue_items": len(remediation_queue),
         "metadata_decisions_applied": metadata_decisions_applied,
+        "doha_eras": {key: doha_report[key] for key in ("rule_id", "era_counts", "corrections", "source_urls_recorded")} if doha_report else None,
         "approved_indexes": [],
         "candidate_indexes": catalog,
         "requires_human_approval": False,
@@ -346,6 +372,15 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
             errors.append(f"current record has unclassified authority role: {record.get('document_id')}")
         if record.get("duplicate_of") and record.get("answer_eligibility") != "excluded_duplicate":
             errors.append(f"duplicate not excluded: {record.get('document_id')}")
+
+    # Every candidate of a library holding DOHA decisions must carry eras that follow
+    # the decision date, consistently in every store, recomputed from the text.
+    production = release_dir / "production"
+    if all((production / relative).is_file() or (root / relative).is_file()
+           for relative in (doha_release.PATH_MANIFEST, doha_release.CONTENT)):
+        inputs = release_dir / DOHA_INPUTS
+        errors.extend(doha_release.check(production, root, doha_release.load_reviews(inputs / DOHA_REVIEWS),
+                                         doha_release.load_provenance(inputs / DOHA_PROVENANCE), enriched=enriched_path))
 
     chunks_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
     source_cache: dict[str, str] = {}
