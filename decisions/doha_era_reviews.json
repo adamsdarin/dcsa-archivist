@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "note": "Reviewed SEAD 4 eras for decisions whose issue date the text alone does not settle. SEAD 4 took effect 2017-06-08 and DOHA applied it to every decision issued on or after that date, so a decision that applies or weighs the new adjudicative guidelines issued on or after it. Evidence quotes procedure and guideline choice only, never case facts.",
+  "reviews": [
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-06-09179-h1_approved_f",
+      "case_stem": "06-09179.h1_approved_f",
+      "decision_date": "2007-01-23",
+      "reviewed_by": "Claude, Custodian session 2026-09-22",
+      "reviewed_utc": "2026-09-22T23:55:00Z",
+      "evidence": "The extraction carries two DATE headers, 01/23/2006 and January 23, 2007; the case was assigned to the judge on October 5, 2006, so the 2006 header is a typo for 2007-01-23."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-08709-h1_approved_e_f",
+      "case_stem": "15-08709.h1_approved_e_f",
+      "sead4_era": "post_sead4",
+      "reviewed_by": "Claude, Custodian session 2026-09-22",
+      "reviewed_utc": "2026-09-22T23:55:00Z",
+      "evidence": "The decision states that the new adjudicative guidelines are to be used in decisions issued on or after June 8, 2017 and that 'In light of this explicit direction ... I have applied the new adjudicative guidelines', so it issued on or after that date. Its stated date, 04/19/2017, precedes the close of its own record on April 28, 2017."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-16-03761-h1_denied_f",
+      "case_stem": "16-03761.h1_denied_f",
+      "sead4_era": "post_sead4",
+      "reviewed_by": "Claude, Custodian session 2026-09-22",
+      "reviewed_utc": "2026-09-22T23:55:00Z",
+      "evidence": "The decision applies the adjudicative guidelines 'as amended on June 8, 2017' and records that the Government's File of Relevant Material was submitted May 14, 2017 and received by the applicant on May 22, 2017, after which his response period ran."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-17-00778-h1_approved_f",
+      "case_stem": "17-00778.h1_approved_f",
+      "sead4_era": "post_sead4",
+      "reviewed_by": "Claude, Custodian session 2026-09-22",
+      "reviewed_utc": "2026-09-22T23:55:00Z",
+      "evidence": "The decision weighs both versions of the adjudicative guidelines, noting the version effective for adjudications on or after June 8, 2017 and that 'My decision in this case would have been the same under either version', which a decision issued before that date would not need to say. Its caption carries the case number where the date belongs, and DOHA posts it on the 2018 hearing listing."
+    }
+  ]
+}

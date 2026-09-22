@@ -40,6 +40,7 @@ _DECISION_LINE = re.compile(r"^[\s_]*Decision[\s_]*$", re.M | re.I)
 # Events that precede the decision in every case. Each phrase ends where its date begins.
 _PROCEDURAL = re.compile(
     r"(?:case\s+was\s+(?:re)?assigned\s+to\s+(?:me|this\s+administrative\s+judge|the\s+undersigned)"
+    r"|(?:I|the\s+undersigned)\s+(?:was|were)\s+(?:re)?assigned\s+(?:the\s+case|this\s+case)"
     r"|record\s+(?:was\s+)?closed"
     r"|hearing\s+(?:was\s+)?(?:held|convened|conducted)"
     r"|(?:DOHA\s+)?received\s+the\s+(?:hearing\s+)?transcript(?:\s+of\s+the\s+hearing)?(?:\s*\(Tr\.?\))?"
@@ -128,18 +129,17 @@ def era_for(value: date) -> str:
 
 
 def listing_span(title: str) -> tuple[date | None, date | None, str] | None:
-    """Issue-date bounds implied by the official DOHA listing page a decision is posted on.
+    """The issue-date bound implied by the official DOHA listing a decision is posted on.
 
-    DOHA files decisions by the year they were issued ("2019 ISCR Hearing Decisions"),
-    and everything earlier under "2016 and Prior".
+    A decision cannot be posted before it issues, so the listing year bounds the
+    issue date from above: "2016 and Prior" means 2016 at the latest. It is no
+    lower bound. DOHA posts late: in this corpus 1,251 decisions with a sound
+    date sit on the listing for the year after the one they were issued in.
     """
-    match = re.search(r"\b(19|20)(\d{2})\b(\s+and\s+prior)?", title or "", re.I)
+    match = re.search(r"\b(19|20)(\d{2})\b", title or "", re.I)
     if not match:
         return None
-    year = int(match.group(1) + match.group(2))
-    if match.group(3):
-        return None, date(year, 12, 31), f"official listing '{title}'"
-    return date(year, 1, 1), date(year, 12, 31), f"official listing '{title}'"
+    return None, date(int(match.group(1) + match.group(2)), 12, 31), f"official listing '{title}'"
 
 
 def classify(text: str, case_id: str, review: dict[str, Any] | None = None,

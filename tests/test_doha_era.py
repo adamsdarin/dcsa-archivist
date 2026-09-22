@@ -48,11 +48,13 @@ class ClassifyTests(unittest.TestCase):
         text = hearing("15-12345", "03/31/2017", "The case was assigned to me on April 7, 2017.")
         self.assertEqual(classify(text, "15-12345")["sead4_era"], "undetermined")
 
-    def test_official_listing_year_bounds_an_unstated_date(self) -> None:
+    def test_official_listing_year_bounds_an_unstated_date_from_above(self) -> None:
         text = hearing("15-12345", "15-12345")
         self.assertEqual(classify(text, "15-12345")["sead4_era"], "undetermined")
         self.assertEqual(classify(text, "15-12345", listing_title="2016 and Prior ISCR Hearing Decisions - 3")["sead4_era"], "pre_sead4")
-        self.assertEqual(classify(text, "15-12345", listing_title="2019 ISCR Hearing Decisions")["sead4_era"], "post_sead4")
+        # DOHA posts late, so the listing year is no lower bound: a 2019 listing
+        # does not make an undated 2015 case post-SEAD 4.
+        self.assertEqual(classify(text, "15-12345", listing_title="2019 ISCR Hearing Decisions")["sead4_era"], "undetermined")
 
     def test_impossible_day_keeps_the_month_as_evidence(self) -> None:
         result = classify(hearing("16-12345", "03/32/2018"), "16-12345")
