@@ -1,0 +1,206 @@
+{
+  "schema_version": "1.0",
+  "note": "DOHA rows the library has no artifacts for. Each names a case the library does hold under another row, with byte-identical indexed text, and none was ever carried in the source manifest documents.jsonl. Retiring them removes dead paths from the DOHA stores without losing evidence. The build re-checks every condition and refuses a retirement whose files exist, whose document is in the source manifest, or whose indexed text differs from its survivor.",
+  "retirements": [
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-07-14508-h2",
+      "case_stem": "07-14508.h2",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-07-14508-h2_approved_b",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-07-14508-h2_approved_b, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-12-06955-h1",
+      "case_stem": "12-06955.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-12-06955-h1_approved_b",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-12-06955-h1_approved_b, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-12-08736-h1",
+      "case_stem": "12-08736.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-12-08736-h1_approved_b",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-12-08736-h1_approved_b, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-12-10172-h1",
+      "case_stem": "12-10172.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-12-10172-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-12-10172-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-14-00010-h1",
+      "case_stem": "14-00010.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-14-00010-h1_approved_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-14-00010-h1_approved_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-14-05478-h1",
+      "case_stem": "14-05478.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-14-05478-h1_approved_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-14-05478-h1_approved_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-14-07001-h1",
+      "case_stem": "14-07001.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-14-07001-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-14-07001-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-14-07025-h1",
+      "case_stem": "14-07025.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-14-07025-h1_approved_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-14-07025-h1_approved_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-00263-h1",
+      "case_stem": "15-00263.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-00263-h1_approved_h",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-00263-h1_approved_h, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-01212-h1",
+      "case_stem": "15-01212.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-01212-h1_approved_b",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-01212-h1_approved_b, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-01481-h1",
+      "case_stem": "15-01481.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-01481-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-01481-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-01622-h1",
+      "case_stem": "15-01622.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-01622-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-01622-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-01670-h1",
+      "case_stem": "15-01670.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-01670-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-01670-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-01961-h1",
+      "case_stem": "15-01961.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-01961-h1_denied_e_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-01961-h1_denied_e_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-01987-h1",
+      "case_stem": "15-01987.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-01987-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-01987-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-02035-h1",
+      "case_stem": "15-02035.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-02035-h1_approved_h",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-02035-h1_approved_h, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-02244-h1",
+      "case_stem": "15-02244.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-02244-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-02244-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-02732-h1",
+      "case_stem": "15-02732.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-02732-h1_approved_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-02732-h1_approved_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-02888-h1",
+      "case_stem": "15-02888.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-02888-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-02888-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-03434-h1",
+      "case_stem": "15-03434.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-03434-h1_approved_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-03434-h1_approved_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-03555-h1",
+      "case_stem": "15-03555.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-03555-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-03555-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-04306-h1",
+      "case_stem": "15-04306.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-04306-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-04306-h1_denied_f, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-15-05026-h1",
+      "case_stem": "15-05026.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-15-05026-h1_denied_e",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-15-05026-h1_denied_e, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-17-01413-h1",
+      "case_stem": "17-01413.h1",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-17-01413-h1_approved_b_c",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-17-01413-h1_approved_b_c, which has both artifacts."
+    },
+    {
+      "document_id": "dcsa-doha_decisions-pdf-s-17-03627-h2_denied_f",
+      "case_stem": "17-03627.h2_denied_f",
+      "superseded_by": "dcsa-doha_decisions-pdf-s-17-03627-h1_denied_f",
+      "reviewed_by": "Claude, Custodian session 2026-09-23",
+      "reviewed_utc": "2026-09-23T03:10:00Z",
+      "evidence": "Neither the robot text nor the source PDF this row names exists in the library, the document is absent from documents.jsonl, and the case index holds byte-identical text for the surviving row dcsa-doha_decisions-pdf-s-17-03627-h1_denied_f, which has both artifacts."
+    }
+  ]
+}

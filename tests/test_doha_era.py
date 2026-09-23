@@ -169,6 +169,71 @@ class ReleaseTests(unittest.TestCase):
             errors = validate_candidate(root, release)["errors"]
             self.assertTrue(any("DOHA_CASE_TOPICS_FTS.sqlite disagrees" in error for error in errors), errors)
 
+    def phantom(self, root: Path, survivor: str = "late-2016-case") -> dict:
+        """A row naming files the library does not hold, with a real row's indexed text."""
+        rows = [row for _, row in iter_jsonl(root / doha_release.PATH_MANIFEST)]
+        real = next(row for row in rows if row["document_id"] == survivor)
+        ghost = dict(real, document_id="ghost", case_stem="16-12345.h1",
+                     robot_text_path="ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/DOHA_DECISIONS/PRE_SEAD_4/ghost.txt",
+                     human_source_path="HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS/PRE_SEAD_4/ghost.pdf")
+        write_jsonl(root / doha_release.PATH_MANIFEST, rows + [ghost])
+        with contextlib.closing(sqlite3.connect(root / doha_release.CONTENT)) as db, db:
+            for table in ("decisions", "corpus"):
+                columns = [r[1] for r in db.execute(f"PRAGMA table_info({table})")] if table == "decisions" else None
+                if columns:
+                    values = dict(zip(columns, db.execute("SELECT * FROM decisions WHERE document_id=?", (survivor,)).fetchone()))
+                    values["document_id"] = "ghost"
+                    db.execute(f"INSERT INTO decisions({','.join(values)}) VALUES({','.join('?' * len(values))})", tuple(values.values()))
+                else:
+                    content = db.execute("SELECT content FROM corpus WHERE document_id=?", (survivor,)).fetchone()[0]
+                    db.execute("INSERT INTO corpus(document_id,content) VALUES(?,?)", ("ghost", content))
+        with contextlib.closing(sqlite3.connect(root / doha_release.PATHS)) as db, db:
+            db.execute("INSERT INTO current_paths(document_id,case_stem,current_group,human_source_path,robot_text_path,authority_priority)"
+                       " VALUES('ghost','16-12345.h1','PRE_SEAD_4',?,?,25)", (ghost["human_source_path"], ghost["robot_text_path"]))
+        return {"document_id": "ghost", "superseded_by": f"{survivor}", "reviewed_by": "reviewer",
+                "reviewed_utc": "2026-09-23T00:00:00Z", "evidence": "no artifacts; identical indexed text"}
+
+    def test_a_row_without_robot_text_fails_validation_until_it_is_retired(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "library"
+            root.mkdir()
+            self.make_library(root)
+            retirement = self.phantom(root)
+            production = Path(temp) / "production"
+            doha_release.build(root, production, {}, {})
+            self.assertTrue(any("robot text the library does not hold" in error
+                                for error in doha_release.check(production, root)), "a dead path must block a release")
+            retirements = {"ghost": retirement}
+            report = doha_release.build(root, production, {}, {}, retirements)
+            self.assertEqual([item["document_id"] for item in report["retired"]], ["ghost"])
+            self.assertEqual(doha_release.check(production, root, retirements=retirements), [])
+            eras = {row["document_id"] for _, row in iter_jsonl(production / doha_release.ERA_MANIFEST)}
+            self.assertNotIn("ghost", eras)
+            with contextlib.closing(sqlite3.connect(production / doha_release.CONTENT)) as db:
+                for table in ("decisions", "corpus"):
+                    self.assertIsNone(db.execute(f"SELECT 1 FROM {table} WHERE document_id='ghost'").fetchone())
+            with contextlib.closing(sqlite3.connect(production / doha_release.PATHS)) as db:
+                self.assertIsNone(db.execute("SELECT 1 FROM current_paths WHERE document_id='ghost'").fetchone())
+
+    def test_retirement_is_refused_when_the_library_still_holds_the_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "library"
+            root.mkdir()
+            self.make_library(root)
+            retirement = self.phantom(root)
+            production = Path(temp) / "production"
+            # A real row, with files on disk, can never be retired.
+            with self.assertRaises(ValueError):
+                doha_release.build(root, production, {}, {}, {"late-2016-case": dict(retirement, document_id="late-2016-case", superseded_by="day-before")})
+            # Nor a phantom whose indexed text differs from the row said to supersede it.
+            with self.assertRaises(ValueError):
+                doha_release.build(root, production, {}, {}, {"ghost": dict(retirement, superseded_by="day-before")})
+            # Nor one the source manifest still carries.
+            documents = [record for _, record in iter_jsonl(root / doha_release.DOCUMENTS)]
+            write_jsonl(root / doha_release.DOCUMENTS, documents + [{"document_id": "ghost", "collection_id": "doha_decisions"}])
+            with self.assertRaises(ValueError):
+                doha_release.build(root, production, {}, {}, {"ghost": retirement})
+
     def test_doctor_reports_an_uncorrected_library(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "library"

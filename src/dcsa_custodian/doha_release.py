@@ -71,6 +71,54 @@ def load_provenance(path: Path) -> dict[str, dict[str, Any]]:
     return output
 
 
+def load_retirements(path: Path) -> dict[str, dict[str, Any]]:
+    """Reviewed removals of DOHA rows that describe a decision the library does not hold."""
+    if not path.is_file():
+        return {}
+    payload = read_json(path)
+    if payload.get("schema_version") != "1.0" or not isinstance(payload.get("retirements"), list):
+        raise ValueError(f"invalid DOHA retirements file: {path}")
+    retirements = {}
+    for item in payload["retirements"]:
+        for key in ("document_id", "superseded_by", "reviewed_by", "reviewed_utc", "evidence"):
+            if not isinstance(item.get(key), str) or not item[key].strip():
+                raise ValueError(f"DOHA retirement for {item.get('document_id')} requires {key}")
+        if item["document_id"] in retirements:
+            raise ValueError(f"duplicate DOHA retirement: {item['document_id']}")
+        retirements[item["document_id"]] = item
+    return retirements
+
+
+def _retire(root: Path, rows: list[dict[str, Any]], retirements: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """Check every condition that makes a removal safe, then drop the rows. Fails closed.
+
+    A row may only go when the library holds nothing it points at, the source
+    manifest never knew it, and its indexed text is byte-identical to a row that
+    does have both artifacts -- so retiring it loses no evidence.
+    """
+    if not retirements:
+        return rows
+    by_id = {row["document_id"]: row for row in rows}
+    governed = {record["document_id"] for _, record in iter_jsonl(root / DOCUMENTS)
+                if record.get("collection_id") == "doha_decisions"}
+    with contextlib.closing(_read_only(root / CONTENT)) as db:
+        digests = dict(db.execute("SELECT document_id,content_sha256 FROM decisions"))
+    for identity, item in retirements.items():
+        row = by_id.get(identity)
+        if row is None:
+            raise ValueError(f"DOHA retirement names a row the manifest does not have: {identity}")
+        if (root / row["robot_text_path"]).is_file() or (root / row["human_source_path"]).is_file():
+            raise ValueError(f"DOHA retirement refused; the library holds this decision's files: {identity}")
+        if identity in governed:
+            raise ValueError(f"DOHA retirement refused; the source manifest carries this document: {identity}")
+        survivor = by_id.get(item["superseded_by"])
+        if survivor is None or not (root / survivor["robot_text_path"]).is_file() or not (root / survivor["human_source_path"]).is_file():
+            raise ValueError(f"DOHA retirement needs a surviving row with both artifacts: {identity}")
+        if not digests.get(identity) or digests.get(identity) != digests.get(item["superseded_by"]):
+            raise ValueError(f"DOHA retirement needs identical indexed content to its survivor: {identity}")
+    return [row for row in rows if row["document_id"] not in retirements]
+
+
 def _resolve(production: Path, root: Path, relative: str) -> Path:
     staged = production / relative
     return staged if staged.is_file() else root / relative
@@ -115,9 +163,10 @@ def classify_rows(root: Path, reviews: dict[str, dict[str, Any]], provenance: di
 
 
 def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
-          provenance: dict[str, dict[str, Any]]) -> dict[str, Any]:
+          provenance: dict[str, dict[str, Any]], retirements: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     """Write corrected DOHA stores into the candidate. The live library is only read."""
-    rows = classify_rows(root, reviews, provenance)
+    retirements = retirements or {}
+    rows = _retire(root, classify_rows(root, reviews, provenance), retirements)
     by_id = {row["document_id"]: row for row in rows}
     before = {row["document_id"]: row for _, row in iter_jsonl(root / PATH_MANIFEST)}
     for relative in (ERA_MANIFEST, PATH_MANIFEST):
@@ -156,9 +205,10 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
                   source_url_field="source_url; null when no official URL is recorded. Never derive one from a case number.")
     write_json(production / ROUTER, router)
     changed_documents = _patch_documents(root, production, by_id)
-    changed_paths = _patch_index(root, production, PATHS, "current_paths", ("current_group", "authority_priority"), by_id)
+    changed_paths = _patch_index(root, production, PATHS, "current_paths", ("current_group", "authority_priority"), by_id,
+                                 retired=set(retirements))
     changed_content = _patch_index(root, production, CONTENT, "decisions", ("current_group", "retrieval_priority"), by_id,
-                                   fts_table="corpus")
+                                   fts_table="corpus", retired=set(retirements), topics_table="decision_topics")
     return {"schema_version": "1.0", "generated_utc": utc_now(), "rule_id": RULE_ID, "decisions": len(rows),
             "era_counts": dict(counts), "corrections": dict(corrections),
             "date_conflicts": sum(bool(row["date_conflicts"]) for row in rows),
@@ -167,6 +217,8 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
             "source_url_basis": dict(collections.Counter(row["source_url_basis"] for row in rows if row["source_url"])),
             "rewritten": {"documents_rows": changed_documents, "path_index_rows": changed_paths,
                           "topic_index_rows": changed_content},
+            "retired": [{"document_id": identity, "superseded_by": item["superseded_by"], "evidence": item["evidence"]}
+                        for identity, item in sorted(retirements.items())],
             "undetermined": [{"document_id": row["document_id"], "case_stem": row["case_stem"], "era_basis": row["era_basis"],
                               "date_conflicts": row["date_conflicts"]} for row in rows if row["sead4_era"] == "undetermined"]}
 
@@ -197,14 +249,21 @@ def _patch_documents(root: Path, production: Path, by_id: dict[str, dict[str, An
 
 
 def _patch_index(root: Path, production: Path, relative: str, table: str, columns: tuple[str, str],
-                 by_id: dict[str, dict[str, Any]], fts_table: str | None = None) -> int:
-    """Copy an index into the candidate and correct its era columns; leave it out when nothing differs."""
+                 by_id: dict[str, dict[str, Any]], fts_table: str | None = None,
+                 retired: set[str] | None = None, topics_table: str | None = None) -> int:
+    """Copy an index into the candidate, correct its era columns and drop retired rows.
+
+    The index is left out of the candidate when nothing differs, so publication
+    does not rewrite a 350 MB store for an unchanged release.
+    """
     group_column, priority_column = columns
+    retired = retired or set()
     with contextlib.closing(_read_only(root / relative)) as db:
         stale = [(row["current_group"], row["retrieval_priority"], identity)
                  for identity, group, priority in db.execute(f"SELECT document_id,{group_column},{priority_column} FROM {table}")
                  if (row := by_id.get(identity)) and (group, priority) != (row["current_group"], row["retrieval_priority"])]
-    if not stale:
+        removable = [(identity,) for identity, in db.execute(f"SELECT document_id FROM {table}") if identity in retired]
+    if not stale and not removable:
         return 0
     target = production / relative
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -214,7 +273,10 @@ def _patch_index(root: Path, production: Path, relative: str, table: str, column
         if fts_table:
             db.executemany(f"UPDATE {fts_table} SET current_group=? WHERE document_id=?",
                            [(group, identity) for group, _, identity in stale])
-    return len(stale)
+        for removed in (table, fts_table, topics_table):
+            if removed:
+                db.executemany(f"DELETE FROM {removed} WHERE document_id=?", removable)
+    return len(stale) + len(removable)
 
 
 def apply_to_records(records: list[dict[str, Any]], production: Path, root: Path) -> int:
@@ -240,7 +302,7 @@ def apply_to_records(records: list[dict[str, Any]], production: Path, root: Path
 
 def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | None = None,
           provenance: dict[str, dict[str, Any]] | None = None, recompute: bool = True,
-          enriched: Path | None = None) -> list[str]:
+          enriched: Path | None = None, retirements: dict[str, dict[str, Any]] | None = None) -> list[str]:
     """Errors when any DOHA store disagrees, or an era does not follow the decision-date rule.
 
     ``recompute`` reclassifies every decision from its text, which is what stops a
@@ -256,7 +318,13 @@ def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | Non
     if path_rows.keys() != era_rows.keys():
         errors.append("DOHA era and path manifests cover different decisions")
     bad: collections.defaultdict[str, list[str]] = collections.defaultdict(list)
+    for identity in sorted(set(retirements or {}) & era_rows.keys()):
+        bad["retired row is still in the era manifest"].append(identity)
     for identity, row in era_rows.items():
+        # A row promising text the library does not hold sends every consumer to a dead
+        # path. It is either a real decision to restore or a phantom to retire by review.
+        if not _resolve(production, root, str(row.get("robot_text_path", ""))).is_file():
+            bad["row points at robot text the library does not hold"].append(identity)
         era = row.get("sead4_era")
         if era not in ERAS or row.get("current_group") != ERAS[era] or row.get("retrieval_priority") != PRIORITY[era]:
             bad["era label, group and priority disagree"].append(identity)
