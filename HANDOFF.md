@@ -1,8 +1,26 @@
 # HANDOFF — dcsa-archivist
 
-Last updated: 2026-09-22 by Claude
+Last updated: 2026-09-23 by Claude
 
 ## Current State
+2026-09-23: Published `doha-retire-phantom-rows-20260923` (autonomous after gates:
+validate valid/publishable, evaluate 16/16, doctor healthy, doha_era_inconsistencies 0).
+Retired the 25 DOHA rows that named a robot text file and a source PDF the library
+does not hold. None was ever in documents.jsonl, and each duplicated a case the
+library does hold under another row with byte-identical indexed text, so nothing was
+lost: all 25 survivors are still there with both artifacts. One of the 25 was
+answer-eligible and inside the Question Bot's default precedent filter, so a real
+answer could have cited a path that does not exist. The DOHA stores now hold 10,633
+decisions, every one with its text, its PDF and a source URL.
+
+A reviewed retirement (decisions/doha_retired_rows.json) drops a row from both DOHA
+manifests and deletes it from both DOHA indexes, including decision_topics and the
+FTS corpus. The build re-checks every condition and refuses a retirement whose files
+exist, whose document the source manifest carries, or whose indexed text differs from
+the row said to supersede it. Validation now fails any candidate that still promises
+robot text the library does not hold, so the next phantom row blocks a release rather
+than reaching consumers. 95 tests pass.
+
 2026-09-22: Published `doha-era-and-provenance-20260922` (autonomous after gates:
 validate valid/publishable, evaluate 16/16, doctor integrity_healthy,
 production_response_ready, 8 verified indexes, doha_era_inconsistencies 0).
@@ -65,30 +83,34 @@ Manager, with a cross-process publication lock. New rebuilds route to
 dcsa-library-rebuilder; regenerate is legacy. 81 tests pass. All work committed.
 
 ## Next
-1. 17 DOHA decisions are UNDETERMINED (release report, doha-era-and-provenance-20260922).
+1. 16 DOHA decisions are UNDETERMINED (release report, doha-retire-phantom-rows-20260923).
    Each needs a reviewed decision or a better extraction; they are excluded from
    default retrieval until then. Their texts state no usable date, or state one
    their own record contradicts, and all sit within weeks of 2017-06-08.
-2. 25 DOHA manifest rows point at robot text files that do not exist; their era
-   came from the indexed copy in the case index. Separate defect, not fixed here.
-3. DOHA era changes deliberately raise no per-document comparison events (the
+2. DOHA era changes deliberately raise no per-document comparison events (the
    change packet tracks source and lifecycle fields, not era). Consumers read
    DOHA_SEAD4_RETRIEVAL_RULES.json and the release report instead. If Question Bot
    should revalidate wiki answers citing a precedent that moved era, that has to be
    decided and built.
-4. Guidance Watch and comparison still owe reviews for three release events
+3. Guidance Watch and comparison still owe reviews for three release events
    (nist-172-r3-intake-20260911, dd254-dec1999-lifecycle-fix-20260915,
    dd254-canonical-title-20260918); acknowledge only with their hashed receipts.
-5. When the Librarian's ledger has verified provenance rows, run import-provenance,
+4. When the Librarian's ledger has verified provenance rows, run import-provenance,
    then build/validate/evaluate/publish. That is how the Rebuilder's 749
    retained-bytes-only records gain official URLs.
-6. Continue the shared audit; DOHA implementation is in docs/DOHA-INTAKE.md.
+5. Continue the shared audit; DOHA implementation is in docs/DOHA-INTAKE.md.
 
 ## Open Questions
 None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-18
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-23 Claude — Retired 25 phantom DOHA rows rather than restoring text for them.
+Restoring was not an option worth taking: the source PDF is missing too, so a restored
+file would be a robot artifact with no source, and the same text is already served by a
+row that has both. Retirement is gated on four conditions checked at build time, because
+the difference between a phantom row and a real document whose file went missing is
+exactly the difference between cleanup and data loss.
 2026-09-22 Claude — Corrected the DOHA SEAD 4 era to follow the decision date and
 recorded an official source URL for every decision. The old flag followed case-number
 order against the delineation case, which is why 1,221 decisions issued after
