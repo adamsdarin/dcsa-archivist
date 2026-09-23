@@ -9,6 +9,7 @@ from typing import Any
 
 from .authority import parse_authority_header
 from .common import HUMAN_PREFIX, ROBOT_PREFIX, iter_jsonl, norm, read_json, safe_relative, sha256_file, utc_now
+from . import doha_release
 from .release_contract import approved_release, bounded_path
 
 
@@ -150,11 +151,22 @@ def audit_library(root: Path, deep: bool = False) -> dict[str, Any]:
             errors.append({"code": "approved_index_failure", **result})
         index_results.append(result)
 
+    # Consistency only: candidate validation recomputes every era from the text.
+    doha_era_problems: list[str] = []
+    if (root / doha_release.PATH_MANIFEST).is_file() and (root / doha_release.CONTENT).is_file():
+        try:
+            doha_era_problems = doha_release.check(root, root, recompute=False)
+        except (OSError, ValueError, KeyError, sqlite3.Error) as exc:
+            doha_era_problems = [f"DOHA era check could not run: {exc}"]
+    if doha_era_problems:
+        warnings.append({"code": "doha_era_inconsistencies", "count": len(doha_era_problems), "sample": doha_era_problems[:10]})
+
     quality_blockers = {
         "duplicate_document_ids": len(duplicate_ids),
         "duplicate_content_groups": len(duplicate_content),
         "authority_tier_conflicts": len(tier_conflicts),
         "unresolved_currency": unresolved_currency,
+        "doha_era_inconsistencies": len(doha_era_problems),
     }
     return {
         "schema_version": "1.0",
