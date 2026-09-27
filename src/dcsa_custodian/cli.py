@@ -43,6 +43,16 @@ def parser() -> argparse.ArgumentParser:
     provenance.add_argument("--library-root")
     provenance.add_argument("--ledger", type=Path, required=True)
     provenance.add_argument("--dry-run", action="store_true")
+    bulk = commands.add_parser("doha-intake-plan", help="Build a hash-bound DOHA intake plan from a Librarian doha-acquire run; writes only --out")
+    bulk.add_argument("--library-root")
+    bulk.add_argument("--run", type=Path, required=True, help="Librarian quarantine/doha-acquire/<run> directory")
+    bulk.add_argument("--not-held", type=Path, required=True, help="Librarian state/provenance/doha_not_in_library.jsonl")
+    bulk.add_argument("--out", type=Path, required=True, help="New directory for the plan, its sources and text")
+    bulk.add_argument("--group", choices=["hearings", "appeals"])
+    bulk.add_argument("--era", choices=["post_sead4", "pre_sead4"])
+    bulk.add_argument("--limit", type=int, help="Stop after this many planned decisions")
+    bulk.add_argument("--pilot", type=int, help="Plan a spread sample of this many decisions")
+    bulk.add_argument("--pdftotext", help="Path to pdftotext if it is not on PATH")
     for name in ("doctor", "audit", "build-candidate"):
         cmd = commands.add_parser(name)
         cmd.add_argument("--library-root")
@@ -115,6 +125,13 @@ def main() -> int:
             print(json.dumps({"ledger_rows": len(rows), "decisions_added": len(added), "dry_run": args.dry_run,
                               "next": "build-candidate --deep, validate, evaluate, publish" if added else None}, indent=2))
             return 0
+        if args.command == "doha-intake-plan":
+            from .doha_bulk import build_plan, pdftotext_extractor
+            summary = build_plan(library_root, args.run.resolve(), args.not_held.resolve(), args.out.resolve(),
+                                 pdftotext_extractor(args.pdftotext), group=args.group, era=args.era,
+                                 limit=args.limit, pilot=args.pilot)
+            print(json.dumps(summary, indent=2))
+            return 0 if summary["counts"].get("planned") else 2
         if args.command == "doctor":
             report = audit_library(library_root, deep=False)
             result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"], "release_metadata_errors": report["release_metadata_errors"], "verified_indexes": len(report["approved_indexes"])}

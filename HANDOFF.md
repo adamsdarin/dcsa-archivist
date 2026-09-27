@@ -1,8 +1,21 @@
 # HANDOFF — dcsa-archivist
 
-Last updated: 2026-09-23 by Claude
+Last updated: 2026-09-27 by Claude
 
 ## Current State
+2026-09-27: Added `doha-intake-plan` for bulk DOHA intake. The Librarian's
+doha-acquire run (owner's machine) holds 21,941 decisions the library lacks, each with
+a standard .intake.json. The command extracts text with pdftotext -layout, derives
+doha_review from the decision text by rule (CASENO/caption identity against the
+listing label, doha_era.classify date and era, outcome from conclusion or order,
+topics from KEYWORD line or formal findings), follows the existing DOHA ID and path
+convention, and sends anything a rule cannot settle to exceptions. Its plan passes
+stage_intake unchanged in tests. New provenance basis acquisition_bytes_identical.
+**Owner rule: no DOHA bulk batch is published before the owner spot-checks a sample.**
+Next: 50-decision pilot on the owner's machine (plan, build-candidate, validate,
+evaluate; not publish). 8 test errors in this cloud environment predate this work
+(fastembed and sibling repos absent); 92 pass.
+
 2026-09-23: Published `doha-retire-phantom-rows-20260923` (autonomous after gates:
 validate valid/publishable, evaluate 16/16, doctor healthy, doha_era_inconsistencies 0).
 Retired the 25 DOHA rows that named a robot text file and a source PDF the library
@@ -105,6 +118,12 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — Added doha-intake-plan. Rules over an LLM pass: DOHA decisions are
+regular enough that identity, date, era, outcome and topics can be read by rule with
+the quoted evidence kept, so every run is repeatable; judgement is reserved for the
+exceptions list. Topics match only within the KEYWORD line, because aliases like
+"debt" or "arrest" would mis-tag anywhere in a decision. Per-batch owner sign-off is
+stricter than the autonomous-publish default, at the owner's choice.
 2026-09-23 Claude — Retired 25 phantom DOHA rows rather than restoring text for them.
 Restoring was not an option worth taking: the source PDF is missing too, so a restored
 file would be a robot artifact with no source, and the same text is already served by a
@@ -133,7 +152,6 @@ instructions. Added per-library OS publication exclusion; tests cover competing 
 separate libraries, exception recovery, preflight coverage and dry-run corpus preservation.
 All 73 tests pass; skill validator (UTF-8 mode), workspace check and diff check pass.
 The sibling lock file persists; OS ownership ends on exit. No live release or schedule change.
-
 2026-09-17 Codex — Reviewed conductor, intake contract, enrichment and publication code.
 The conductor spans acquisition through Guidance Watch in one session; existing hash-bound
 intake plans and release events provide useful role boundaries. Recommend scoped review
@@ -141,7 +159,6 @@ and release roles, deterministic build/validation tools, and single-writer publi
 Current publish checks stale baselines but has no enclosing publisher lock. Naming and
 intake instructions also need reconciliation. Workspace health check passed; no runtime
 tests or production audit performed, and no code/library changes made.
-
 2026-09-16 Codex — Shared directive splitter now supports truthful producer attribution and blocks
 noncurrent/ineligible directive section output. Standalone Rebuilder shares these
 rules and wiki graph generation; the 70-test Archivist suite still passes.

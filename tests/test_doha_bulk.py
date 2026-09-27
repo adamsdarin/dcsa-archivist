@@ -1,0 +1,165 @@
+"""A Librarian doha-acquire run becomes an intake plan stage_intake accepts; doubtful decisions become exceptions.
+
+Decision texts, case numbers and URLs here are synthetic. The extractor is replaced
+by one that returns prepared text, so pdftotext is not needed.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from dcsa_custodian.common import iter_jsonl, read_json, sha256_file, write_json, write_jsonl
+from dcsa_custodian.doha import MANIFEST, TAXONOMY, append_cases
+from dcsa_custodian.doha_bulk import build_plan, outcome, topics
+from dcsa_custodian.intake import stage_intake
+
+DOHA = "https://doha.ogc.osd.mil/Industrial-Security-Program/Industrial-Security-Clearance-Decisions"
+TAXONOMY_BODY = {"schema_version": "1.0", "guidelines": {
+    "B": {"label": "Foreign Influence", "aliases": ["foreign influence"]},
+    "C": {"label": "Foreign Preference", "aliases": ["foreign preference"]},
+    "F": {"label": "Financial Considerations", "aliases": ["financial considerations", "delinquent debt"]}}}
+FILLER = "\nThe record was reviewed in full and the applicable guidelines were applied.\n" * 6
+
+
+def hearing(case: str, level: str, date: str, keyword: str, conclusion: str) -> str:
+    return (f"KEYWORD: {keyword}\n\nDIGEST: Synthetic digest.\n\nCASENO: {case}.{level}\n\nDATE: {date}\n\n"
+            f"In the matter of: ISCR Case No. {case}\n\nDecision\n{FILLER}\nConclusion\n{conclusion}\n")
+
+
+def appeal(case: str, date: str, keyword: str, order: str) -> str:
+    return (f"KEYWORD: {keyword}\n\nDIGEST: Synthetic digest. {order}\n\nCASENO: {case}.a1\n\nDATE: {date}\n\n"
+            f"ISCR Case No. {case}\n\nAPPEAL BOARD DECISION\n{FILLER}\nOrder\n{order}\n")
+
+
+TEXTS = {
+    "19-01234.h1": hearing("19-01234", "h1", "01/15/2020", "Guideline F",
+                           "National security eligibility for access to classified information is denied."),
+    "06-25928.a1": appeal("06-25928", "04/09/2008", "Guideline C; Guideline B",
+                          "The Judge's adverse security clearance decision is REMANDED."),
+    "07-00001.h1": hearing("07-00001", "h1", "11/20/2007", "Foreign Preference; Foreign Influence",
+                           "Eligibility for access to classified information is granted."),
+    "20-00002.h1": hearing("20-00002", "h1", "03/03/2021", "Guideline F",
+                           "Eligibility is granted. Eligibility is denied."),
+    "20-00003.h1": hearing("20-99999", "h1", "03/03/2021", "Guideline F",
+                           "Eligibility for access to classified information is denied."),
+    "20-00004.h1": "",
+    "18-00005.h1": hearing("18-00005", "h1", "05/05/2019", "Guideline F",
+                           "Eligibility for access to classified information is denied."),
+}
+
+
+class DohaBulkTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        base = Path(temp.name)
+        self.library, self.run, self.out, self.staged = base / "library", base / "run", base / "plan", base / "staged"
+        manifests = self.library / "ROBOT_READABLE_DIRECTORY/MANIFESTS"
+        manifests.mkdir(parents=True)
+        write_json(self.library / TAXONOMY, TAXONOMY_BODY)
+        write_jsonl(manifests / "documents.jsonl", [])
+        write_jsonl(manifests / "relationships.jsonl", [])
+        # One decision the library already holds, stored the way the Archivist stores it.
+        robot = self.library / "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/DOHA_DECISIONS/POST_SEAD_4/18-00005.h1_denied_F.txt"
+        robot.parent.mkdir(parents=True)
+        robot.write_text("Synthetic held decision text.", encoding="utf-8")
+        append_cases(self.library, [{
+            "document_id": "held", "collection_id": "doha_decisions", "authority_tier": 5,
+            "current_status": "historical_case_research",
+            "human_source_path": "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS/POST_SEAD_4/18-00005.h1_denied_F.pdf",
+            "robot_text_path": robot.relative_to(self.library).as_posix(), "robot_sha256": sha256_file(robot),
+            "doha_review": {"case_id": "18-00005", "decision_level": "h1", "decision_date": "2019-05-05",
+                            "current_group": "POST_SEAD_4", "outcome": "denied", "guidelines": ["F"],
+                            "answer_eligible": True, "reviewed_by": "synthetic", "reviewed_utc": "2026-09-01T00:00:00Z",
+                            "metadata_basis": "synthetic"}}], TAXONOMY_BODY)
+        write_json(self.library / "START_HERE_FOR_ROBOTS.json", {
+            "documents": "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl",
+            "relationships": "ROBOT_READABLE_DIRECTORY/MANIFESTS/relationships.jsonl"})
+        not_held = []
+        for key in TEXTS:
+            folder = self.run / ("doha-appeal-board-decisions" if ".a" in key else "iscr-hearing-decisions")
+            folder.mkdir(parents=True, exist_ok=True)
+            body = f"%PDF-1.5 synthetic {key}".encode()
+            (folder / f"{key}.pdf").write_bytes(body)
+            url = f"{DOHA}/ISCR-Hearing-Decisions/Listing/FileId/{abs(hash(key)) % 10**6}/"
+            write_json(folder / f"{key}.pdf.intake.json", {
+                "submission_id": key, "producer_id": "dcsa-librarian", "retrieved_at": "2026-09-25T15:12:00Z",
+                "requested_source_uri": url, "resolved_source_uri": url, "source_filename": f"{key}.pdf",
+                "mime_type": "application/pdf", "source_sha256": hashlib.sha256(body).hexdigest(),
+                "source_bytes": len(body), "approval_state": "quarantined_unreviewed", "publisher_claim": f"{key}.pdf"})
+            not_held.append({"case_key": key, "listing_titles": ["Synthetic listing"], "urls_by_format": {"pdf": [url]},
+                             "captured_utc": "2026-09-22T00:00:00Z"})
+        self.not_held = base / "not_held.jsonl"
+        write_jsonl(self.not_held, not_held)
+
+    def extract(self, source: Path, target: Path) -> None:
+        target.write_text(TEXTS[source.stem], encoding="utf-8")
+
+    def build(self, **kwargs):
+        return build_plan(self.library, self.run, self.not_held, self.out, self.extract, **kwargs)
+
+    def test_the_plan_is_accepted_by_stage_intake(self) -> None:
+        summary = self.build()
+        self.assertEqual(summary["counts"]["planned"], 3)
+        plan = read_json(self.out / "intake-plan.json")
+        changed = stage_intake(self.library, self.staged, self.out / "intake-plan.json")
+        self.assertIn(MANIFEST, changed)
+        staged = {row["document_id"] for _, row in iter_jsonl(self.staged / MANIFEST)}
+        self.assertEqual(staged - {"held"}, {item["record"]["document_id"] for item in plan["items"]})
+        self.assertEqual([row["document_id"] for _, row in iter_jsonl(self.library / MANIFEST)], ["held"],
+                         "the library must not be written")
+
+    def test_metadata_follows_the_text_and_existing_conventions(self) -> None:
+        self.build()
+        records = {item["record"]["doha_review"]["case_id"]: item["record"]
+                   for item in read_json(self.out / "intake-plan.json")["items"]}
+        post = records["19-01234"]
+        self.assertEqual(post["document_id"], "dcsa-doha_decisions-pdf-s-19-01234-h1_denied_f")
+        self.assertEqual(post["human_source_path"],
+                         "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS/POST_SEAD_4/19-01234.h1_denied_F.pdf")
+        self.assertEqual(post["doha_review"]["decision_date"], "2020-01-15")
+        self.assertTrue(post["doha_review"]["answer_eligible"])
+        self.assertEqual(post["authority_tier"], 5)
+        remand = records["06-25928"]["doha_review"]
+        self.assertEqual((remand["outcome"], remand["guidelines"], remand["answer_eligible"]), ("remanded", ["B", "C"], False))
+        old = records["07-00001"]["doha_review"]
+        self.assertEqual((old["current_group"], old["outcome"], old["guidelines"]), ("PRE_SEAD_4", "approved", ["B", "C"]))
+        self.assertIn("KEYWORD line", old["metadata_basis"])
+
+    def test_doubtful_decisions_become_exceptions_and_held_ones_are_skipped(self) -> None:
+        summary = self.build()
+        reasons = {row["case_key"]: row["reason"] for _, row in iter_jsonl(self.out / "exceptions.jsonl")}
+        self.assertIn("conflicting outcome", reasons["20-00002.h1"])
+        self.assertIn("does not match", reasons["20-00003.h1"])
+        self.assertIn("needs OCR", reasons["20-00004.h1"])
+        self.assertEqual(summary["counts"]["already_held"], 1)
+        self.assertNotIn("18-00005.h1", reasons)
+
+    def test_provenance_rows_carry_the_fetched_bytes(self) -> None:
+        self.build()
+        rows = [row for _, row in iter_jsonl(self.out / "doha_source_urls.additions.jsonl")]
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(all(row["source_url_basis"] == "acquisition_bytes_identical" and row["source_bytes_sha256"]
+                            for row in rows))
+
+    def test_selection_by_group_era_and_pilot(self) -> None:
+        self.assertEqual(self.build(group="appeals")["counts"]["planned"], 1)
+
+    def test_an_existing_output_directory_is_refused(self) -> None:
+        self.out.mkdir()
+        with self.assertRaises(FileExistsError):
+            self.build()
+
+    def test_outcome_and_topic_rules(self) -> None:
+        self.assertEqual(outcome("…" + "Favorable decision reversed." , "a1")[0], "denied")
+        self.assertEqual(outcome("It is not clearly consistent with the national interest to grant", "h1")[0], "denied")
+        self.assertIsNone(outcome("The hearing was held.", "h1")[0])
+        self.assertEqual(topics("KEYWORD: Delinquent debt\n", TAXONOMY_BODY)[0], ["F"])
+        self.assertEqual(topics("no keyword\nGuideline F: AGAINST APPLICANT\n", TAXONOMY_BODY)[0], ["F"])
+
+
+if __name__ == "__main__":
+    unittest.main()
