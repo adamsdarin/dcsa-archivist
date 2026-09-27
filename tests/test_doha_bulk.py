@@ -305,7 +305,7 @@ class RealWordingTests(unittest.TestCase):
         self.assertEqual(topics("Paragraph 1, Guideline F (Financial Considerations)           FOR APPLICANT\n",
                                 TAXONOMY_BODY)[0], ["F"])
         self.assertEqual(topics("Guideline F applies; the evidence weighs for Applicant.\n" + FILLER,
-                                TAXONOMY_BODY)[1], "guidelines alleged in the Statement of the Case")
+                                TAXONOMY_BODY)[1], "guidelines alleged in the Statement of the Case (F)")
         body = FILLER * 30 + "most pertinent to this case, with regard to criteria H, E and J.\n"
         taxonomy = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "EHJ"}}
         self.assertEqual(topics(body, taxonomy), (["E", "H", "J"], "guidelines the decision applies"))
@@ -327,7 +327,7 @@ class RealWordingTests(unittest.TestCase):
         self.assertIn("naming no guideline: Something Unlisted", basis)
         codes, basis = topics("KEYWORD: Personal Conduct; Something Unlisted\n", full)
         self.assertEqual(codes, ["E"])
-        self.assertIn("no formal findings or SOR guidelines to complete it", basis)
+        self.assertNotIn("formal findings", basis)
 
     def test_a_self_contradicting_conclusion_is_settled_only_by_agreeing_summary_and_findings(self) -> None:
         # The layout of a real decision whose judge wrote "clearly consistent ... to grant"
@@ -385,6 +385,19 @@ class RealWordingTests(unittest.TestCase):
                                  "with the national interest to grant a clearance.", "h1")[0], "denied")
         self.assertEqual(outcome("Conclusion\nApplicant failed to establish that it is clearly consistent with the "
                                  "national interest to grant him a clearance. Clearance is denied.", "h1")[0], "denied")
+
+    def test_topics_are_every_guideline_the_case_put_in_issue(self) -> None:
+        # Owner decision: topics are all SOR guidelines, not only the KEYWORD line's.
+        full = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "ABCDEFGHIJKLM"}}
+        text = ("KEYWORD: Personal Conduct\n\nStatement of the Case\nThe SOR alleged security concerns under "
+                "Guidelines E and M.\n" + FILLER + "Paragraph 1, Guideline E: AGAINST APPLICANT\n"
+                "Paragraph 2, Guideline M: FOR APPLICANT\n")
+        codes, basis = topics(text, full)
+        self.assertEqual(codes, ["E", "M"])
+        self.assertIn("KEYWORD line", basis)
+        self.assertIn("formal findings for Guideline E, Guideline M", basis)
+        # The KEYWORD line itself is not read as a statement of what the SOR alleged.
+        self.assertEqual(topics("KEYWORD: Guideline F\n" + FILLER, full)[1], "KEYWORD line 'Guideline F'")
 
 if __name__ == "__main__":
     unittest.main()

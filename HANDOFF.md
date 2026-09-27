@@ -152,6 +152,14 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — Owner decided topics = every guideline the SOR alleged (option A),
+matching what the held library stores. The rule now unions the KEYWORD line, formal
+findings and Statement-of-the-Case guidelines instead of taking the first source that
+names any. Owner's checks of held-vs-rule outcome conflicts so far: rule right on 3
+(17-01558.h1, 06-23369.h1, 24-00928.a1), library right on 1 (19-01803.h1, rule since
+fixed), and 15-02333.a1 wrong on both sides (the case ran h1 denied, a1 remanded, h2
+denied, a2 affirmed; the rule read a1 as "favorable decision affirmed") — its text is
+needed. Reviewer v5.
 2026-09-27 Claude — v3's cross-check doubled exceptions (1,110 to 2,148): 969 "denied but
 findings all for". Samples from the owner's machine showed three reader gaps in older
 (2000-2002) layouts, not contradictions: findings written "AGAINST THE APPLICANT";

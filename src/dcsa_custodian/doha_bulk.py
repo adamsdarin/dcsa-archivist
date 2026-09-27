@@ -35,7 +35,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v4"
+REVIEWER = "doha-intake-plan rule-based review v5"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -326,41 +326,51 @@ def _keyword_codes(keywords: str, guidelines: dict[str, Any]) -> tuple[set[str],
     return codes & set(guidelines), unmapped
 
 
-def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
-    """KEYWORD line first; then formal findings; then the guidelines the SOR alleged.
+def _alleged(region: str, guidelines: dict[str, Any]) -> set[str]:
+    found: set[str] = set()
+    for match in SOR_GUIDELINES.finditer(_flat(region)):
+        found.add(match.group(1))
+        found.update(re.findall(r"\b([A-M])\b", match.group(2)))
+    return found & set(guidelines)
 
-    A KEYWORD line is trusted alone only when every segment names a guideline. When a
-    segment names none, the line may be missing a guideline, so the formal findings (or
-    else the SOR) are added to it rather than silently dropping a topic."""
+
+def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
+    """Every guideline the case put in issue (owner decision 2026-09-27: topics are all the
+    guidelines the SOR alleged, not only DOHA's KEYWORD line).
+
+    The union of three statements of the same thing, each recorded in the basis: the
+    KEYWORD line, the formal findings (one per SOR paragraph), and the guidelines the
+    Statement of the Case says the SOR alleged. Any one alone can be incomplete: a KEYWORD
+    line often lists only the main concern, and older decisions have no KEYWORD line. Only
+    when none of them names a guideline is the whole text read ("with regard to criteria
+    H, E and J")."""
     guidelines = validate_taxonomy(taxonomy)
+    codes: set[str] = set()
+    parts = []
     line = KEYWORD.search(text[:20000])
-    partial: set[str] = set()
-    partial_basis = ""
     if line:
         keywords = line.group(1)
-        codes, unmapped = _keyword_codes(keywords, guidelines)
-        if codes and not unmapped:
-            return sorted(codes), f"KEYWORD line '{keywords.strip()[:120]}'"
-        if codes:
-            partial = codes
-            partial_basis = (f"KEYWORD line '{keywords.strip()[:80]}' (segments naming no guideline: "
-                             f"{'; '.join(u[:30] for u in unmapped[:3])}) plus ")
-    findings = sorted(set(code.upper() for code in FORMAL_FINDING.findall(text)) | set(FORMAL_FINDING_COLUMN.findall(text)))
+        named, unmapped = _keyword_codes(keywords, guidelines)
+        if named:
+            codes |= named
+            parts.append(f"KEYWORD line '{keywords.strip()[:80]}'" + (
+                f" (segments naming no guideline: {'; '.join(u[:30] for u in unmapped[:3])})" if unmapped else ""))
+    findings = (set(code.upper() for code in FORMAL_FINDING.findall(text)) | set(FORMAL_FINDING_COLUMN.findall(text))) & set(guidelines)
     if findings:
-        return sorted(partial | set(findings)), partial_basis + "formal findings for " + ", ".join(f"Guideline {code}" for code in findings)
-    # The Statement of the Case names the guidelines the SOR alleged; older decisions name
-    # them later ("with regard to criteria H, E and J").
-    for region, basis in ((text[:8000], "guidelines alleged in the Statement of the Case"),
-                          (text, "guidelines the decision applies")):
-        alleged: set[str] = set()
-        for match in SOR_GUIDELINES.finditer(_flat(region)):
-            alleged.add(match.group(1))
-            alleged.update(re.findall(r"\b([A-M])\b", match.group(2)))
-        alleged &= set(guidelines)
-        if alleged:
-            return sorted(partial | alleged), partial_basis + basis
-    if partial:
-        return sorted(partial), partial_basis.removesuffix(" plus ") + "; no formal findings or SOR guidelines to complete it"
+        codes |= findings
+        parts.append("formal findings for " + ", ".join(f"Guideline {code}" for code in sorted(findings)))
+    opening = text[:8000]
+    if line and line.start() < 8000:  # the KEYWORD line is not a statement of what the SOR alleged
+        opening = opening[:line.start()] + opening[line.end():]
+    alleged = _alleged(opening, guidelines)
+    if alleged:
+        codes |= alleged
+        parts.append("guidelines alleged in the Statement of the Case (" + ",".join(sorted(alleged)) + ")")
+    if codes:
+        return sorted(codes), " + ".join(parts)
+    applied = _alleged(text, guidelines)
+    if applied:
+        return sorted(applied), "guidelines the decision applies"
     return [], "no KEYWORD line, formal findings or SOR guidelines name a guideline"
 
 

@@ -51,7 +51,7 @@ retained bytes are those fetched from that official URL) before building, then
 `build-candidate --intake-plan <out>\intake-plan.json`, `validate`, `evaluate`.
 
 Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
-`doha-intake-plan rule-based review v4` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts). Do not `publish` a DOHA bulk batch until
+`doha-intake-plan rule-based review v5` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only). Do not `publish` a DOHA bulk batch until
 the owner has spot-checked a sample of its plan items against their PDFs.
 
 ### Ruling types and the decision an appeal reviews (owner decision 2026-09-27)
@@ -104,3 +104,11 @@ asks no DOHA questions. Accuracy is therefore measured, not assumed (`doha_quali
 5. **Coverage**: after the last batch, rerun the Librarian's `doha-provenance` reverse
    check; the only decision DOHA lists that the library should lack is 06-25928.h1, which
    DOHA publishes as a digest only.
+
+### What a decision's topics are (owner decision 2026-09-27)
+
+Topics are every guideline the case put in issue — all the guidelines the SOR alleged —
+not only those DOHA's `KEYWORD:` line lists. The rule takes the union of the KEYWORD
+line, the formal findings and the guidelines the Statement of the Case says were
+alleged, and records which sources contributed. Only when none names a guideline is the
+whole text read.
