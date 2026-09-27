@@ -53,6 +53,30 @@ def parser() -> argparse.ArgumentParser:
     bulk.add_argument("--limit", type=int, help="Stop after this many planned decisions")
     bulk.add_argument("--pilot", type=int, help="Plan a spread sample of this many decisions")
     bulk.add_argument("--pdftotext", help="Path to pdftotext if it is not on PATH")
+    batches = commands.add_parser("doha-plan-batches", help="Split a DOHA intake plan into batches; a case stays in one batch")
+    batches.add_argument("--plan", type=Path, required=True)
+    batches.add_argument("--size", type=int, default=5500, help="Decisions per batch (a case is never split)")
+    batches.add_argument("--out", type=Path, required=True)
+    sample = commands.add_parser("doha-accuracy-sample", help="Seeded stratified sample of a DOHA plan for the owner to check against the PDFs")
+    sample.add_argument("--plan", type=Path, required=True)
+    sample.add_argument("--out", type=Path, required=True, help="New .csv sheet")
+    sample.add_argument("--size", type=int, default=150, help="Decisions in the scored estimate")
+    sample.add_argument("--edge", type=int, default=3, help="Extra unscored draws per rare stratum")
+    sample.add_argument("--seed", type=int, default=20260927)
+    score = commands.add_parser("doha-accuracy-score", help="Score a checked accuracy or disagreement sheet")
+    score.add_argument("--sheet", type=Path, required=True)
+    score.add_argument("--target", type=float, default=0.05, help="Highest acceptable error rate (95%% upper bound)")
+    recheck = commands.add_parser("doha-recheck", help="Re-run the intake rules over held DOHA decisions; writes only --out")
+    recheck.add_argument("--library-root")
+    recheck.add_argument("--out", type=Path, required=True)
+    recheck.add_argument("--not-held", type=Path, help="Librarian doha_not_in_library.jsonl, to link to decisions not held")
+    recheck.add_argument("--size", type=int, default=150)
+    recheck.add_argument("--edge", type=int, default=3)
+    recheck.add_argument("--disagreements", type=int, default=100, help="Disagreements to sample for review")
+    recheck.add_argument("--seed", type=int, default=20260927)
+    append = commands.add_parser("doha-append-provenance", help="Add a batch's provenance rows to decisions/doha_source_urls.jsonl")
+    append.add_argument("--additions", type=Path, required=True)
+    append.add_argument("--dry-run", action="store_true")
     for name in ("doctor", "audit", "build-candidate"):
         cmd = commands.add_parser(name)
         cmd.add_argument("--library-root")
@@ -132,6 +156,24 @@ def main() -> int:
                                  limit=args.limit, pilot=args.pilot)
             print(json.dumps(summary, indent=2))
             return 0 if summary["counts"].get("planned") else 2
+        if args.command in ("doha-plan-batches", "doha-accuracy-sample", "doha-accuracy-score",
+                            "doha-recheck", "doha-append-provenance"):
+            from . import doha_quality as quality
+            if args.command == "doha-plan-batches":
+                result = quality.split_plan(args.plan.resolve(), args.size, args.out.resolve())
+            elif args.command == "doha-accuracy-sample":
+                result = quality.accuracy_sample(args.plan.resolve(), args.out.resolve(), args.size, args.edge, args.seed)
+            elif args.command == "doha-accuracy-score":
+                result = quality.score_sheet(args.sheet.resolve(), args.target)
+            elif args.command == "doha-recheck":
+                result = quality.recheck_library(library_root, args.out.resolve(),
+                                                 args.not_held.resolve() if args.not_held else None,
+                                                 args.size, args.disagreements, args.edge, args.seed)
+            else:
+                target = PROJECT_ROOT / config.get("doha_provenance_file", "decisions/doha_source_urls.jsonl")
+                result = quality.append_provenance(args.additions.resolve(), target, args.dry_run)
+            print(json.dumps(result, indent=2))
+            return 2 if result.get("passed") is False else 0
         if args.command == "doctor":
             report = audit_library(library_root, deep=False)
             result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"], "release_metadata_errors": report["release_metadata_errors"], "verified_indexes": len(report["approved_indexes"])}
