@@ -3,18 +3,23 @@
 Last updated: 2026-09-27 by Claude
 
 ## Current State
-2026-09-27: Added `doha-intake-plan` for bulk DOHA intake. The Librarian's
-doha-acquire run (owner's machine) holds 21,941 decisions the library lacks, each with
-a standard .intake.json. The command extracts text with pdftotext -layout, derives
-doha_review from the decision text by rule (CASENO/caption identity against the
-listing label, doha_era.classify date and era, outcome from conclusion or order,
-topics from KEYWORD line or formal findings), follows the existing DOHA ID and path
-convention, and sends anything a rule cannot settle to exceptions. Its plan passes
-stage_intake unchanged in tests. New provenance basis acquisition_bytes_identical.
-**Owner rule: no DOHA bulk batch is published before the owner spot-checks a sample.**
-Next: 50-decision pilot on the owner's machine (plan, build-candidate, validate,
-evaluate; not publish). 8 test errors in this cloud environment predate this work
-(fastembed and sibling repos absent); 92 pass.
+2026-09-27: DOHA bulk intake is NOT complete. Library holds 10,633 DOHA decisions;
+~21,890 more are downloaded (Librarian run quarantine/doha-acquire/20260925T151200Z)
+and not yet planned. Pilot `doha-pilot-20260927` (48 decisions): build valid and
+publishable, validate 0 errors/0 blockers, evaluate 18/18; NOT published. Claude
+recommended not publishing it separately (its decisions ride in batch 1); owner to decide.
+evaluate asks no DOHA questions, so it proves only that regulation search is intact.
+Accuracy is unmeasured: owner spot-checked 5 pilot decisions (all correct after the
+affirmed/denied fix). Added doha_quality.py: doha-plan-batches, doha-accuracy-sample,
+doha-accuracy-score (one-sided 95% Clopper-Pearson bound vs an agreed target),
+doha-recheck (rules over held decisions: disagreements, unsettled, appeal/remand
+backfill proposals, two review sheets), doha-append-provenance. Workflow in
+docs/DOHA-INTAKE.md. **Owner rule: no DOHA bulk batch is published before the owner
+spot-checks a sample; do not approve/publish without explicit go-ahead.**
+Remaining known gaps: 10-03426.h1 needs refetch (empty package); 06-25928.h1 exists
+only as a DOHA digest; 2 pilot exceptions (30-01130.a1 docket typo, 97-00053.h1
+underscore date). 8 test errors in this cloud environment predate this work
+(fastembed and sibling repos absent); 129 pass.
 
 2026-09-24: Published `fcl-intake-20260924b` (autonomous after gates: validate valid/publishable, 0 errors,
 0 blockers; evaluate 18/18; doctor integrity_healthy, production_response_ready, 8 verified indexes).
@@ -111,11 +116,14 @@ Manager, with a cross-process publication lock. New rebuilds route to
 dcsa-library-rebuilder; regenerate is legacy. 81 tests pass. All work committed.
 
 ## Next
-0. Owner requirement 2026-09-27: run the appeal-ruling rules over the library's EXISTING
-   DOHA decisions too (appeal_disposition, appealed_by, reviewed_decision,
-   decided_on_remand_from). Needs a reviewed way to add fields to existing records (a
-   decisions file applied at build, like doha_era_reviews.json) and, for search, a
-   reviewed DOHA index migration. doha_bulk.appeal_ruling is written to be reused.
+0. DOHA completion, in order (docs/DOHA-INTAKE.md): full doha-intake-plan; owner checks
+   doha-accuracy-sample sheet, doha-accuracy-score must pass the agreed target; doha-recheck
+   over held decisions and owner review of its sheets; batches of ~5,500 with per-batch
+   provenance append, build, validate, evaluate, owner sign-off, publish; Librarian
+   reverse check at the end. Still to build after the recheck is reviewed: applying
+   ruling_backfill.jsonl and accepted corrections to held records (a reviewed decisions
+   file applied at build, like doha_era_reviews.json) and a reviewed DOHA index
+   migration so appeal fields are searchable.
 0. Decisions reach DOCUMENTS_ENRICHED.jsonl and the indexes, not the source documents.jsonl, which still
    says DTM 24-004 "active" (and the 2018 handbook "active"); `doctor` counts unresolved_currency from the
    source manifest, so it still reports 3. Decide whether publication should sync decided lifecycle into
@@ -144,6 +152,13 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — Owner asked whether DOHA work is complete and accurate: it is not
+(32% of DOHA's rulings held; accuracy never measured). Built measurement rather than
+more spot checks: a seeded proportional-stratified sample scored by a one-sided 95%
+upper bound, because "5 of 5 correct" bounds nothing (95% bound 45%). Rare rulings get
+unscored edge draws so the estimate stays unbiased. Held decisions are re-checked by the
+same rules and every disagreement is listed for review, not auto-corrected: either side
+may be wrong. Batches keep a case together so appeal links resolve within one release.
 2026-09-27 Claude — Added an embedding cache (.custodian/embedding_cache.sqlite). Every build
 re-embedded all ~16,100 chunks although only new or edited documents change them; vectors
 are now keyed by model name and the SHA-256 of the exact chunk text, so a changed chunk or

@@ -67,3 +67,40 @@ from the appeal's own text). A hearing decision issued after a remand carries
 `decided_on_remand_from`, the appeal that sent it back. These live in `doha_review` on
 the record; exposing them in the DOHA indexes needs a reviewed schema migration, and the
 library's existing appeals get them by a separate backfill over their robot text.
+
+### Measuring accuracy, batching, and re-checking held decisions
+
+Passing `validate` proves a candidate is consistent — hashes, eras that follow dates,
+complete indexes. It cannot prove a decision labelled denied was denied, and `evaluate`
+asks no DOHA questions. Accuracy is therefore measured, not assumed (`doha_quality.py`):
+
+1. **Plan everything**: `doha-intake-plan` without `--pilot`. Read `exceptions.jsonl`.
+2. **Sample and check**: `doha-accuracy-sample --plan <plan> --out <sheet.csv>` draws a
+   seeded random sample in proportion to each stratum (hearing/appeal × era × ruling),
+   150 scored decisions by default, plus up to 3 unscored `edge` draws for each rare
+   stratum so reversed and remanded appeals are seen. The owner opens each PDF and marks
+   `date_ok`, `outcome_ok`, `appeal_ok` (blank for hearings) and `topics_ok` Y or N.
+   `doha-accuracy-score --sheet <sheet.csv> --target 0.05` reports the error rate and
+   its one-sided 95% Clopper–Pearson upper bound, and passes only when that bound is at or
+   under the target. With 150 decisions, a 5% target allows 2 wrong; 0 wrong bounds the
+   rate at 2%. Edge rows are listed when wrong but never scored: over-sampling rare
+   rulings would bias the estimate. A failed sheet means fix the rule and draw a new
+   sample with a new `--seed`; re-scoring the same sample after tuning to it proves nothing.
+3. **Re-check held decisions**: `doha-recheck --out <dir> [--not-held ...]` runs the same
+   rules over the robot text of every decision the library holds and writes
+   `disagreements.jsonl` (stored outcome or topics differ from the rule), `unsettled.jsonl`
+   (the rule cannot decide), `ruling_backfill.jsonl` (the appeal fields and remand links
+   the held decisions lack), `disagreements_sample.csv` (the owner marks each `verdict`
+   `library`, `rule` or `neither`) and `existing_accuracy_sample.csv` (scored like step 2,
+   measuring the held library itself). Dates are not re-checked: the build already
+   recomputes them with the same rule. Nothing here writes the library; applying the
+   backfill and any corrections is a separate reviewed change.
+4. **Batches**: `doha-plan-batches --plan <plan> --size 5500 --out <dir>` writes
+   `batch-NN` directories `stage_intake` accepts, never splitting a case, so an appeal
+   and the hearing it reviewed are published together. Files are hard-linked where the
+   disk allows. For each batch: `doha-append-provenance --additions <batch>\doha_source_urls.additions.jsonl`
+   (refuses a conflicting row), `build-candidate --intake-plan <batch>\intake-plan.json`,
+   `validate`, `evaluate`, owner spot-check, then publish.
+5. **Coverage**: after the last batch, rerun the Librarian's `doha-provenance` reverse
+   check; the only decision DOHA lists that the library should lack is 06-25928.h1, which
+   DOHA publishes as a digest only.
