@@ -173,6 +173,29 @@
         "dcsa-forms-dd254-instructions",
         "dcsa-forms-dd254-contract-security-classification-spec"
       ]
+    },
+    {
+      "id": "fcl-handbook-2026-retrievable",
+      "intent": "system_or_workflow_how_to",
+      "query": "right the first time submission minimize delays company readiness FCL",
+      "require_hit": true,
+      "require_locator": true,
+      "expected_document_ids": [
+        "dcsa-job_aids-fcl-orientation-handbook-2026-07"
+      ],
+      "expected_passages": [
+        "right the first time"
+      ]
+    },
+    {
+      "id": "fcl-sf328-job-aid-retrievable",
+      "intent": "system_or_workflow_how_to",
+      "query": "consolidated SF-328 highest uncleared U.S. parent corporate chain",
+      "require_hit": true,
+      "expected_document_ids": [
+        "dcsa-job_aids-fcl-job-aid-sf328",
+        "dcsa-job_aids-fcl-orientation-handbook-2026-07"
+      ]
     }
   ]
 }

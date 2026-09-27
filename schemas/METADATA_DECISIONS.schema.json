@@ -13,7 +13,10 @@
         "properties": {
           "source_document_id": {"type": "string", "minLength": 1},
           "robot_text_path": {"type": "string", "pattern": "^ROBOT_READABLE_DIRECTORY/"},
-          "decision": {"enum": ["verified_current", "superseded", "historical", "exclude"]},
+          "decision": {"enum": ["verified_current", "superseded", "historical", "currency_unresolved", "exclude", "provenance"]},
+          "status_detail": {"type": "string", "description": "Required for currency_unresolved: what the official evidence leaves unconfirmed."},
+          "source_url": {"type": "string", "pattern": "^https://", "description": "Byte-verified official URL; requires source_sha256 equal to the retained file."},
+          "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
           "verified_utc": {"type": "string", "format": "date-time"},
           "verified_by": {"type": "string", "minLength": 1},
           "evidence": {

@@ -896,3 +896,16 @@ surfacing correctly downstream — treat it as a lead, not a fact.
 2026-09-11 Codex — Cross-system workflow audit in progress. User selected Librarian -> Archivist -> approved release -> comparison and Guidance Watch. Implementing staged source intake, published navigation graph, and durable release packets with completion receipts. Existing dirty files preserved. No live library changes; installed Windows task inspection found no DCSA/FSO/Custodian-named tasks.
 2026-09-10 Codex — Completed authorized implementation. 47 tests pass, including three offline cross-system acceptance cases. Expanded staged-release evaluation passes 13/13 with a real local semantic query. Publication re-runs current evaluations so older reports cannot bypass new cases. Changes remain uncommitted, including preserved prior edits.
 2026-09-10 Codex — Implementing the five authorized workspace improvements and accepted-answer wiki. Preserved the entire prior handoff in the archive, including pre-existing edits. Validation is in progress; do not interpret implementation as a live library release.
+2026-09-15 Claude — Corrected mislabelled DD 254 record through the lifecycle process:
+chose a `historical` metadata decision (effective 1999-12) over a rename, retirement or
+deletion as the least destructive option the contract permits. Evidence: PDF byte-identical
+(sha256 264e2155…) to the historical DEC 1999 expired copy; embedded title says December
+1999; the recorded official current edition is APR 2018. Added three golden-query cases,
+which fail against the prior release and pass against the new one. Published
+`dd254-dec1999-lifecycle-fix-20260915`. The first build hung in fastembed workers
+(WinError 6 when run under the Git Bash background shell), so I killed it, removed the
+partial candidate and rebuilt under PowerShell. The release included the unpublished
+2026-09-13 FOCI manifest edits. No source files were changed or deleted. Not committed.
+2026-09-15 Codex — Integrated shared source inbox and reviewed-period watch
+confirmation into the conductor. Missing evidence now has durable owner routing;
+DOHA reconstruction and final role audit remain open.
