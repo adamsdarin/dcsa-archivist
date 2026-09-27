@@ -152,6 +152,15 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — v3's cross-check doubled exceptions (1,110 to 2,148): 969 "denied but
+findings all for". Samples from the owner's machine showed three reader gaps in older
+(2000-2002) layouts, not contradictions: findings written "AGAINST THE APPLICANT";
+the order under a bare "DECISION" heading, so the findings section ran into footnotes
+("the case against Applicant"); and synopses like "precludes a finding that it is
+clearly consistent ... to grant" read as a grant. Fixed all three (the negation check
+applies to the grant phrase only, so "has not mitigated ... not clearly consistent"
+stays a denial). Same "the" gap explained most of the remaining topic mismatches.
+Reviewer v4. Owner asked to choose topic meaning (all SOR guidelines vs KEYWORD only).
 2026-09-27 Claude — Owner checked 5 outcome conflicts between the held library and the
 rule: library wrong on 2 hearings, rule wrong on 1 (19-01803.h1), 2 appeals pending the
 owner's detail. The rule's error was a judge's slip ("clearly consistent ... to grant

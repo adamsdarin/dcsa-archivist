@@ -358,5 +358,33 @@ class RealWordingTests(unittest.TestCase):
         agree = "\nFormal Findings\n\nParagraph 1, Guideline F:   FOR APPLICANT\n"
         self.assertEqual(outcome(FILLER + agree + conclusion, "h1")[0], "approved")
 
+    def test_older_layouts_findings_against_the_applicant_and_a_decision_heading(self) -> None:
+        # Shapes from 2000-2002 hearing decisions that v3 misread.
+        full = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "ABCDEFGHIJKLM"}}
+        synopsis = ("SYNOPSIS\n\n  Applicant's long-standing indebtedness precludes a finding that it is clearly consistent "
+                    "with the national interest to grant\n  him access to classified information at the present time. "
+                    "Clearance is denied.\n\nSTATEMENT OF THE CASE\n")
+        findings = ("\n  FORMAL FINDINGS\n\n  Formal findings For or Against Applicant on the allegations set forth in "
+                    "the SOR, are:\n\n  Paragraph 1. Guideline J: AGAINST THE APPLICANT\n\n  Subparagraph a: For the "
+                    "Applicant\n\n  Subparagraph b: Against the Applicant\n\n  Paragraph 2. Guideline E: FOR THE "
+                    "APPLICANT\n\n  Subparagraph a: For the Applicant\n")
+        order = ("\n  DECISION\n\n  In light of all the circumstances presented by the record in this case, it is not "
+                 "clearly consistent with the national interest\n  to grant or continue a security clearance for Applicant.\n"
+                 "\n  1. A footnote noting the case against Applicant was weak.\n")
+        text = synopsis + FILLER + "\n  CONCLUSIONS\n  Discussion.\n" + findings + order
+        value, basis = outcome(text, "h1")
+        self.assertEqual(value, "denied", basis)
+        self.assertEqual(topics(text, full)[0], ["E", "J"])
+        granted = findings.replace("AGAINST THE APPLICANT", "FOR THE APPLICANT").replace("Against the", "For the")
+        grant = order.replace("it is not clearly", "it is clearly")
+        value, basis = outcome("SYNOPSIS\nClearance is granted.\nSTATEMENT OF THE CASE\n" + FILLER + granted + grant, "h1")
+        self.assertEqual(value, "approved", basis)
+
+    def test_a_negated_grant_phrase_is_not_a_grant_but_a_negated_denial_is_still_a_denial(self) -> None:
+        self.assertEqual(outcome("Conclusion\nApplicant has not mitigated the concerns. It is not clearly consistent "
+                                 "with the national interest to grant a clearance.", "h1")[0], "denied")
+        self.assertEqual(outcome("Conclusion\nApplicant failed to establish that it is clearly consistent with the "
+                                 "national interest to grant him a clearance. Clearance is denied.", "h1")[0], "denied")
+
 if __name__ == "__main__":
     unittest.main()

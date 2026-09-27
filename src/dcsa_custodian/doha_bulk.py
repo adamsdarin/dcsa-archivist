@@ -35,7 +35,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v3"
+REVIEWER = "doha-intake-plan rule-based review v4"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -52,14 +52,18 @@ CAPTION = re.compile(r"(?:D?ISCR|ADP)(?:\s+OSD)?\s+Case\s+No\.?:?\s*(\d{2})-(\d{
 KEYWORD = re.compile(r"^\s*KEYWORD:\s*(.+)$", re.M | re.I)
 # "Guideline F" since 1997; "Criterion F" in earlier decisions. The letters mean the same.
 GUIDELINE_LETTER = re.compile(r"\b(?:Guideline|Criterion)\s+([A-M])\b")
-FORMAL_FINDING = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n:]{0,60}:\s*(?:FOR|AGAINST)\s+APPLICANT", re.I)
+# Older decisions write "AGAINST THE APPLICANT" / "For the Applicant".
+FORMAL_FINDING = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n:]{0,60}:\s*(?:FOR|AGAINST)\s+(?:THE\s+)?APPLICANT", re.I)
 # Formal findings without a colon, e.g. "Paragraph 1, Guideline F (Financial Considerations)   FOR APPLICANT".
 # Upper case only, so running prose ("... for Applicant") does not count.
-FORMAL_FINDING_COLUMN = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n]{0,60}?\s(?:FOR|AGAINST)\s+APPLICANT\b")
+FORMAL_FINDING_COLUMN = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n]{0,60}?\s(?:FOR|AGAINST)\s+(?:THE\s+)?APPLICANT\b")
 # "security concerns under Guidelines F and E", "under Guideline F (Financial Considerations)".
 SOR_GUIDELINES = re.compile(r"\b(?i:guidelines?|criteri(?:on|a))\s+([A-M])\b((?:\s*(?:\([^)]{0,40}\))?\s*(?:,|and|&)\s*"
                             r"(?:Guidelines?\s+)?[A-M]\b)*)")
-CONCLUSION_HEADING = re.compile(r"^\s*Conclusions?\s*$", re.M | re.I)
+# Older decisions put the order under a bare "DECISION" heading after the formal findings;
+# newer ones under "Conclusion". The last of either is the order (a newer decision's
+# "Decision" title line comes first).
+CONCLUSION_HEADING = re.compile(r"^\s*(?:Conclusions?|Decision)\s*$", re.M | re.I)
 
 # Hearing conclusions, matched on whitespace-collapsed text so "not" split from
 # "clearly" by a line break still counts. Every match is collected and the
@@ -76,6 +80,10 @@ HEARING_OUTCOMES = (
 # clearly consistent ..." and "must demonstrate that ... it is clearly consistent ...".
 BOILERPLATE = re.compile(r"affirmative finding|could not make|unable to find|burden|persuasion|\bprov(?:e|es|ing)\b"
                          r"|demonstrat", re.I)
+# A grant phrase inside a negated finding is a denial's reasoning, not a grant: "... precludes
+# a finding that it is clearly consistent ... to grant", "failed to establish that it is ...".
+# Checked for the grant phrase only: "has not mitigated ... it is not clearly consistent" is a denial.
+NEGATED_GRANT = re.compile(r"preclud|\bfail(?:ed|s|ure)?\b|\b(?:has|have|had|did|does)\s+not\b|\bcannot\b", re.I)
 # "Adverse decision affirmed"; "the decision of the Administrative Judge denying Applicant a
 # security clearance is AFFIRMED".
 APPEAL_EXPLICIT = re.compile(
@@ -203,7 +211,7 @@ def _statements(region: str) -> dict[str, str]:
     for pattern, value in HEARING_OUTCOMES:
         for match in pattern.finditer(region):
             sentence = region[region.rfind(". ", 0, match.start()) + 1:match.start()]
-            if BOILERPLATE.search(sentence):
+            if BOILERPLATE.search(sentence) or (value == "approved" and NEGATED_GRANT.search(sentence)):
                 continue
             found.setdefault(value or WORD_OUTCOME[match.group(1).lower()], match.group(0))
     return found
@@ -219,7 +227,7 @@ def _hearing_outcome(text: str) -> dict[str, str]:
 CASE_HISTORY = re.compile(r"^\s*(?:Statement of the Case|History of the Case|Procedural History|Findings of Fact)\s*$",
                           re.M | re.I)
 FORMAL_FINDINGS_HEADING = re.compile(r"^\s*Formal Findings\s*$", re.M | re.I)
-FINDING_DIRECTION = re.compile(r"\b(for|against)\s+applicant\b", re.I)
+FINDING_DIRECTION = re.compile(r"\b(for|against)\s+(?:the\s+)?applicant\b", re.I)
 
 
 def _summary_outcome(text: str) -> dict[str, str]:
@@ -235,7 +243,7 @@ def _findings_outcome(text: str) -> str | None:
     start = headings[-1].end()
     conclusion = CONCLUSION_HEADING.search(text, start)
     section = text[start:conclusion.start() if conclusion else start + 6000]
-    section = re.sub(r"\bfor\s+or\s+against\s+applicant\b", " ", section, flags=re.I)  # the section's own preamble
+    section = re.sub(r"\bfor\s+or\s+against\s+(?:the\s+)?applicant\b", " ", section, flags=re.I)  # the section's own preamble
     directions = {m.group(1).lower() for m in FINDING_DIRECTION.finditer(section)}
     if not directions:
         return None
