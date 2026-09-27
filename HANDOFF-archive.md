@@ -909,3 +909,6 @@ partial candidate and rebuilt under PowerShell. The release included the unpubli
 2026-09-15 Codex — Integrated shared source inbox and reviewed-period watch
 confirmation into the conductor. Missing evidence now has durable owner routing;
 DOHA reconstruction and final role audit remain open.
+2026-09-16 Codex — Added portable reviewed-case builder, staged DOHA intake, source-baseline
+comparison and publication hashes. Synthetic intake/publish/tamper tests pass;
+production corpus unchanged. Legacy regenerator is no longer the canonical route.

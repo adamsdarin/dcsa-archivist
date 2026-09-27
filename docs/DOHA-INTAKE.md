@@ -53,3 +53,17 @@ retained bytes are those fetched from that official URL) before building, then
 Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
 `doha-intake-plan rule-based review v1`. Do not `publish` a DOHA bulk batch until
 the owner has spot-checked a sample of its plan items against their PDFs.
+
+### Ruling types and the decision an appeal reviews (owner decision 2026-09-27)
+
+Hearing decisions are granted or denied (`outcome` approved/denied). Appeal decisions
+record what the Board did as `appeal_disposition` — affirmed, reversed or remanded —
+next to `outcome`, which keeps meaning where the clearance ends up (remanded when the
+case is sent back), so existing IDs, paths and consumers are unchanged. Each appeal
+also carries `appealed_by` and `reviewed_decision`: the hearing decision it reviewed
+(`case_key`, `decision_date`, `status` — held, in this plan, acquired, or only listed —
+and the `basis` for choosing it) and what that decision had decided (`outcome`, read
+from the appeal's own text). A hearing decision issued after a remand carries
+`decided_on_remand_from`, the appeal that sent it back. These live in `doha_review` on
+the record; exposing them in the DOHA indexes needs a reviewed schema migration, and the
+library's existing appeals get them by a separate backfill over their robot text.

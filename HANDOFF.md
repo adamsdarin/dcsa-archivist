@@ -111,6 +111,11 @@ Manager, with a cross-process publication lock. New rebuilds route to
 dcsa-library-rebuilder; regenerate is legacy. 81 tests pass. All work committed.
 
 ## Next
+0. Owner requirement 2026-09-27: run the appeal-ruling rules over the library's EXISTING
+   DOHA decisions too (appeal_disposition, appealed_by, reviewed_decision,
+   decided_on_remand_from). Needs a reviewed way to add fields to existing records (a
+   decisions file applied at build, like doha_era_reviews.json) and, for search, a
+   reviewed DOHA index migration. doha_bulk.appeal_ruling is written to be reused.
 0. Decisions reach DOCUMENTS_ENRICHED.jsonl and the indexes, not the source documents.jsonl, which still
    says DTM 24-004 "active" (and the 2018 handbook "active"); `doctor` counts unresolved_currency from the
    source manifest, so it still reports 3. Decide whether publication should sync decided lifecycle into
@@ -139,6 +144,12 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — Appeals now record what the Board did (affirmed/reversed/remanded) and
+which hearing decision it reviewed, per the owner. Kept `outcome` as where the clearance
+ends up rather than replacing it: "affirmed" alone does not say whether a clearance was
+granted, and the outcome is embedded in 10,633 existing IDs and paths and in both
+consumers' filters. The reviewed decision is the latest hearing decision dated before
+the appeal, else the case's only one, else the same-numbered one, each with its basis.
 2026-09-27 Claude — Committed and merged the 2026-09-24 session's uncommitted work (it
 built and published fcl-intake-20260924b from an uncommitted tree). Needed before any
 further build: the already-retired DOHA rows fix (main would refuse every build, the
@@ -209,6 +220,3 @@ tests or production audit performed, and no code/library changes made.
 2026-09-16 Codex — Shared directive splitter now supports truthful producer attribution and blocks
 noncurrent/ineligible directive section output. Standalone Rebuilder shares these
 rules and wiki graph generation; the 70-test Archivist suite still passes.
-2026-09-16 Codex — Added portable reviewed-case builder, staged DOHA intake, source-baseline
-comparison and publication hashes. Synthetic intake/publish/tamper tests pass;
-production corpus unchanged. Legacy regenerator is no longer the canonical route.

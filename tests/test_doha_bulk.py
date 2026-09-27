@@ -78,25 +78,32 @@ class DohaBulkTests(unittest.TestCase):
         write_json(self.library / "START_HERE_FOR_ROBOTS.json", {
             "documents": "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl",
             "relationships": "ROBOT_READABLE_DIRECTORY/MANIFESTS/relationships.jsonl"})
-        not_held = []
+        self.texts = dict(TEXTS)
+        self.not_held = base / "not_held.jsonl"
+        self.listings: list[dict] = []
         for key in TEXTS:
+            self.add(key, TEXTS[key])
+
+    def add(self, key: str, text: str | None, title: str = "Synthetic listing") -> None:
+        """A decision in the acquisition run (or, with text None, only on a DOHA listing)."""
+        url = f"{DOHA}/ISCR-Hearing-Decisions/Listing/FileId/{abs(hash(key)) % 10**6}/"
+        if text is not None:
+            self.texts[key] = text
             folder = self.run / ("doha-appeal-board-decisions" if ".a" in key else "iscr-hearing-decisions")
             folder.mkdir(parents=True, exist_ok=True)
             body = f"%PDF-1.5 synthetic {key}".encode()
             (folder / f"{key}.pdf").write_bytes(body)
-            url = f"{DOHA}/ISCR-Hearing-Decisions/Listing/FileId/{abs(hash(key)) % 10**6}/"
             write_json(folder / f"{key}.pdf.intake.json", {
                 "submission_id": key, "producer_id": "dcsa-librarian", "retrieved_at": "2026-09-25T15:12:00Z",
                 "requested_source_uri": url, "resolved_source_uri": url, "source_filename": f"{key}.pdf",
                 "mime_type": "application/pdf", "source_sha256": hashlib.sha256(body).hexdigest(),
                 "source_bytes": len(body), "approval_state": "quarantined_unreviewed", "publisher_claim": f"{key}.pdf"})
-            not_held.append({"case_key": key, "listing_titles": ["Synthetic listing"], "urls_by_format": {"pdf": [url]},
-                             "captured_utc": "2026-09-22T00:00:00Z"})
-        self.not_held = base / "not_held.jsonl"
-        write_jsonl(self.not_held, not_held)
+        self.listings.append({"case_key": key, "listing_titles": [title], "urls_by_format": {"pdf": [url]},
+                              "captured_utc": "2026-09-22T00:00:00Z"})
+        write_jsonl(self.not_held, self.listings)
 
     def extract(self, source: Path, target: Path) -> None:
-        target.write_text(TEXTS[source.stem], encoding="utf-8")
+        target.write_text(self.texts[source.stem], encoding="utf-8")
 
     def build(self, **kwargs):
         return build_plan(self.library, self.run, self.not_held, self.out, self.extract, **kwargs)
@@ -171,6 +178,48 @@ class DohaBulkTests(unittest.TestCase):
         with self.assertRaises(ValueError) as raised:
             build_plan(self.library / "nowhere", self.run, self.not_held, self.out, self.extract)
         self.assertIn("check --library-root", str(raised.exception))
+
+    def reviews(self) -> dict[str, dict]:
+        return {f"{item['record']['doha_review']['case_id']}.{item['record']['doha_review']['decision_level']}":
+                item["record"]["doha_review"] for item in read_json(self.out / "intake-plan.json")["items"]}
+
+    def test_an_appeal_names_the_decision_it_reviewed_and_a_remand_decision_its_appeal(self) -> None:
+        # The real sequence of ISCR Case No. 06-25928: denied, remanded, granted on remand.
+        self.add("06-25928.h1", hearing("06-25928", "h1", "11/20/2007", "Foreign Preference; Foreign Influence",
+                                        "Eligibility for access to classified information is denied."))
+        self.add("06-25928.h2", hearing("06-25928", "h2", "06/16/2008", "Guideline C; Guideline B",
+                                        "On April 9, 2008, the Appeal Board remanded the case for a new decision.\n"
+                                        "Eligibility for access to classified information is granted."))
+        self.build()
+        reviews = self.reviews()
+        appeal = reviews["06-25928.a1"]
+        self.assertEqual((appeal["appeal_disposition"], appeal["appealed_by"], appeal["outcome"]), ("remanded", "Applicant", "remanded"))
+        self.assertEqual(appeal["reviewed_decision"]["case_key"], "06-25928.h1")
+        self.assertEqual(appeal["reviewed_decision"]["outcome"], "denied")
+        self.assertEqual(appeal["reviewed_decision"]["decision_date"], "2007-11-20")
+        self.assertEqual(appeal["reviewed_decision"]["status"], "in this plan")
+        self.assertEqual(reviews["06-25928.h2"]["decided_on_remand_from"]["case_key"], "06-25928.a1")
+        self.assertNotIn("decided_on_remand_from", reviews["06-25928.h1"])
+
+    def test_affirmed_and_reversed_keep_the_boards_action_and_the_clearance_result(self) -> None:
+        self.add("21-01882.h1", None)
+        self.add("21-01882.a1", appeal("21-01882", "04/08/2024", "Guideline F",
+                                       "Applicant appealed.\n The Decision is AFFIRMED."))
+        self.add("98-00252.a1", "CASENO: 98-00252.a1\nDATE: 09/15/1999\n" + FILLER +
+                 "The case is before the Board on Department Counsel's appeal from that favorable decision. "
+                 "For the reasons set forth below, the Board reverses the Administrative Judge's decision.\n")
+        summary = self.build()
+        reviews = self.reviews()
+        affirmed = reviews["21-01882.a1"]
+        self.assertEqual((affirmed["appeal_disposition"], affirmed["outcome"]), ("affirmed", "denied"))
+        self.assertEqual(affirmed["reviewed_decision"]["case_key"], "21-01882.h1")
+        self.assertEqual(affirmed["reviewed_decision"]["status"], "listed by DOHA, not acquired")
+        reversed_ = reviews["98-00252.a1"]
+        self.assertEqual((reversed_["appeal_disposition"], reversed_["appealed_by"], reversed_["outcome"]),
+                         ("reversed", "Department Counsel", "denied"))
+        self.assertEqual(reversed_["reviewed_decision"]["outcome"], "approved")
+        self.assertIsNone(reversed_["reviewed_decision"]["case_key"])
+        self.assertEqual(summary["counts"]["PRE_SEAD_4/appeal/reversed (clearance denied)"], 1)
 
 
 class RealWordingTests(unittest.TestCase):
