@@ -19,7 +19,7 @@ spot-checks a sample; do not approve/publish without explicit go-ahead.**
 Remaining known gaps: 10-03426.h1 needs refetch (empty package); 06-25928.h1 exists
 only as a DOHA digest; 2 pilot exceptions (30-01130.a1 docket typo, 97-00053.h1
 underscore date). 8 test errors in this cloud environment predate this work
-(fastembed and sibling repos absent); 129 pass.
+(fastembed and sibling repos absent); 132 pass.
 
 2026-09-24: Published `fcl-intake-20260924b` (autonomous after gates: validate valid/publishable, 0 errors,
 0 blockers; evaluate 18/18; doctor integrity_healthy, production_response_ready, 8 verified indexes).
@@ -152,6 +152,15 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — First full runs: plan 20,831 planned / 1,110 exceptions of 21,941;
+re-check of 10,633 held. The re-check's 3,852 topic "disagreements" were mostly its own
+bug (legacy index rows store codes space-separated, "E I J"); fixed. A real topic-rule
+gap remained: a KEYWORD line was trusted if any segment matched, so "Financial ;
+Personal Conduct" lost F and "Security Violations" (1997 name for K) was dropped. Now
+every published guideline name (1997/2006/2017) and unique first words map, and a
+segment naming no guideline adds the formal findings instead of dropping a topic.
+Reviewer bumped to v2; the full plan must be regenerated. 21 held decisions have no
+stored outcome (reported as outcome_missing, not conflicts).
 2026-09-27 Claude — Owner asked whether DOHA work is complete and accurate: it is not
 (32% of DOHA's rulings held; accuracy never measured). Built measurement rather than
 more spot checks: a seeded proportional-stratified sample scored by a one-sided 95%

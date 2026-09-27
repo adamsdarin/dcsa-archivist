@@ -311,5 +311,23 @@ class RealWordingTests(unittest.TestCase):
         self.assertEqual(topics(body, taxonomy), (["E", "H", "J"], "guidelines the decision applies"))
 
 
+    def test_keyword_lines_use_every_published_guideline_name(self) -> None:
+        # Shapes seen in held decisions whose stored topics the old rule contradicted.
+        full = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "ABCDEFGHIJKLM"}}
+        self.assertEqual(topics("KEYWORD: Financial ; Personal Conduct\n", full)[0], ["E", "F"])
+        self.assertEqual(topics("KEYWORD: Security Violations; Personal Conduct\n", full)[0], ["E", "K"])
+        self.assertEqual(topics("KEYWORD: Emotional, Mental, and Personality Disorders\n", full)[0], ["I"])
+        self.assertEqual(topics("KEYWORD: Foreign Influence; Foreign Preference\n", full)[0], ["B", "C"])
+
+    def test_a_keyword_segment_naming_no_guideline_adds_the_formal_findings(self) -> None:
+        full = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "ABCDEFGHIJKLM"}}
+        text = "KEYWORD: Personal Conduct; Something Unlisted\n" + FILLER + "Guideline J: AGAINST APPLICANT\n"
+        codes, basis = topics(text, full)
+        self.assertEqual(codes, ["E", "J"])
+        self.assertIn("naming no guideline: Something Unlisted", basis)
+        codes, basis = topics("KEYWORD: Personal Conduct; Something Unlisted\n", full)
+        self.assertEqual(codes, ["E"])
+        self.assertIn("no formal findings or SOR guidelines to complete it", basis)
+
 if __name__ == "__main__":
     unittest.main()

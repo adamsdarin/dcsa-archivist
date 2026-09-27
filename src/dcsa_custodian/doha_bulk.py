@@ -35,7 +35,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v1"
+REVIEWER = "doha-intake-plan rule-based review v2"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -222,23 +222,70 @@ def outcome(text: str, level: str) -> tuple[str | None, str]:
     return None, "conflicting outcome statements: " + "; ".join(f"{k} ('{v[:80]}')" for k, v in sorted(found.items()))
 
 
+# The published names of each guideline across the 1997, 2006 and 2017 Adjudicative
+# Guidelines. KEYWORD lines use whichever name was current, and older decisions use the
+# 1997 names ("Security Violations", "Emotional, Mental, and Personality Disorders").
+GUIDELINE_NAMES = {
+    "A": ("allegiance to the united states",), "B": ("foreign influence",), "C": ("foreign preference",),
+    "D": ("sexual behavior",), "E": ("personal conduct",), "F": ("financial considerations",),
+    "G": ("alcohol consumption",), "H": ("drug involvement", "substance misuse"),
+    "I": ("psychological conditions", "emotional, mental, and personality disorders",
+          "emotional, mental and personality disorders"),
+    "J": ("criminal conduct",), "K": ("handling protected information", "security violations"),
+    "L": ("outside activities",),
+    "M": ("use of information technology", "misuse of information technology"),
+}
+# A segment's first word names one guideline only when no other guideline name starts with
+# it ("Financial" is F; "Foreign" could be B or C). "Use" and "Security" are too common.
+FIRST_WORD = {"allegiance": "A", "sexual": "D", "personal": "E", "financial": "F", "alcohol": "G",
+              "drug": "H", "substance": "H", "psychological": "I", "emotional": "I", "criminal": "J",
+              "handling": "K", "outside": "L", "misuse": "M"}
+
+
+def _keyword_codes(keywords: str, guidelines: dict[str, Any]) -> tuple[set[str], list[str]]:
+    """Codes named by a KEYWORD line, and the segments that name no guideline."""
+    codes: set[str] = set()
+    unmapped = []
+    for segment in re.split(r";", keywords):
+        lowered = re.sub(r"\s+", " ", segment).strip().lower()
+        if not lowered:
+            continue
+        found = set(GUIDELINE_LETTER.findall(segment))
+        for code, item in guidelines.items():
+            names = [item.get("label", ""), *item["aliases"], *GUIDELINE_NAMES.get(code, ())]
+            if any(name and re.search(r"\b" + re.escape(name.lower()) + r"\b", lowered) for name in names):
+                found.add(code)
+        first = FIRST_WORD.get(lowered.split(" ")[0].strip(",."))
+        if not found and first in guidelines:
+            found.add(first)
+        codes |= found
+        if not found:
+            unmapped.append(segment.strip())
+    return codes & set(guidelines), unmapped
+
+
 def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
-    """KEYWORD line first; then formal findings; then the guidelines the SOR alleged."""
+    """KEYWORD line first; then formal findings; then the guidelines the SOR alleged.
+
+    A KEYWORD line is trusted alone only when every segment names a guideline. When a
+    segment names none, the line may be missing a guideline, so the formal findings (or
+    else the SOR) are added to it rather than silently dropping a topic."""
     guidelines = validate_taxonomy(taxonomy)
     line = KEYWORD.search(text[:20000])
+    partial: set[str] = set()
+    partial_basis = ""
     if line:
         keywords = line.group(1)
-        codes = set(GUIDELINE_LETTER.findall(keywords))
-        lowered = keywords.lower()
-        for code, item in guidelines.items():
-            names = [item.get("label", "")] + list(item["aliases"])
-            if any(name and re.search(r"\b" + re.escape(name.lower()) + r"\b", lowered) for name in names):
-                codes.add(code)
-        if codes:
+        codes, unmapped = _keyword_codes(keywords, guidelines)
+        if codes and not unmapped:
             return sorted(codes), f"KEYWORD line '{keywords.strip()[:120]}'"
+        if codes:
+            partial = codes
+            partial_basis = (f"KEYWORD line '{keywords.strip()[:80]}' (segments naming no guideline: "
+                             f"{'; '.join(u[:30] for u in unmapped[:3])}) plus ")
     findings = sorted(set(code.upper() for code in FORMAL_FINDING.findall(text)) | set(FORMAL_FINDING_COLUMN.findall(text)))
     if findings:
-        return findings, "formal findings for " + ", ".join(f"Guideline {code}" for code in findings)
+        return sorted(partial | set(findings)), partial_basis + "formal findings for " + ", ".join(f"Guideline {code}" for code in findings)
     # The Statement of the Case names the guidelines the SOR alleged; older decisions name
     # them later ("with regard to criteria H, E and J").
     for region, basis in ((text[:8000], "guidelines alleged in the Statement of the Case"),
@@ -249,7 +296,9 @@ def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
             alleged.update(re.findall(r"\b([A-M])\b", match.group(2)))
         alleged &= set(guidelines)
         if alleged:
-            return sorted(alleged), basis
+            return sorted(partial | alleged), partial_basis + basis
+    if partial:
+        return sorted(partial), partial_basis.removesuffix(" plus ") + "; no formal findings or SOR guidelines to complete it"
     return [], "no KEYWORD line, formal findings or SOR guidelines name a guideline"
 
 
