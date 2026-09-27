@@ -45,23 +45,47 @@ AUTHORITY_TIER = 5  # what the library's existing DOHA records carry
 
 KEY = re.compile(r"^(?P<case>\d{2}-\d{4,6})(?P<suffix>-[a-z0-9]+)?\.(?P<level>[ha][1-9])$")
 CASENO = re.compile(r"^\s*CASENO:\s*(\d{2})-(\d{4,6})\.?([ha]\d)?\s*$", re.M | re.I)
-CAPTION = re.compile(r"(?:ISCR|ADP)\s+Case\s+No\.?:?\s*(\d{2})-(\d{4,6})", re.I)
+# Older decisions converted from HTML open (and page-foot) with the bare key, e.g. "97-0050.h1".
+BARE_KEY = re.compile(r"^\s*(\d{2})-(\d{4,6})\.([ha]\d)\s*$", re.M | re.I)
+# "ISCR Case No. 12-09565", and in the 1990s "ISCR OSD Case No. 97-0050".
+CAPTION = re.compile(r"(?:D?ISCR|ADP)(?:\s+OSD)?\s+Case\s+No\.?:?\s*(\d{2})-(\d{4,6})", re.I)
 KEYWORD = re.compile(r"^\s*KEYWORD:\s*(.+)$", re.M | re.I)
-GUIDELINE_LETTER = re.compile(r"\bGuideline\s+([A-M])\b")
-FORMAL_FINDING = re.compile(r"Guideline\s+([A-M])\b[^\n:]{0,60}:\s*(?:FOR|AGAINST)\s+APPLICANT", re.I)
+# "Guideline F" since 1997; "Criterion F" in earlier decisions. The letters mean the same.
+GUIDELINE_LETTER = re.compile(r"\b(?:Guideline|Criterion)\s+([A-M])\b")
+FORMAL_FINDING = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n:]{0,60}:\s*(?:FOR|AGAINST)\s+APPLICANT", re.I)
+# "security concerns under Guidelines F and E", "under Guideline F (Financial Considerations)".
+SOR_GUIDELINES = re.compile(r"\b(?:Guidelines?|Criteri(?:on|a))\s+([A-M])\b((?:\s*(?:\([^)]{0,40}\))?\s*(?:,|and|&)\s*"
+                            r"(?:Guidelines?\s+)?[A-M]\b)*)")
+CONCLUSION_HEADING = re.compile(r"^\s*Conclusions?\s*$", re.M | re.I)
 
-# Hearing conclusions. Order matters only for readability; every match is collected
-# and the decision must point one way.
+# Hearing conclusions, matched on whitespace-collapsed text so "not" split from
+# "clearly" by a line break still counts. Every match is collected and the
+# decision must point one way.
 HEARING_OUTCOMES = (
-    (re.compile(r"not\s+clearly\s+consistent\s+with\s+the\s+(?:interests?\s+of\s+)?national\s+(?:security|interest)", re.I), "denied"),
-    (re.compile(r"(?<!not )clearly\s+consistent\s+with\s+the\s+(?:interests?\s+of\s+)?national\s+(?:security|interest)\s+to\s+(?:grant|continue)", re.I), "approved"),
-    (re.compile(r"(?:eligibility|clearance|access)[^.\n]{0,80}?\b(?:is|are)\s+(granted|denied|revoked|continued)\b", re.I), None),
+    (re.compile(r"\bnot clearly consistent with the (?:interests? of )?national (?:security|interest)", re.I), "denied"),
+    (re.compile(r"(?<!not )\bclearly consistent with the (?:interests? of )?national (?:security|interest) to (?:grant|continue)", re.I), "approved"),
+    (re.compile(r"\b(?:eligibility|clearance|access)[^.]{0,80}?\b(?:is|are) (granted|denied|revoked|continued)\b", re.I), None),
 )
-APPEAL_OUTCOMES = re.compile(
-    r"(adverse|unfavorable|favorable)\s+(?:security\s+clearance\s+)?(?:decision|determination)\s+(?:is\s+)?"
-    r"(affirmed|reversed|remanded)", re.I)
+# The boilerplate that opens every decision: "DOHA could not make the preliminary
+# affirmative finding ... that it is clearly consistent ... to grant". Not an outcome.
+BOILERPLATE = re.compile(r"affirmative finding|could not make|unable to find", re.I)
+# "Adverse decision affirmed"; "the decision of the Administrative Judge denying Applicant a
+# security clearance is AFFIRMED".
+APPEAL_EXPLICIT = re.compile(
+    r"\b(adverse|unfavorable|favorable)\s+(?:security\s+clearance\s+)?(?:decision|determination)\s+(?:is\s+)?"
+    r"(affirmed|reversed|remanded)\b", re.I)
+APPEAL_DIRECTED = re.compile(
+    r"\bdecision\s+of\s+the\s+Administrative\s+Judge\s+(denying|granting|revoking|continuing)\b[^.]{0,120}?\bis\s+"
+    r"(affirmed|reversed|remanded)\b", re.I)
+# "The Decision is AFFIRMED." Its meaning depends on who appealed.
+APPEAL_BARE = re.compile(r"\b(?:the\s+)?(?:Administrative\s+)?(?:Judge'?s\s+)?decision(?:\s+below)?\s+is\s+"
+                         r"(affirmed|reversed|remanded)\b", re.I)
+APPELLANT_APPLICANT = re.compile(r"\bApplicant\s+(?:has\s+)?(?:timely\s+)?appealed\b|\bApplicant's\s+appeal\b", re.I)
+APPELLANT_GOVERNMENT = re.compile(r"\b(?:Department\s+Counsel|the\s+Government)\s+(?:has\s+)?(?:timely\s+)?appealed\b"
+                                  r"|\b(?:Department\s+Counsel's|Government's)\s+appeal\b", re.I)
 APPEAL_MEANING = {("adverse", "affirmed"): "denied", ("adverse", "reversed"): "approved",
                   ("favorable", "affirmed"): "approved", ("favorable", "reversed"): "denied"}
+DIRECTION = {"denying": "adverse", "revoking": "adverse", "granting": "favorable", "continuing": "favorable"}
 WORD_OUTCOME = {"granted": "approved", "continued": "approved", "denied": "denied", "revoked": "denied"}
 
 
@@ -84,12 +108,13 @@ def identity(text: str, case_id: str, level: str) -> tuple[str | None, str]:
     """Problem, or None, and the evidence. The text must name the listed case."""
     number = int(case_id.split("-")[1])
     year = case_id.split("-")[0]
-    header = CASENO.search(text[:20000])
-    if header:
-        same = header.group(1) == year and int(header.group(2)) == number
-        if not same or (header.group(3) and header.group(3).lower() != level):
-            return f"CASENO header '{_snippet(text, header)}' does not match {case_id}.{level}", ""
-        return None, f"CASENO header '{header.group(0).strip()}'"
+    for pattern, name in ((CASENO, "CASENO header"), (BARE_KEY, "case key line")):
+        header = pattern.search(text[:20000])
+        if header:
+            same = header.group(1) == year and int(header.group(2)) == number
+            if not same or (header.group(3) and header.group(3).lower() != level):
+                return f"{name} '{_snippet(text, header)}' does not match {case_id}.{level}", ""
+            return None, f"{name} '{header.group(0).strip()}'"
     caption = CAPTION.search(text[:20000])
     if caption:
         if caption.group(1) != year or int(caption.group(2)) != number:
@@ -98,32 +123,61 @@ def identity(text: str, case_id: str, level: str) -> tuple[str | None, str]:
     return "no case number found in the extracted text", ""
 
 
+def _flat(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
+
+
+def _appeal_outcome(text: str) -> dict[str, str]:
+    found: dict[str, str] = {}
+    flat = _flat(text)
+    for match in APPEAL_EXPLICIT.finditer(flat):
+        kind, verb = match.group(1).lower(), match.group(2).lower()
+        kind = "adverse" if kind == "unfavorable" else kind
+        found.setdefault("remanded" if verb == "remanded" else APPEAL_MEANING[(kind, verb)], match.group(0))
+    for match in APPEAL_DIRECTED.finditer(flat):
+        verb = match.group(2).lower()
+        found.setdefault("remanded" if verb == "remanded" else APPEAL_MEANING[(DIRECTION[match.group(1).lower()], verb)],
+                         _snippet(flat, match, 160))
+    if found:
+        return found
+    bare = {match.group(1).lower(): match.group(0) for match in APPEAL_BARE.finditer(flat)}
+    if list(bare) == ["remanded"]:
+        return {"remanded": bare["remanded"]}
+    if len(bare) == 1:
+        (verb, said), = bare.items()
+        applicant, government = bool(APPELLANT_APPLICANT.search(flat)), bool(APPELLANT_GOVERNMENT.search(flat))
+        if applicant != government:
+            kind = "adverse" if applicant else "favorable"
+            found[APPEAL_MEANING[(kind, verb)]] = f"'{said}' on an appeal by {'Applicant' if applicant else 'Department Counsel'}"
+    return found
+
+
+def _hearing_outcome(text: str) -> dict[str, str]:
+    headings = list(CONCLUSION_HEADING.finditer(text))
+    region = _flat(text[headings[-1].start():] if headings else text[-3000:])
+    found: dict[str, str] = {}
+    for pattern, value in HEARING_OUTCOMES:
+        for match in pattern.finditer(region):
+            sentence = region[region.rfind(". ", 0, match.start()) + 1:match.start()]
+            if BOILERPLATE.search(sentence):
+                continue
+            found.setdefault(value or WORD_OUTCOME[match.group(1).lower()], match.group(0))
+    return found
+
+
 def outcome(text: str, level: str) -> tuple[str | None, str]:
     """(outcome, evidence) or (None, problem). Ambiguity is a problem, not a guess."""
-    found: dict[str, str] = {}
-    if level.startswith("a"):
-        for match in APPEAL_OUTCOMES.finditer(text):
-            kind, verb = match.group(1).lower(), match.group(2).lower()
-            kind = "adverse" if kind == "unfavorable" else kind
-            value = "remanded" if verb == "remanded" else APPEAL_MEANING[(kind, verb)]
-            found.setdefault(value, _snippet(text, match))
-        if not found and re.search(r"\bremanded\b", text[-4000:], re.I) and re.search(r"\bREMAND", text):
-            found["remanded"] = "order remands the case"
-    else:
-        tail = text[-6000:]
-        for pattern, value in HEARING_OUTCOMES:
-            for match in pattern.finditer(tail):
-                result = value or WORD_OUTCOME[match.group(1).lower()]
-                found.setdefault(result, _snippet(tail, match))
+    found = _appeal_outcome(text) if level.startswith("a") else _hearing_outcome(text)
     if len(found) == 1:
         (value, evidence), = found.items()
-        return value, evidence
+        return value, evidence[:160]
     if not found:
         return None, "no conclusion or order states the outcome"
-    return None, "conflicting outcome statements: " + "; ".join(f"{k} ('{v}')" for k, v in sorted(found.items()))
+    return None, "conflicting outcome statements: " + "; ".join(f"{k} ('{v[:80]}')" for k, v in sorted(found.items()))
 
 
 def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
+    """KEYWORD line first; then formal findings; then the guidelines the SOR alleged."""
     guidelines = validate_taxonomy(taxonomy)
     line = KEYWORD.search(text[:20000])
     if line:
@@ -136,10 +190,19 @@ def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
                 codes.add(code)
         if codes:
             return sorted(codes), f"KEYWORD line '{keywords.strip()[:120]}'"
-    findings = sorted(set(FORMAL_FINDING.findall(text)))
+    findings = sorted(set(code.upper() for code in FORMAL_FINDING.findall(text)))
     if findings:
         return findings, "formal findings for " + ", ".join(f"Guideline {code}" for code in findings)
-    return [], "no KEYWORD line or formal findings name a guideline"
+    # The Statement of the Case names the guidelines the SOR alleged.
+    opening = _flat(text[:8000])
+    alleged: set[str] = set()
+    for match in SOR_GUIDELINES.finditer(opening):
+        alleged.add(match.group(1))
+        alleged.update(re.findall(r"\b([A-M])\b", match.group(2)))
+    alleged &= set(guidelines)
+    if alleged:
+        return sorted(alleged), "guidelines alleged in the Statement of the Case"
+    return [], "no KEYWORD line, formal findings or SOR guidelines name a guideline"
 
 
 def load_packages(run_dir: Path) -> tuple[list[tuple[Path, dict[str, Any]]], list[tuple[Path, str]]]:

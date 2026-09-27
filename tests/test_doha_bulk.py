@@ -13,7 +13,7 @@ import unittest
 
 from dcsa_custodian.common import iter_jsonl, read_json, sha256_file, write_json, write_jsonl
 from dcsa_custodian.doha import MANIFEST, TAXONOMY, append_cases
-from dcsa_custodian.doha_bulk import build_plan, outcome, topics
+from dcsa_custodian.doha_bulk import build_plan, identity, outcome, topics
 from dcsa_custodian.intake import stage_intake
 
 DOHA = "https://doha.ogc.osd.mil/Industrial-Security-Program/Industrial-Security-Clearance-Decisions"
@@ -171,6 +171,50 @@ class DohaBulkTests(unittest.TestCase):
         with self.assertRaises(ValueError) as raised:
             build_plan(self.library / "nowhere", self.run, self.not_held, self.out, self.extract)
         self.assertIn("check --library-root", str(raised.exception))
+
+
+class RealWordingTests(unittest.TestCase):
+    """Rules against wording taken from real DOHA decisions in the 2026-09-27 pilot."""
+
+    def test_a_bare_affirmance_takes_its_meaning_from_who_appealed(self) -> None:
+        body = "Applicant appealed pursuant to Directive E3.1.28.\n" + FILLER
+        order = "                                                  Order\n       The Decision is AFFIRMED.\n"
+        self.assertEqual(outcome(body + order, "a1")[0], "denied")
+        government = "Department Counsel appealed the favorable decision.\n" + FILLER
+        self.assertEqual(outcome(government + "The Administrative Judge's decision is AFFIRMED.", "a1")[0], "approved")
+        self.assertIsNone(outcome(FILLER + order, "a1")[0], "without an appellant a bare affirmance means nothing")
+
+    def test_an_order_naming_the_decision_it_affirms(self) -> None:
+        text = ("(App. Bd. Oct. 13, 2004). Therefore, the decision of the Administrative Judge denying Applicant a "
+                "security clearance is\n  AFFIRMED.\n  Signed:")
+        self.assertEqual(outcome(text, "a1")[0], "denied")
+
+    def test_not_split_from_clearly_by_a_line_break_is_still_a_denial(self) -> None:
+        text = ("DOHA could not make the preliminary affirmative finding under the Directive that it is clearly "
+                "consistent with the national interest to grant or continue a security clearance.\n" + FILLER +
+                "                                        Conclusion\n"
+                "         In light of all of the circumstances presented by the record in this case, it is not\n"
+                "clearly consistent with the national interest to grant Applicant a security clearance.\n"
+                "Eligibility for access to classified information is denied.\n")
+        self.assertEqual(outcome(text, "h1"), ("denied", "not clearly consistent with the national interest"))
+
+    def test_the_opening_boilerplate_is_not_an_outcome(self) -> None:
+        text = ("DOHA could not make the preliminary affirmative finding under the Directive that it is clearly "
+                "consistent with the national interest to grant or continue a security clearance for Applicant.\n"
+                "It is clearly consistent with the national interest to grant or continue a security clearance for Applicant.")
+        self.assertEqual(outcome(text, "h1")[0], "approved")
+
+    def test_a_1997_decision_is_identified_by_its_key_line_or_osd_caption(self) -> None:
+        head = "97-0050.h1\n  Date: April 30, 1997\n  ISCR OSD Case No. 97-0050\n"
+        self.assertIsNone(identity(head, "97-00050", "h1")[0])
+        self.assertIsNone(identity("  ISCR OSD Case No. 97-0050\n", "97-00050", "h1")[0])
+        self.assertIn("does not match", identity(head, "97-00051", "h1")[0])
+
+    def test_topics_fall_back_to_the_guidelines_the_sor_alleged(self) -> None:
+        text = "Statement of the Case\nDOHA issued an SOR detailing security concerns under Guidelines F and E. " + FILLER
+        self.assertEqual(topics(text, TAXONOMY_BODY | {"guidelines": TAXONOMY_BODY["guidelines"] | {
+            "E": {"label": "Personal Conduct", "aliases": ["personal conduct"]}}})[0], ["E", "F"])
+        self.assertEqual(topics("Paragraph 1, Criterion F:   AGAINST APPLICANT\n", TAXONOMY_BODY)[0], ["F"])
 
 
 if __name__ == "__main__":
