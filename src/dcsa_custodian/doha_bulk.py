@@ -138,37 +138,61 @@ def _flat(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def _appeal_outcome(text: str) -> dict[str, str]:
-    found: dict[str, str] = {}
+OPPOSITE = {"approved": "denied", "denied": "approved"}
+REVIEWED_OUTCOME = {"adverse": "denied", "favorable": "approved"}
+
+
+def appeal_ruling(text: str) -> dict[str, Any]:
+    """What an Appeal Board decision did and to what, read from its text.
+
+    Returns disposition (affirmed/reversed/remanded), reviewed_outcome (what the
+    decision under review had decided: approved/denied, or None when the text does
+    not say), appealed_by, outcome (where the clearance ends up; remanded when sent
+    back), evidence, and problem when the text does not settle it. Every candidate
+    reading is collected; disagreement is a problem, not a choice.
+    """
     flat = _flat(text)
+    readings: dict[tuple[str, str | None], str] = {}
     for match in APPEAL_EXPLICIT.finditer(flat):
-        kind, verb = match.group(1).lower(), match.group(2).lower()
+        kind = match.group(1).lower()
         kind = "adverse" if kind == "unfavorable" else kind
-        found.setdefault("remanded" if verb == "remanded" else APPEAL_MEANING[(kind, verb)], match.group(0))
+        readings.setdefault((match.group(2).lower(), kind), match.group(0))
     for match in APPEAL_DIRECTED.finditer(flat):
-        verb = match.group(2).lower()
-        found.setdefault("remanded" if verb == "remanded" else APPEAL_MEANING[(DIRECTION[match.group(1).lower()], verb)],
-                         _snippet(flat, match, 160))
-    if found:
-        return found
-    bare = {match.group(1).lower(): match.group(0) for match in APPEAL_BARE.finditer(flat)}
-    for match in APPEAL_BOARD_VERB.finditer(flat):
-        bare.setdefault(BOARD_VERB[match.group(1).lower()], match.group(0))
-    if list(bare) == ["remanded"]:
-        return {"remanded": bare["remanded"]}
-    if len(bare) == 1:
-        (verb, said), = bare.items()
-        stated = {m.group(1).lower() for m in APPEAL_FROM.finditer(flat)}
-        stated = {"adverse" if kind == "unfavorable" else kind for kind in stated}
-        if len(stated) == 1:
-            kind = stated.pop()
-            found[APPEAL_MEANING[(kind, verb)]] = f"'{said}' on an appeal from a {kind} decision"
-            return found
-        applicant, government = bool(APPELLANT_APPLICANT.search(flat)), bool(APPELLANT_GOVERNMENT.search(flat))
-        if applicant != government:
-            kind = "adverse" if applicant else "favorable"
-            found[APPEAL_MEANING[(kind, verb)]] = f"'{said}' on an appeal by {'Applicant' if applicant else 'Department Counsel'}"
-    return found
+        readings.setdefault((match.group(2).lower(), DIRECTION[match.group(1).lower()]), _snippet(flat, match, 160))
+    if not readings:
+        bare = {match.group(1).lower(): match.group(0) for match in APPEAL_BARE.finditer(flat)}
+        for match in APPEAL_BOARD_VERB.finditer(flat):
+            bare.setdefault(BOARD_VERB[match.group(1).lower()], match.group(0))
+        if len(bare) == 1:
+            (verb, said), = bare.items()
+            stated = {"adverse" if m.group(1).lower() == "unfavorable" else m.group(1).lower()
+                      for m in APPEAL_FROM.finditer(flat)}
+            applicant, government = bool(APPELLANT_APPLICANT.search(flat)), bool(APPELLANT_GOVERNMENT.search(flat))
+            if len(stated) == 1:
+                kind = stated.pop()
+                readings[(verb, kind)] = f"'{said}' on an appeal from a {kind} decision"
+            elif applicant != government:
+                kind = "adverse" if applicant else "favorable"
+                readings[(verb, kind)] = f"'{said}' on an appeal by {'Applicant' if applicant else 'Department Counsel'}"
+            elif verb == "remanded":
+                readings[(verb, None)] = said
+    dispositions = {verb for verb, _ in readings}
+    kinds = {kind for _, kind in readings if kind}
+    if not readings:
+        return {"problem": "no order states what the Board did"}
+    if len(dispositions) > 1 or len(kinds) > 1:
+        return {"problem": "conflicting order statements: " + "; ".join(f"{v}/{k} ('{e[:60]}')"
+                                                                         for (v, k), e in sorted(readings.items(), key=str))}
+    disposition, kind = dispositions.pop(), (kinds.pop() if kinds else None)
+    reviewed = REVIEWED_OUTCOME.get(kind) if kind else None
+    applicant, government = bool(APPELLANT_APPLICANT.search(flat)), bool(APPELLANT_GOVERNMENT.search(flat))
+    appealed_by = ("Applicant" if applicant else "Department Counsel") if applicant != government else \
+        {"adverse": "Applicant", "favorable": "Department Counsel"}.get(kind or "")
+    effect = "remanded" if disposition == "remanded" else (reviewed if disposition == "affirmed" else OPPOSITE.get(reviewed or ""))
+    if effect is None:
+        return {"problem": f"the Board {disposition} a decision whose outcome the text does not state"}
+    return {"disposition": disposition, "reviewed_outcome": reviewed, "appealed_by": appealed_by,
+            "outcome": effect, "evidence": next(iter(readings.values()))[:160]}
 
 
 def _hearing_outcome(text: str) -> dict[str, str]:
@@ -186,7 +210,10 @@ def _hearing_outcome(text: str) -> dict[str, str]:
 
 def outcome(text: str, level: str) -> tuple[str | None, str]:
     """(outcome, evidence) or (None, problem). Ambiguity is a problem, not a guess."""
-    found = _appeal_outcome(text) if level.startswith("a") else _hearing_outcome(text)
+    if level.startswith("a"):
+        ruling = appeal_ruling(text)
+        return (ruling["outcome"], ruling["evidence"]) if "outcome" in ruling else (None, ruling["problem"])
+    found = _hearing_outcome(text)
     if len(found) == 1:
         (value, evidence), = found.items()
         return value, evidence[:160]
@@ -252,18 +279,74 @@ def _rows(path: Path) -> list[dict[str, Any]]:
         raise ValueError(f"{path} is not valid JSON lines: {exc}") from exc
 
 
-def held_cases(library: Path) -> tuple[set[str], set[str], set[str]]:
-    """Case keys, document IDs and paths the library already holds."""
-    cases, ids, paths = set(), set(), set()
+def held_cases(library: Path) -> tuple[dict[str, str | None], set[str], set[str]]:
+    """Case keys the library holds (with decision dates where recorded), document IDs and paths."""
+    cases: dict[str, str | None] = {}
+    ids, paths = set(), set()
     if (library / DOHA_MANIFEST).is_file():
         for row in _rows(library / DOHA_MANIFEST):
-            cases.add(str(row.get("case_stem", "")).split("_")[0].lower())
+            cases[str(row.get("case_stem", "")).split("_")[0].lower()] = row.get("decision_date")
     for row in _rows(library / DOCUMENTS):
         ids.add(row["document_id"])
         for key in ("human_source_path", "robot_text_path"):
             if row.get(key):
                 paths.add(str(row[key]).replace("\\", "/").casefold())
     return cases, ids, paths
+
+
+LEVEL = re.compile(r"^(\d{2}-\d{4,6})\.([ha])(\d)$")
+
+
+def _related(case_id: str, family: str, known: dict[str, tuple[str | None, str]]) -> list[tuple[str, str | None, str, int]]:
+    """Known decisions of one case and family: (key, date, status, number)."""
+    found = []
+    for key, (decided, status) in known.items():
+        match = LEVEL.match(key)
+        if match and match.group(1) == case_id and match.group(2) == family:
+            found.append((key, decided, status, int(match.group(3))))
+    return found
+
+
+def reviewed_decision(case_id: str, level: str, decided: str, known: dict[str, tuple[str | None, str]]) -> dict[str, Any]:
+    """The hearing decision an appeal reviewed: the latest one dated before the appeal;
+    else the case's only hearing decision; else the one with the appeal's number."""
+    hearings = _related(case_id, "h", known)
+    dated = [h for h in hearings if h[1] and h[1] < decided]
+    if dated:
+        key, date_, status, _ = max(dated, key=lambda h: (h[1], h[3]))
+        return {"case_key": key, "decision_date": date_, "status": status,
+                "basis": "latest hearing decision of the case dated before the appeal"}
+    if len(hearings) == 1:
+        key, date_, status, _ = hearings[0]
+        return {"case_key": key, "decision_date": date_, "status": status,
+                "basis": "the only hearing decision of the case that DOHA lists or the library holds"}
+    same = [h for h in hearings if h[3] == int(level[1:])]
+    if same:
+        key, date_, status, _ = same[0]
+        return {"case_key": key, "decision_date": date_, "status": status,
+                "basis": "hearing decision with the appeal's number; the case has several and their dates are not all known"}
+    return {"case_key": None, "decision_date": None, "status": "not identified",
+            "basis": "no hearing decision of this case is listed by DOHA or held by the library"}
+
+
+def remanded_from(case_id: str, level: str, decided: str, known: dict[str, tuple[str | None, str]]) -> dict[str, Any] | None:
+    """For a hearing decision issued on remand, the appeal that sent the case back."""
+    appeals = _related(case_id, "a", known)
+    dated = [a for a in appeals if a[1] and a[1] < decided]
+    if dated:
+        key, date_, status, _ = max(dated, key=lambda a: (a[1], a[3]))
+        return {"case_key": key, "decision_date": date_, "status": status,
+                "basis": "latest appeal decision of the case dated before this decision"}
+    earlier = [a for a in appeals if a[3] == int(level[1:]) - 1]
+    if earlier:
+        key, date_, status, _ = earlier[0]
+        return {"case_key": key, "decision_date": date_, "status": status,
+                "basis": "appeal numbered one below this hearing decision"}
+    return {"case_key": None, "decision_date": None, "status": "not identified",
+            "basis": "the decision says it follows a remand; no appeal of this case is listed or held"}
+
+
+REMAND_TEXT = re.compile(r"\bremand(?:ed)?\b", re.I)
 
 
 def pilot_sample(keys: list[str], size: int) -> list[str]:
@@ -292,10 +375,15 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
     validate_taxonomy(taxonomy)
     listings = {row["case_key"]: row for row in _rows(not_held)}
     held, used_ids, used_paths = held_cases(library)
+    # Every decision this plan can point at, with what is known of it.
+    known: dict[str, tuple[str | None, str]] = {key: (None, "listed by DOHA, not acquired") for key in listings}
     packages = {}
     loaded, unreadable = load_packages(run_dir)
     for path, package in loaded:
         packages[Path(package["source_filename"]).stem.lower()] = (path, package)
+    known.update({key: (None, "acquired, not in this plan") for key in packages})
+    known.update({key: (decided, "held by the library") for key, decided in held.items()})
+    links: list[tuple[dict[str, Any], str, str, str, str]] = []
     keys = sorted(packages)
     if group:
         keys = [k for k in keys if k.rsplit(".", 1)[1].startswith("h" if group == "hearings" else "a")]
@@ -364,6 +452,7 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
             refuse(key, outcome_basis)
             continue
         codes, topic_basis = topics(text, taxonomy)
+        ruling = appeal_ruling(text) if level.startswith("a") else {}
         group_name = ERA_FOLDERS[era_result["sead4_era"]]
         eligible = group_name == "POST_SEAD_4" and level.startswith("h") and result in ("approved", "denied") and bool(codes)
         stem = f"{case_id}.{level}_{result}" + "".join(f"_{code}" for code in codes)
@@ -378,6 +467,9 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
         shutil.copy2(source, out_dir / "sources" / source.name)
         shutil.copy2(package_path, out_dir / "sources" / package_path.name)
         robot_sha = sha256_file(text_path)
+        if ruling:
+            outcome_basis = (f"the Board {ruling['disposition']} the decision under review "
+                             f"({ruling['reviewed_outcome'] or 'outcome not stated'}); {ruling['evidence']}")
         basis = (f"identity: {identity_basis}; date: {decided} ({era_result.get('decision_date_basis')}); "
                  f"outcome: {outcome_basis}; topics: {topic_basis}")
         items.append({
@@ -394,6 +486,8 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
                     "current_group": group_name, "outcome": result, "guidelines": codes,
                     "answer_eligible": eligible, "reviewed_by": REVIEWER, "reviewed_utc": reviewed_utc,
                     "metadata_basis": basis,
+                    **({"appeal_disposition": ruling["disposition"], "appealed_by": ruling["appealed_by"],
+                        "reviewed_decision": {"outcome": ruling["reviewed_outcome"]}} if ruling else {}),
                 },
             },
             "review": {
@@ -420,8 +514,23 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
             "listing_conflict": len(titles) > 1,
         })
         counts["planned"] += 1
-        counts[f"{group_name}/{'hearing' if level[0] == 'h' else 'appeal'}/{result}"] += 1
+        if ruling:
+            counts[f"{group_name}/appeal/{ruling['disposition']} (clearance {result})"] += 1
+        else:
+            counts[f"{group_name}/hearing/{'granted' if result == 'approved' else result}"] += 1
+        review = items[-1]["record"]["doha_review"]
+        on_remand = level.startswith("h") and (int(level[1:]) > 1 or bool(REMAND_TEXT.search(text)))
+        links.append((review, key, case_id, level, decided if not on_remand or level.startswith("a") else "remand"))
+        known[key] = (decided, "in this plan")
         counts["answer_eligible"] += eligible
+    # Links are resolved once every decision in the plan is known, so an appeal can
+    # point at a hearing decision planned after it.
+    for review, key, case_id, level, marker in links:
+        decided = review["decision_date"]
+        if level.startswith("a"):
+            review["reviewed_decision"] = {**reviewed_decision(case_id, level, decided, known), **review["reviewed_decision"]}
+        elif marker == "remand":
+            review["decided_on_remand_from"] = remanded_from(case_id, level, decided, known)
     if items:
         write_json(out_dir / "intake-plan.json", {"schema_version": "1.0", "items": items})
     write_jsonl(out_dir / "doha_source_urls.additions.jsonl", provenance)
