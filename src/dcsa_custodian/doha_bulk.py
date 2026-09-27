@@ -142,21 +142,39 @@ def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
     return [], "no KEYWORD line or formal findings name a guideline"
 
 
-def load_packages(run_dir: Path) -> list[tuple[Path, dict[str, Any]]]:
-    packages = []
+def load_packages(run_dir: Path) -> tuple[list[tuple[Path, dict[str, Any]]], list[tuple[Path, str]]]:
+    """Readable packages, and the ones that are not. An acquisition run interrupted
+    mid-write can leave an empty package; that is one decision to refetch, not a
+    reason to stop."""
+    packages, unreadable = [], []
     for group in ("iscr-hearing-decisions", "doha-appeal-board-decisions"):
         for path in sorted((run_dir / group).glob("*.intake.json")):
-            packages.append((path, read_json(path)))
-    return packages
+            try:
+                package = read_json(path)
+                if not isinstance(package, dict) or not package.get("source_filename"):
+                    raise ValueError("not an intake package")
+            except (ValueError, UnicodeDecodeError) as exc:
+                unreadable.append((path, f"{type(exc).__name__}: {exc}"))
+                continue
+            packages.append((path, package))
+    return packages, unreadable
+
+
+def _rows(path: Path) -> list[dict[str, Any]]:
+    """A JSON-lines input, with the file named if it does not parse."""
+    try:
+        return [row for _, row in iter_jsonl(path)]
+    except ValueError as exc:
+        raise ValueError(f"{path} is not valid JSON lines: {exc}") from exc
 
 
 def held_cases(library: Path) -> tuple[set[str], set[str], set[str]]:
     """Case keys, document IDs and paths the library already holds."""
     cases, ids, paths = set(), set(), set()
     if (library / DOHA_MANIFEST).is_file():
-        for _, row in iter_jsonl(library / DOHA_MANIFEST):
+        for row in _rows(library / DOHA_MANIFEST):
             cases.add(str(row.get("case_stem", "")).split("_")[0].lower())
-    for _, row in iter_jsonl(library / DOCUMENTS):
+    for row in _rows(library / DOCUMENTS):
         ids.add(row["document_id"])
         for key in ("human_source_path", "robot_text_path"):
             if row.get(key):
@@ -183,12 +201,16 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
                limit: int | None = None, pilot: int | None = None) -> dict[str, Any]:
     if out_dir.exists():
         raise FileExistsError(f"output directory already exists: {out_dir}")
-    taxonomy = read_json(library / TAXONOMY)
+    try:
+        taxonomy = read_json(library / TAXONOMY)
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"cannot read the DOHA taxonomy at {library / TAXONOMY}; check --library-root: {exc}") from exc
     validate_taxonomy(taxonomy)
-    listings = {row["case_key"]: row for _, row in iter_jsonl(not_held)}
+    listings = {row["case_key"]: row for row in _rows(not_held)}
     held, used_ids, used_paths = held_cases(library)
     packages = {}
-    for path, package in load_packages(run_dir):
+    loaded, unreadable = load_packages(run_dir)
+    for path, package in loaded:
         packages[Path(package["source_filename"]).stem.lower()] = (path, package)
     keys = sorted(packages)
     if group:
@@ -200,6 +222,11 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
     items, provenance, exceptions = [], [], []
     counts: collections.Counter[str] = collections.Counter()
     reviewed_utc = utc_now()
+    for path, problem in unreadable:
+        counts["exception"] += 1
+        exceptions.append({"case_key": path.name.removesuffix(".pdf.intake.json").lower(),
+                           "reason": f"intake package unreadable ({problem}); refetch this decision",
+                           "package": str(path)})
 
     def refuse(key: str, reason: str, **extra: Any) -> None:
         counts["exception"] += 1
