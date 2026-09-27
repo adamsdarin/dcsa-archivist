@@ -160,6 +160,18 @@ class DohaBulkTests(unittest.TestCase):
         self.assertEqual(topics("KEYWORD: Delinquent debt\n", TAXONOMY_BODY)[0], ["F"])
         self.assertEqual(topics("no keyword\nGuideline F: AGAINST APPLICANT\n", TAXONOMY_BODY)[0], ["F"])
 
+    def test_an_unreadable_package_is_an_exception_not_a_stop(self) -> None:
+        (self.run / "iscr-hearing-decisions" / "19-01234.h1.pdf.intake.json").write_text("", encoding="utf-8")
+        summary = self.build()
+        self.assertEqual(summary["counts"]["planned"], 2)
+        reasons = {row["case_key"]: row["reason"] for _, row in iter_jsonl(self.out / "exceptions.jsonl")}
+        self.assertIn("intake package unreadable", reasons["19-01234.h1"])
+
+    def test_a_wrong_library_root_names_what_is_missing(self) -> None:
+        with self.assertRaises(ValueError) as raised:
+            build_plan(self.library / "nowhere", self.run, self.not_held, self.out, self.extract)
+        self.assertIn("check --library-root", str(raised.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
