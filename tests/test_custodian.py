@@ -172,6 +172,49 @@ class CustodianTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             apply_metadata_decisions([winner], [decision])
 
+    def test_currency_unresolved_leaves_status_unconfirmed_not_cancelled(self) -> None:
+        winner, _ = self._duplicate_pair()
+        winner.update(current_status="active", answer_eligibility="answer_eligible")
+        detail = "Past its stated expiration of 2026-07-31; publisher still lists it with no change or cancellation."
+        apply_metadata_decisions([winner], [self._decision(winner, decision="currency_unresolved", status_detail=detail)])
+        self.assertEqual(winner["current_status"], "current_or_verify")
+        self.assertEqual(winner["answer_eligibility"], "unresolved_currency")
+        self.assertEqual(winner["current_status_detail"], detail)
+
+    def test_currency_unresolved_requires_detail_and_evidence(self) -> None:
+        winner, _ = self._duplicate_pair()
+        with self.assertRaisesRegex(ValueError, "status_detail"):
+            apply_metadata_decisions([winner], [self._decision(winner, decision="currency_unresolved")])
+        with self.assertRaisesRegex(ValueError, "requires official-source evidence"):
+            apply_metadata_decisions([winner], [self._decision(winner, decision="currency_unresolved",
+                                                               status_detail="x", evidence=[])])
+
+    def test_lifecycle_decision_can_carry_byte_verified_provenance(self) -> None:
+        winner, _ = self._duplicate_pair()
+        winner["human_artifact_sha256"] = "a" * 64
+        apply_metadata_decisions([winner], [self._decision(winner, decision="verified_current",
+                                                           source_url="https://example.gov/form.pdf", source_sha256="a" * 64)])
+        self.assertEqual(winner["source_url"], "https://example.gov/form.pdf")
+        self.assertEqual(winner["source_url_basis"], "reacquired_bytes_identical")
+        self.assertEqual(winner["answer_eligibility"], "answer_eligible")
+        other, _ = self._duplicate_pair()
+        other["human_artifact_sha256"] = "a" * 64
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            apply_metadata_decisions([other], [self._decision(other, source_url="https://example.gov/form.pdf",
+                                                              source_sha256="b" * 64)])
+
+    def test_embedding_runs_in_process_on_windows_unless_overridden(self) -> None:
+        from unittest.mock import patch
+        from dcsa_custodian.semantic import embedding_workers
+        with patch.dict("os.environ", {"DCSA_EMBED_PARALLEL": ""}):
+            self.assertIsNone(embedding_workers(50_000, platform="nt"))
+            self.assertEqual(embedding_workers(50_000, platform="posix"), 20)
+            self.assertIsNone(embedding_workers(10, platform="posix"))
+        with patch.dict("os.environ", {"DCSA_EMBED_PARALLEL": "1"}):
+            self.assertIsNone(embedding_workers(50_000, platform="posix"))
+        with patch.dict("os.environ", {"DCSA_EMBED_PARALLEL": "4"}):
+            self.assertEqual(embedding_workers(50_000, platform="nt"), 4)
+
     def test_ledger_becomes_decisions_for_verified_rows_only(self) -> None:
         from dcsa_custodian.decisions import provenance_decisions
         winner, loser = self._duplicate_pair()

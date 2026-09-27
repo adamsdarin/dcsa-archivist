@@ -215,6 +215,23 @@ class ReleaseTests(unittest.TestCase):
             with contextlib.closing(sqlite3.connect(production / doha_release.PATHS)) as db:
                 self.assertIsNone(db.execute("SELECT 1 FROM current_paths WHERE document_id='ghost'").fetchone())
 
+    def test_a_published_retirement_does_not_block_later_builds(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "library"
+            root.mkdir()
+            # The library this retirement was published into no longer holds the row.
+            self.make_library(root)
+            retirement = {"document_id": "ghost", "superseded_by": "late-2016-case", "reviewed_by": "reviewer",
+                          "reviewed_utc": "2026-09-23T00:00:00Z", "evidence": "no artifacts; identical indexed text"}
+            production = Path(temp) / "production"
+            report = doha_release.build(root, production, {}, {}, {"ghost": retirement})
+            self.assertEqual(report["retired"], [])
+            self.assertEqual([item["document_id"] for item in report["already_retired"]], ["ghost"])
+            self.assertEqual(doha_release.check(production, root, retirements={"ghost": retirement}), [])
+            # An absent row whose survivor is gone too is still refused.
+            with self.assertRaises(ValueError):
+                doha_release.build(root, production, {}, {}, {"ghost": dict(retirement, superseded_by="no-such-row")})
+
     def test_retirement_is_refused_when_the_library_still_holds_the_decision(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "library"
