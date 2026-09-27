@@ -144,6 +144,13 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — Added an embedding cache (.custodian/embedding_cache.sqlite). Every build
+re-embedded all ~16,100 chunks although only new or edited documents change them; vectors
+are now keyed by model name and the SHA-256 of the exact chunk text, so a changed chunk or
+model misses and is re-embedded. Only the real model's vectors are cached: a substituted
+embedder (the tests' zero-vector fakes) bypasses it, so a fake can never be served to a
+real build. DCSA_EMBED_CACHE=0 disables it; each build reports hits in EMBEDDING_CACHE.json.
+The first DOHA pilot build (48 decisions) was valid and publishable; not published.
 2026-09-27 Claude — Appeals now record what the Board did (affirmed/reversed/remanded) and
 which hearing decision it reviewed, per the owner. Kept `outcome` as where the clearance
 ends up rather than replacing it: "affirmed" alone does not say whether a clearance was
@@ -217,6 +224,3 @@ and release roles, deterministic build/validation tools, and single-writer publi
 Current publish checks stale baselines but has no enclosing publisher lock. Naming and
 intake instructions also need reconciliation. Workspace health check passed; no runtime
 tests or production audit performed, and no code/library changes made.
-2026-09-16 Codex — Shared directive splitter now supports truthful producer attribution and blocks
-noncurrent/ineligible directive section output. Standalone Rebuilder shares these
-rules and wiki graph generation; the 70-test Archivist suite still passes.
