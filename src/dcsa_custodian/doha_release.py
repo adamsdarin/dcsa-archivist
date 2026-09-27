@@ -318,12 +318,18 @@ def apply_to_records(records: list[dict[str, Any]], production: Path, root: Path
 
 def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | None = None,
           provenance: dict[str, dict[str, Any]] | None = None, recompute: bool = True,
-          enriched: Path | None = None, retirements: dict[str, dict[str, Any]] | None = None) -> list[str]:
+          enriched: Path | None = None, retirements: dict[str, dict[str, Any]] | None = None,
+          pending: set[str] | None = None) -> list[str]:
     """Errors when any DOHA store disagrees, or an era does not follow the decision-date rule.
 
     ``recompute`` reclassifies every decision from its text, which is what stops a
     case-number or folder rule from returning under a new name.
+
+    ``pending`` names decisions an intake build has just staged into the path store
+    and indexes but whose era the same build has not yet assigned. Only the pre-build
+    audit passes it; candidate validation checks every decision, pending ones included.
     """
+    pending = pending or set()
     errors: list[str] = []
     rules_path = _resolve(production, root, RULES)
     rules = read_json(rules_path) if rules_path.is_file() else {}
@@ -331,7 +337,7 @@ def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | Non
         errors.append(f"DOHA era rules must state {RULE_ID}; found cutoff {rules.get('cutoff')!r}")
     era_rows = {row["document_id"]: row for _, row in iter_jsonl(_resolve(production, root, ERA_MANIFEST))}
     path_rows = {row["document_id"]: row for _, row in iter_jsonl(_resolve(production, root, PATH_MANIFEST))}
-    if path_rows.keys() != era_rows.keys():
+    if path_rows.keys() - pending != era_rows.keys():
         errors.append("DOHA era and path manifests cover different decisions")
     bad: collections.defaultdict[str, list[str]] = collections.defaultdict(list)
     for identity in sorted(set(retirements or {}) & era_rows.keys()):
@@ -362,11 +368,11 @@ def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | Non
                             (CONTENT, "SELECT document_id,current_group,retrieval_priority FROM decisions")):
         with contextlib.closing(_read_only(_resolve(production, root, relative))) as db:
             for identity, group, priority in db.execute(query):
-                if expected.get(identity) != (group, priority):
+                if identity not in pending and expected.get(identity) != (group, priority):
                     bad[f"{relative} disagrees with the era manifest"].append(identity)
             if relative == CONTENT:
                 for identity, group in db.execute("SELECT document_id,current_group FROM corpus"):
-                    if (expected.get(identity) or (None,))[0] != group:
+                    if identity not in pending and (expected.get(identity) or (None,))[0] != group:
                         bad[f"{relative} corpus disagrees with the era manifest"].append(identity)
     for _, record in iter_jsonl(_resolve(production, root, DOCUMENTS)):
         if record.get("collection_id") == "doha_decisions" and record.get("document_id") in expected:
