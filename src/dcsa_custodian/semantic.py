@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import os
 import sqlite3
 from pathlib import Path
@@ -66,6 +67,70 @@ def embed_texts(texts: list[str], batch_size: int = 32, parallel: int | None = N
             vector = vector / norm
         vectors.append(vector.tobytes())
     return vectors
+
+
+CACHE_TABLE = ("CREATE TABLE IF NOT EXISTS vectors(model TEXT NOT NULL, content_sha256 TEXT NOT NULL, "
+               "vector BLOB NOT NULL, PRIMARY KEY(model, content_sha256))")
+
+
+def embed_texts_cached(texts: list[str], cache_path: Path | None, embed: Any = None,
+                       cacheable: bool | None = None) -> tuple[list[bytes], dict[str, Any]]:
+    """Passage vectors, reusing ones already computed for identical text.
+
+    A build re-embeds every chunk, though only chunks from new or edited documents
+    change. Vectors are keyed by the model name and the SHA-256 of the exact text, so
+    a changed chunk or a changed model misses the cache and is embedded afresh; a hit
+    returns what this model produced for these bytes before. Passages only: query
+    embedding adds an instruction prefix and is never cached here. A cache that cannot
+    be read is ignored, never trusted, and everything is embedded.
+
+    Only the real model's vectors are cached: a substituted embedder (a test fake, a
+    mock) bypasses the cache entirely, so fake vectors can never be stored under the
+    model's name and served to a later real build. ``cacheable`` overrides that, for
+    the cache's own tests.
+    """
+    if cacheable is None:
+        cacheable = embed is None or embed is embed_texts
+    embed = embed or embed_texts
+    if not cacheable:
+        cache_path = None
+    stats: dict[str, Any] = {"model": MODEL_NAME, "texts": len(texts), "cache": str(cache_path) if cache_path else None}
+    if not texts:
+        return [], dict(stats, cached=0, embedded=0)
+    if cache_path is None:
+        return embed(texts), dict(stats, cached=0, embedded=len(texts))
+    keys = [hashlib.sha256(text.encode("utf-8")).hexdigest() for text in texts]
+    size = VECTOR_DIM * 4
+    found: dict[str, bytes] = {}
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with contextlib.closing(sqlite3.connect(cache_path)) as db:
+            db.execute(CACHE_TABLE)
+            unique = sorted(set(keys))
+            for start in range(0, len(unique), 500):
+                batch = unique[start:start + 500]
+                rows = db.execute(f"SELECT content_sha256, vector FROM vectors WHERE model=? AND content_sha256 IN "
+                                  f"({','.join('?' for _ in batch)})", (MODEL_NAME, *batch))
+                found.update((key, vector) for key, vector in rows if len(vector) == size)
+    except sqlite3.DatabaseError as exc:
+        return embed(texts), dict(stats, cached=0, embedded=len(texts), warning=f"cache unreadable, not used: {exc}")
+    missing = {}
+    for key, text in zip(keys, texts):
+        if key not in found and key not in missing:
+            missing[key] = text
+    if missing:
+        fresh = embed(list(missing.values()))
+        if len(fresh) != len(missing) or any(len(vector) != size for vector in fresh):
+            raise ValueError("embedding returned the wrong number or size of vectors")
+        found.update(zip(missing, fresh))
+        try:
+            with contextlib.closing(sqlite3.connect(cache_path)) as db, db:
+                db.executemany("INSERT OR REPLACE INTO vectors VALUES(?,?,?)",
+                               [(MODEL_NAME, key, found[key]) for key in missing])
+        except sqlite3.DatabaseError as exc:
+            stats["warning"] = f"cache not updated: {exc}"
+    return [found[key] for key in keys], dict(stats, cached=len(texts) - sum(1 for k in keys if k in missing),
+                                              embedded=len(missing))
 
 
 def embed_query(query: str) -> bytes:

@@ -912,3 +912,6 @@ DOHA reconstruction and final role audit remain open.
 2026-09-16 Codex — Added portable reviewed-case builder, staged DOHA intake, source-baseline
 comparison and publication hashes. Synthetic intake/publish/tamper tests pass;
 production corpus unchanged. Legacy regenerator is no longer the canonical route.
+2026-09-16 Codex — Shared directive splitter now supports truthful producer attribution and blocks
+noncurrent/ineligible directive section output. Standalone Rebuilder shares these
+rules and wiki graph generation; the 70-test Archivist suite still passes.

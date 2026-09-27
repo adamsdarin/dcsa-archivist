@@ -21,7 +21,7 @@ from . import doha_release
 from .enrich import enrich_manifest
 from .evals import evaluate_candidate
 from .indexes import build_indexes
-from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts
+from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts, embed_texts_cached
 from .events import SUMMARY_DIR, build_changes, reconcile_event, summary_history
 from .wiki import build_graph, lint_report
 from .intake import stage_intake
@@ -274,7 +274,10 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     })
     write_json(release_dir / "reports/WIKI_LINT.json", lint_report(records, f"candidate:{release_id}"))
 
-    embedded_vectors = embed_texts([chunk["content"] for chunk in chunks])
+    # DCSA_EMBED_CACHE=0 embeds everything afresh, e.g. to rule the cache out.
+    cache = None if os.environ.get("DCSA_EMBED_CACHE", "1").strip() == "0" else state_root / "embedding_cache.sqlite"
+    embedded_vectors, embedding_stats = embed_texts_cached([chunk["content"] for chunk in chunks], cache, embed_texts)
+    write_json(release_dir / "reports/EMBEDDING_CACHE.json", embedding_stats)
     chunk_vectors = {chunk["chunk_id"]: vector for chunk, vector in zip(chunks, embedded_vectors)}
 
     indexes_dir = release_dir / "indexes"
