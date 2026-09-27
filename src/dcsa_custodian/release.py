@@ -220,7 +220,13 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / relative, target)
 
-    audit = audit_library(root, deep=deep)
+    pending = None
+    if target_root is not None and (root / doha_release.PATH_MANIFEST).is_file():
+        # DOHA decisions this intake staged have no era until this build assigns one.
+        live = target_root / doha_release.ERA_MANIFEST
+        held = {row["document_id"] for _, row in iter_jsonl(live)} if live.is_file() else set()
+        pending = {row["document_id"] for _, row in iter_jsonl(root / doha_release.PATH_MANIFEST)} - held
+    audit = audit_library(root, deep=deep, pending_doha=pending)
     if audit["errors"]:
         raise RuntimeError(f"production integrity audit failed with {len(audit['errors'])} blocking errors")
     write_json(release_dir / "reports/PRODUCTION_AUDIT.json", audit)

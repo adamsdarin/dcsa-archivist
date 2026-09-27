@@ -32,7 +32,7 @@ def _doha_hashes(root: Path) -> tuple[dict[str, str], dict[str, bool]]:
     return hashes, eligible
 
 
-def audit_library(root: Path, deep: bool = False) -> dict[str, Any]:
+def audit_library(root: Path, deep: bool = False, pending_doha: set[str] | None = None) -> dict[str, Any]:
     entry_path = root / "START_HERE_FOR_ROBOTS.json"
     if not entry_path.is_file():
         raise FileNotFoundError(entry_path)
@@ -155,9 +155,13 @@ def audit_library(root: Path, deep: bool = False) -> dict[str, Any]:
     doha_era_problems: list[str] = []
     if (root / doha_release.PATH_MANIFEST).is_file() and (root / doha_release.CONTENT).is_file():
         try:
-            doha_era_problems = doha_release.check(root, root, recompute=False)
+            doha_era_problems = doha_release.check(root, root, recompute=False, pending=pending_doha)
         except (OSError, ValueError, KeyError, sqlite3.Error) as exc:
             doha_era_problems = [f"DOHA era check could not run: {exc}"]
+    if pending_doha:
+        # Staged by this intake build; the build assigns their era and candidate
+        # validation checks them with every other decision.
+        warnings.append({"code": "doha_era_pending_intake", "count": len(pending_doha)})
     if doha_era_problems:
         warnings.append({"code": "doha_era_inconsistencies", "count": len(doha_era_problems), "sample": doha_era_problems[:10]})
 

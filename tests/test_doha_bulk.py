@@ -221,6 +221,28 @@ class DohaBulkTests(unittest.TestCase):
         self.assertIsNone(reversed_["reviewed_decision"]["case_key"])
         self.assertEqual(summary["counts"]["PRE_SEAD_4/appeal/reversed (clearance denied)"], 1)
 
+    def test_the_pre_build_audit_skips_only_decisions_this_intake_staged(self) -> None:
+        from dcsa_custodian import doha_release
+        from dcsa_custodian.audit import audit_library
+        # Give the library consistent era stores, as a published release has.
+        import shutil
+        published = self.library.parent / "published"
+        doha_release.build(self.library, published, {}, {})
+        shutil.copytree(published, self.library, dirs_exist_ok=True)
+        self.assertEqual(doha_release.check(self.library, self.library, recompute=False), [])
+        self.build()
+        stage_intake(self.library, self.staged, self.out / "intake-plan.json")
+        staged = {row["document_id"] for _, row in iter_jsonl(self.staged / MANIFEST)} - {"held"}
+        problems = doha_release.check(self.staged, self.staged, recompute=False)
+        self.assertTrue(problems, "staged decisions have no era yet, so an unqualified check reports them")
+        self.assertEqual(doha_release.check(self.staged, self.staged, recompute=False, pending=staged), [])
+        audit = audit_library(self.staged, pending_doha=staged)
+        codes = {warning["code"]: warning for warning in audit["warnings"]}
+        self.assertNotIn("doha_era_inconsistencies", codes)
+        self.assertEqual(codes["doha_era_pending_intake"]["count"], len(staged))
+        # Pending covers only what it names: an existing decision gone wrong is still reported.
+        self.assertTrue(doha_release.check(self.staged, self.staged, recompute=False, pending=set(list(staged)[:1])))
+
 
 class RealWordingTests(unittest.TestCase):
     """Rules against wording taken from real DOHA decisions in the 2026-09-27 pilot."""
