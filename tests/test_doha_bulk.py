@@ -329,5 +329,34 @@ class RealWordingTests(unittest.TestCase):
         self.assertEqual(codes, ["E"])
         self.assertIn("no formal findings or SOR guidelines to complete it", basis)
 
+    def test_a_self_contradicting_conclusion_is_settled_only_by_agreeing_summary_and_findings(self) -> None:
+        # The layout of a real decision whose judge wrote "clearly consistent ... to grant"
+        # and then "is denied"; its summary and every formal finding say granted.
+        summary = ("Decision\n\n       Applicant mitigated the financial considerations security concerns by resolving and\n"
+                   "paying his delinquent debts. National security eligibility for access to classified information\n"
+                   "is granted.\n\n                                    History of the Case\n")
+        findings = ("\n                                      Formal Findings\n\n      Formal findings For or Against "
+                    "Applicant on the allegations set forth in the SOR,\nas required by Section E3.1.25 of Enclosure 3 "
+                    "of the Directive, are:\n\n      Paragraph 1, Guideline F:                    FOR APPLICANT\n"
+                    "              Subparagraphs 1.a – 1.o:                    For Applicant\n")
+        slip = ("\n                                        Conclusion\n\n        I conclude that it is clearly consistent "
+                "with the interests of national security of the\nUnited States to grant or continue Applicant’s national "
+                "security eligibility for access to\nclassified information. Eligibility for access to classified "
+                "information is denied.\n")
+        value, basis = outcome(summary + FILLER + findings + slip, "h1")
+        self.assertEqual(value, "approved")
+        self.assertIn("contradicts itself", basis)
+        # Without the summary the findings alone do not settle it.
+        self.assertIsNone(outcome(FILLER + findings + slip, "h1")[0])
+
+    def test_a_clear_conclusion_contradicted_by_the_findings_is_a_problem(self) -> None:
+        findings = "\nFormal Findings\n\nParagraph 1, Guideline F:   AGAINST APPLICANT\n"
+        conclusion = "\nConclusion\nEligibility for access to classified information is granted.\n"
+        value, problem = outcome(FILLER + findings + conclusion, "h1")
+        self.assertIsNone(value)
+        self.assertIn("formal findings are partly against", problem)
+        agree = "\nFormal Findings\n\nParagraph 1, Guideline F:   FOR APPLICANT\n"
+        self.assertEqual(outcome(FILLER + agree + conclusion, "h1")[0], "approved")
+
 if __name__ == "__main__":
     unittest.main()

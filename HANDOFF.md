@@ -152,6 +152,14 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-27 Claude — Owner checked 5 outcome conflicts between the held library and the
+rule: library wrong on 2 hearings, rule wrong on 1 (19-01803.h1), 2 appeals pending the
+owner's detail. The rule's error was a judge's slip ("clearly consistent ... to grant
+... is denied") where the grant phrase ("national security of the United States")
+was not recognised. Hearing outcomes are now cross-checked against the opening summary
+and the formal findings: any contradiction of a clear conclusion is an exception, and a
+missing or self-contradicting conclusion is settled only when summary and findings
+agree. Stricter, so expect more exceptions and fewer wrong labels. Reviewer v3.
 2026-09-27 Claude — First full runs: plan 20,831 planned / 1,110 exceptions of 21,941;
 re-check of 10,633 held. The re-check's 3,852 topic "disagreements" were mostly its own
 bug (legacy index rows store codes space-separated, "E I J"); fixed. A real topic-rule
