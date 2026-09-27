@@ -216,6 +216,29 @@ class RealWordingTests(unittest.TestCase):
             "E": {"label": "Personal Conduct", "aliases": ["personal conduct"]}}})[0], ["E", "F"])
         self.assertEqual(topics("Paragraph 1, Criterion F:   AGAINST APPLICANT\n", TAXONOMY_BODY)[0], ["F"])
 
+    def test_1990s_board_orders_and_the_decision_they_review(self) -> None:
+        affirm = ("Applicant. The case is before the Board on Department Counsel's appeal from that favorable decision.\n"
+                  "appealed that decision. For the reasons set forth below, the Board affirms the Administrative Judge's decision.")
+        self.assertEqual(outcome(affirm, "a1")[0], "approved")
+        reverse = ("case is before the Board on Department Counsel's appeal from that favorable decision.\n"
+                   "appealed. For the reasons set forth below, the Board reverses the Administrative Judge's decision.")
+        self.assertEqual(outcome(reverse, "a1")[0], "denied")
+
+    def test_the_burden_of_proof_sentence_is_not_an_outcome(self) -> None:
+        text = ("CONCLUSIONS\nApplicant has the ultimate burden of persuasion in proving that it is clearly consistent with "
+                "the national interest to grant him or her a security clearance. In light of all the circumstances presented "
+                "by the record in this case, it is not clearly consistent with the national interest to grant a clearance.")
+        self.assertEqual(outcome(text, "h1")[0], "denied")
+
+    def test_formal_findings_without_a_colon_and_lower_case_criteria(self) -> None:
+        self.assertEqual(topics("Paragraph 1, Guideline F (Financial Considerations)           FOR APPLICANT\n",
+                                TAXONOMY_BODY)[0], ["F"])
+        self.assertEqual(topics("Guideline F applies; the evidence weighs for Applicant.\n" + FILLER,
+                                TAXONOMY_BODY)[1], "guidelines alleged in the Statement of the Case")
+        body = FILLER * 30 + "most pertinent to this case, with regard to criteria H, E and J.\n"
+        taxonomy = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "EHJ"}}
+        self.assertEqual(topics(body, taxonomy), (["E", "H", "J"], "guidelines the decision applies"))
+
 
 if __name__ == "__main__":
     unittest.main()
