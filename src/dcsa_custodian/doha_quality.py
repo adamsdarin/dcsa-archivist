@@ -26,6 +26,7 @@ import csv
 import math
 import os
 import random
+import re
 import shutil
 import sqlite3
 from pathlib import Path
@@ -332,7 +333,8 @@ def recheck_library(library: Path, out_dir: Path, not_held: Path | None = None,
                               "reason": f"robot text unreadable: {exc}"})
             counts["text_unreadable"] += 1
             continue
-        stored_topics = sorted(filter(None, (row["guideline_codes"] or "").split(",")))
+        # Legacy rows store codes space-separated ("E I J"); rows the intake writes use commas.
+        stored_topics = sorted(set(re.split(r"[\s,]+", (row["guideline_codes"] or "").strip())) - {""})
         decided = dates.get(row["document_id"]) or ""
 
         def differ(field: str, stored: Any, found: Any, evidence: str) -> None:
@@ -345,6 +347,8 @@ def recheck_library(library: Path, out_dir: Path, not_held: Path | None = None,
         if found is None:
             counts["outcome_unsettled"] += 1
             unsettled.append({"case_key": key, "document_id": row["document_id"], "field": "outcome", "reason": evidence})
+        elif not row["outcome"]:
+            differ("outcome_missing", None, found, evidence)  # a gap the rule fills, not a conflict
         elif found != row["outcome"]:
             differ("outcome", row["outcome"], found, evidence)
         else:

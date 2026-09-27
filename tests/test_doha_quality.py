@@ -164,6 +164,23 @@ class QualityTests(unittest.TestCase):
         self.assertEqual(sha256_file(self.library / "LOCAL_INDEXES/DOHA_CASE_TOPICS_FTS.sqlite"), before,
                          "the re-check must not write the library")
 
+    def test_legacy_space_separated_topics_and_missing_outcomes(self) -> None:
+        text = bulk.hearing("19-07777", "h1", "01/15/2020", "Foreign Influence; Delinquent debt",
+                            "Eligibility for access to classified information is denied.")
+        self.hold("19-07777.h1", text, "2020-01-15", "denied", ["B", "F"])
+        self.hold("19-01234.a1", APPEAL_TEXT, "2020-06-01", "denied", ["F"])
+        import sqlite3
+        from contextlib import closing
+        with closing(sqlite3.connect(self.library / "LOCAL_INDEXES/DOHA_CASE_TOPICS_FTS.sqlite")) as db, db:
+            db.execute("UPDATE decisions SET guideline_codes='B F' WHERE document_id='held-19-07777.h1'")
+            db.execute("UPDATE decisions SET outcome=NULL WHERE document_id='held-19-01234.a1'")
+        out = self.out.parent / "recheck-legacy"
+        recheck_library(self.library, out, sample_size=1, edge=0)
+        found = {(r["case_key"], r["field"]): r for _, r in iter_jsonl(out / "disagreements.jsonl")}
+        self.assertNotIn(("19-07777.h1", "topics"), found, "'B F' and B,F are the same topics")
+        self.assertEqual(found[("19-01234.a1", "outcome_missing")]["rule_value"], "denied")
+        self.assertNotIn(("19-01234.a1", "outcome"), found)
+
     def test_a_checked_disagreement_sheet_is_tallied(self) -> None:
         rows = [{"sample_id": "1", "case_key": "x.a1", "field": "outcome", "verdict": "rule"},
                 {"sample_id": "2", "case_key": "y.h1", "field": "outcome", "verdict": "Library"},

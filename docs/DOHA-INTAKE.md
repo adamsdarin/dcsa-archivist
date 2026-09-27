@@ -51,7 +51,7 @@ retained bytes are those fetched from that official URL) before building, then
 `build-candidate --intake-plan <out>\intake-plan.json`, `validate`, `evaluate`.
 
 Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
-`doha-intake-plan rule-based review v1`. Do not `publish` a DOHA bulk batch until
+`doha-intake-plan rule-based review v2` (v1 before the 2026-09-27 topic fix). Do not `publish` a DOHA bulk batch until
 the owner has spot-checked a sample of its plan items against their PDFs.
 
 ### Ruling types and the decision an appeal reviews (owner decision 2026-09-27)
