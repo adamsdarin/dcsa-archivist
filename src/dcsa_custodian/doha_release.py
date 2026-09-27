@@ -36,7 +36,9 @@ RULE_ID = "decision_date_on_or_after_2017-06-08"
 PRIORITY = {"post_sead4": 100, "pre_sead4": 25, "undetermined": 10}
 PROVENANCE_FIELDS = ("source_url", "source_url_basis", "source_listing_page", "source_listing_title",
                      "source_listing_captured_utc", "source_url_alternates")
-PROVENANCE_BASES = ("official_listing_label", "legacy_download_bytes_identical")
+# acquisition_bytes_identical: the retained bytes are the ones the Librarian fetched from
+# that official URL (doha-acquire), so identity is proven, not inferred from a label.
+PROVENANCE_BASES = ("official_listing_label", "legacy_download_bytes_identical", "acquisition_bytes_identical")
 
 
 def load_reviews(path: Path) -> dict[str, dict[str, Any]]:

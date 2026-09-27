@@ -25,3 +25,31 @@ the synthetic implementation tests.
 The legacy `regenerate` compatibility utility still excludes cases. New library
 rebuilds belong to the standalone Rebuilder; this intake path maintains governed
 libraries that already exist.
+
+## Bulk intake from a Librarian acquisition run
+
+`doha-intake-plan` turns a Librarian `doha-acquire` run into a plan this intake
+accepts unchanged. It extracts each PDF with `pdftotext -layout` (the form of the
+existing DOHA robot text) and derives `doha_review` from the decision text only:
+case identity from the `CASENO:` header or caption, checked against the listing
+label; decision date and era from `doha_era.classify`, the rule the release build
+applies; outcome from the conclusion or order; topics from the `KEYWORD:` line
+through the taxonomy's labels and aliases, else the formal findings. Paths and IDs
+follow the library's existing DOHA convention. Any decision a rule cannot settle —
+no text layer, a case number that disagrees, no established date, an ambiguous
+outcome, a suffixed case key — goes to `exceptions.jsonl`, never into the plan.
+
+```powershell
+python custodian.py doha-intake-plan --run <librarian>\quarantine\doha-acquire\<run> `
+  --not-held <librarian>\state\provenance\doha_not_in_library.jsonl --out <new dir> --pilot 50
+```
+
+The output holds `intake-plan.json`, `sources/`, `text/`, `exceptions.jsonl`,
+`summary.json` and `doha_source_urls.additions.jsonl`. Append the additions to
+`decisions/doha_source_urls.jsonl` (basis `acquisition_bytes_identical`: the
+retained bytes are those fetched from that official URL) before building, then
+`build-candidate --intake-plan <out>\intake-plan.json`, `validate`, `evaluate`.
+
+Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
+`doha-intake-plan rule-based review v1`. Do not `publish` a DOHA bulk batch until
+the owner has spot-checked a sample of its plan items against their PDFs.
