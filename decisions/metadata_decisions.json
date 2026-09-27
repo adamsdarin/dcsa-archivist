@@ -885,7 +885,10 @@
         }
       ],
       "note": "Live on the official DoD Manuals index with an incorporated Change 2; no cancellation or superseding issuance found.",
-      "effective_date": "2018-08-01"
+      "effective_date": "2018-08-01",
+      "source_url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodm/522032v1.PDF?ver=1BFNVqOKXaqdXcO618H-yg%3d%3d",
+      "source_sha256": "964904c708140d34dc86dc268448d26ca5ecc31f703801a34df6e82b1dd60fab",
+      "provenance_note": "Official URL attached 2026-09-24T15:00:00Z from Librarian run 20260924T122142Z byte match (checked 2026-09-24T12:19:25Z); lifecycle decision unchanged."
     },
     {
       "source_document_id": "dcsa-dodi-dodm-5220-32-v2-foci",
@@ -900,7 +903,10 @@
         }
       ],
       "note": "Live on the official DoD Manuals index with an incorporated Change 2; no cancellation or superseding issuance found.",
-      "effective_date": "2014-04-17"
+      "effective_date": "2014-04-17",
+      "source_url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodm/522032v2.PDF?ver=6r6Wq0aBhS44uQvw8Vne_w%3d%3d",
+      "source_sha256": "5a2adbf9de7c48994ab94260910d6965ca30960258df2e15ecc2e3d34043f58b",
+      "provenance_note": "Official URL attached 2026-09-24T15:00:00Z from Librarian run 20260924T122142Z byte match (checked 2026-09-24T12:19:26Z); lifecycle decision unchanged."
     },
     {
       "source_document_id": "dcsa-dodi-sci-dodm-5105-21-volume-1-ch2-2020",
@@ -1514,17 +1520,22 @@
     {
       "source_document_id": "dcsa-job_aids-aid-fcl-orientation-handbook",
       "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/TOOLS/DCSA_ISSUED_JOB_AIDS/AID FCL Orientation Handbook.txt",
-      "decision": "verified_current",
-      "verified_utc": "2026-09-01T12:45:00Z",
-      "verified_by": "Claude source review for Darin",
+      "decision": "superseded",
+      "verified_utc": "2026-09-24T15:00:00Z",
+      "verified_by": "dcsa-archivist Evidence Reviewer (Claude) under Darin Adams authorization 2026-09-24",
       "evidence": [
         {
-          "url": "https://www.dcsa.mil/Industrial-Security/National-Industrial-Security-Program-Oversight/NISP-Tools-Resources/",
-          "observation": "\"FCL Process Orientation Handbook\" linked live under the Facility Clearances tab (filename dated 9 March 2021)."
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/fc/DCSA%20FCL_Orientation_Handbook_20260828.pdf",
+          "observation": "DCSA-published Facility Clearance Orientation Handbook, cover 'July 2026' (Industrial Security, Entity Vetting Directorate), retrieved 2026-09-24."
+        },
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Entity-Vetting-Facility-Clearances-FOCI/Facility-Clearances/",
+          "observation": "Official Facility Clearances listing links the July 2026 handbook (Librarian fetch 2026-09-24)."
         }
       ],
-      "note": "Live and linked from DCSA's current NISP Tools & Resources page.",
-      "effective_date": "2021-03-09"
+      "superseded_by": "dcsa-job_aids-fcl-orientation-handbook-2026-07",
+      "supersession_label": "inferred_pending_review",
+      "note": "March 2021 edition of the FCL Orientation Handbook, superseded by the July 2026 edition (dcsa-job_aids-fcl-orientation-handbook-2026-07; cover July 2026, official URL dated 20260828, sha256 14e31263...). Supersession label: inferred_pending_review - DCSA publishes the new edition on its Facility Clearances page but no source states that it supersedes earlier editions. Retained for historical reference; not deleted. Replaces prior decision: verified_current verified 2026-09-01T12:45:00Z (Live and linked from DCSA's current NISP Tools & Resources page.)"
     },
     {
       "source_document_id": "dcsa-job_aids-aid-insider-threat-training-info-paper",
@@ -5150,7 +5161,10 @@
           "observation": "DCSA news release confirms the updated SF-328 (Certificate Pertaining to Foreign Interests), approved 2025-05-01 and effective 2025-05-12, is the current mandatory edition as of the check date. The library file, dated Aug 2026, postdates and matches this revision with no newer edition found."
         }
       ],
-      "note": "Verified via DCSA public news release confirming this is the current, mandatory SF-328 edition."
+      "note": "Verified via DCSA public news release confirming this is the current, mandatory SF-328 edition.",
+      "source_url": "https://www.dcsa.mil/Portals/128/Documents/CTP/FOCI/sf-328%20(Aug%202026).pdf",
+      "source_sha256": "6ba83c447c0f926caa1eb9be09058f180f6adf27ed72f6f148d64908bb68a3ab",
+      "provenance_note": "Official URL attached 2026-09-24T15:00:00Z from Librarian run 20260924T122142Z byte match (checked 2026-09-24T12:19:22Z); lifecycle decision unchanged."
     },
     {
       "source_document_id": "dcsa-cfr-ear-15-cfr-300-744-2025",
@@ -5365,6 +5379,61 @@
         }
       ],
       "note": "Canonical copy of the byte-identical December 1999 DD Form 254 (sha256 264e2155...). enrich_manifest ranked the mislabelled FOCI copy canonical because its folder carries a higher authority role; this reviewed choice makes the correctly named expired copy canonical so historical research cites 'DEC 1999', and the FOCI copy becomes excluded_duplicate. No bytes, paths or IDs change."
+    },
+    {
+      "source_document_id": "dcsa-sead-adjudicative-guidelines-2005",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/ADJUDICATIVE_GUIDELINES_PRE_SEAD_4/Adjudicative Guidelines 2005.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-23T11:00:00Z",
+      "verified_by": "Claude source review for Darin",
+      "evidence": [
+        {
+          "url": "https://archive.dni.gov/files/NCSC/documents/Regulations/SEAD-4-Adjudicative-Guidelines-U.pdf",
+          "observation": "SEAD 4 section B: 'The Guidelines reflected herein supersede all previously issued national security adjudicative criteria or guidelines.' Effective 8 June 2017."
+        }
+      ],
+      "note": "The 2005 Adjudicative Guidelines were explicitly superseded by SEAD 4 on 2017-06-08; retain for historical use, including pre-SEAD 4 DOHA decisions."
+    },
+    {
+      "source_document_id": "dcsa-forms-fcl_orientation_handbook_10oct18_1",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/FOCI/FCL Orientation Handbook October 2018.txt",
+      "decision": "superseded",
+      "verified_utc": "2026-09-24T15:00:00Z",
+      "verified_by": "dcsa-archivist Evidence Reviewer (Claude) under Darin Adams authorization 2026-09-24",
+      "evidence": [
+        {
+          "url": "https://www.dcsa.mil/Portals/128/Documents/CTP/fc/DCSA%20FCL_Orientation_Handbook_20260828.pdf",
+          "observation": "DCSA-published Facility Clearance Orientation Handbook, cover 'July 2026' (Industrial Security, Entity Vetting Directorate), retrieved 2026-09-24."
+        },
+        {
+          "url": "https://www.dcsa.mil/Industrial-Security/Entity-Vetting-Facility-Clearances-FOCI/Facility-Clearances/",
+          "observation": "Official Facility Clearances listing links the July 2026 handbook (Librarian fetch 2026-09-24)."
+        }
+      ],
+      "superseded_by": "dcsa-job_aids-fcl-orientation-handbook-2026-07",
+      "supersession_label": "inferred_pending_review",
+      "note": "October 2018 edition of the FCL Orientation Handbook, superseded by the July 2026 edition (dcsa-job_aids-fcl-orientation-handbook-2026-07; cover July 2026, official URL dated 20260828, sha256 14e31263...). Supersession label: inferred_pending_review - DCSA publishes the new edition on its Facility Clearances page but no source states that it supersedes earlier editions. Retained for historical reference; not deleted."
+    },
+    {
+      "source_document_id": "dcsa-industrial_security-dtm-24-004",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/NAESOC/DTM 24-004 Facility Security Clearance Requirements for Covered Joint Ventures.txt",
+      "decision": "currency_unresolved",
+      "verified_utc": "2026-09-24T15:00:00Z",
+      "verified_by": "dcsa-archivist Evidence Reviewer (Claude) under Darin Adams authorization 2026-09-24",
+      "status_detail": "Past its stated expiration: the DTM (Incorporating Change 1, 2025-08-04) says it 'will expire effective July 31, 2026' and must be incorporated into DoDM 5220.32 Volume 1. As of 2026-09-24 WHS still lists it (CH 1, expiration 2026-07-31) with no Change 2, extension, cancellation or incorporation posted. Status unconfirmed by WHS; not recorded as cancelled.",
+      "evidence": [
+        {
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dtm/DTM-24-004.PDF?ver=xjHWilUsiMyXVOt7kR3t_g%3d%3d",
+          "observation": "Official WHS copy, byte-identical to the retained file; its text states expiration effective July 31, 2026."
+        },
+        {
+          "url": "https://www.esd.whs.mil/Directives/issuances/dtm/",
+          "observation": "WHS DTM listing checked by the Librarian 2026-09-24: still lists DTM 24-004 CH 1 expiring 2026-07-31, incorporation into DoDM 5220.32 V1 pending; no Change 2 or cancellation."
+        }
+      ],
+      "source_url": "https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dtm/DTM-24-004.PDF?ver=xjHWilUsiMyXVOt7kR3t_g%3d%3d",
+      "source_sha256": "4cec8d2c90c864e3ca8adb9e4b912e3c5b533a8e3d5a4dfba93eda02b0d1a2ef",
+      "note": "Lifecycle review: replaced the unverified 'active' status with currency_unresolved (current_or_verify), which keeps it out of controlling-answer retrieval and in the remediation queue until WHS posts an extension, cancellation or incorporation. Provenance from Librarian run 20260924T122142Z byte match."
     }
   ]
 }

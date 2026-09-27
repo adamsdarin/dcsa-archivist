@@ -30,11 +30,31 @@ def _get_model():
     return _model
 
 
+def embedding_workers(count: int, platform: str | None = None) -> int | None:
+    """fastembed `parallel` for a batch of `count` texts; None embeds in-process.
+
+    fastembed's multiprocessing pool fails on Windows with WinError 6 ("The handle
+    is invalid") in its worker queues and then hangs the build (2026-09-23 and
+    2026-09-24 FCL builds), so Windows defaults to in-process embedding. The model,
+    batch size and normalization are unchanged, so vectors are the same either way.
+    DCSA_EMBED_PARALLEL overrides: 0 or 1 = in-process, N > 1 = N worker processes.
+    """
+    setting = os.environ.get("DCSA_EMBED_PARALLEL", "").strip()
+    if setting:
+        workers = int(setting)
+        if workers < 0:
+            raise ValueError("DCSA_EMBED_PARALLEL must be 0 or a positive worker count")
+        return workers if workers > 1 else None
+    if (platform or os.name) == "nt":
+        return None
+    return 20 if count >= 200 else None
+
+
 def embed_texts(texts: list[str], batch_size: int = 32, parallel: int | None = None, is_query: bool = False) -> list[bytes]:
     if not texts:
         return []
     if parallel is None:
-        parallel = 20 if len(texts) >= 200 else None
+        parallel = embedding_workers(len(texts))
     if is_query:
         texts = [QUERY_INSTRUCTION + text for text in texts]
     model = _get_model()

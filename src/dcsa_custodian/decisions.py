@@ -6,7 +6,7 @@ from typing import Any
 from .common import norm, read_json
 
 
-ALLOWED_DECISIONS = {"verified_current", "superseded", "historical", "exclude", "provenance"}
+ALLOWED_DECISIONS = {"verified_current", "superseded", "historical", "currency_unresolved", "exclude", "provenance"}
 
 
 def load_metadata_decisions(path: Path) -> list[dict[str, Any]]:
@@ -49,7 +49,7 @@ def apply_metadata_decisions(records: list[dict[str, Any]], decisions: list[dict
             _apply_provenance(decision, matched_records, identity)
             applied += 1
             continue
-        if disposition in {"verified_current", "superseded", "historical"}:
+        if disposition in {"verified_current", "superseded", "historical", "currency_unresolved"}:
             if not isinstance(evidence, list) or not evidence:
                 raise ValueError(f"{disposition} requires official-source evidence: {identity}")
             for item in evidence:
@@ -65,6 +65,16 @@ def apply_metadata_decisions(records: list[dict[str, Any]], decisions: list[dict
                 raise ValueError(f"title override must be non-empty text: {identity}")
             if not isinstance(evidence, list) or not evidence:
                 raise ValueError(f"title override requires official-source evidence: {identity}")
+        detail = decision.get("status_detail")
+        if disposition == "currency_unresolved" and (not isinstance(detail, str) or not detail.strip()):
+            # Official evidence contradicts the recorded status but does not settle a new
+            # one (e.g. an issuance past its own stated expiration that its publisher
+            # still lists). Say exactly what is unconfirmed; never invent a cancellation.
+            raise ValueError(f"currency_unresolved requires a status_detail: {identity}")
+        if decision.get("source_url") is not None:
+            # A byte-verified official URL may ride on a lifecycle decision, because a
+            # record carries at most one decision. Same byte check as `provenance`.
+            _apply_provenance(decision, matched_records, identity)
         if decision.get("canonical"):
             _promote_canonical(records, matched_records, identity)
         # A manifest identity can resolve to more than one legacy record (e.g. two
@@ -83,6 +93,13 @@ def apply_metadata_decisions(records: list[dict[str, Any]], decisions: list[dict
                 record["current_status"] = disposition
                 record["answer_eligibility"] = "historical_only"
                 record["answer_eligibility_basis"] = f"official_source_review_{disposition}"
+            elif disposition == "currency_unresolved":
+                # Same state as any unverified record: out of controlling-answer indexes
+                # and in the remediation queue until an official source settles it.
+                record["current_status"] = "current_or_verify"
+                record["answer_eligibility"] = "unresolved_currency"
+                record["answer_eligibility_basis"] = "official_source_review_currency_unresolved"
+                record["current_status_detail"] = detail.strip()
             else:
                 record["answer_eligibility"] = "excluded_by_review"
                 record["answer_eligibility_basis"] = "approved_maintenance_exclusion"

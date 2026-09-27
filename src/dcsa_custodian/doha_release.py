@@ -89,34 +89,46 @@ def load_retirements(path: Path) -> dict[str, dict[str, Any]]:
     return retirements
 
 
-def _retire(root: Path, rows: list[dict[str, Any]], retirements: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+def _retire(root: Path, rows: list[dict[str, Any]],
+            retirements: dict[str, dict[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
     """Check every condition that makes a removal safe, then drop the rows. Fails closed.
 
     A row may only go when the library holds nothing it points at, the source
     manifest never knew it, and its indexed text is byte-identical to a row that
     does have both artifacts -- so retiring it loses no evidence.
+
+    A retirement stays in the decisions file after it is published, so later
+    builds meet it again. It counts as already applied only when the row is gone
+    from the path manifest, the content index and the source manifest, and its
+    survivor still has both artifacts; any other absent row is refused.
+    Returns the kept rows and the already-applied identities.
     """
     if not retirements:
-        return rows
+        return rows, []
     by_id = {row["document_id"]: row for row in rows}
     governed = {record["document_id"] for _, record in iter_jsonl(root / DOCUMENTS)
                 if record.get("collection_id") == "doha_decisions"}
     with contextlib.closing(_read_only(root / CONTENT)) as db:
         digests = dict(db.execute("SELECT document_id,content_sha256 FROM decisions"))
+    already = []
     for identity, item in retirements.items():
         row = by_id.get(identity)
+        survivor = by_id.get(item["superseded_by"])
         if row is None:
-            raise ValueError(f"DOHA retirement names a row the manifest does not have: {identity}")
+            if identity in digests or identity in governed or survivor is None \
+                    or not (root / survivor["robot_text_path"]).is_file() or not (root / survivor["human_source_path"]).is_file():
+                raise ValueError(f"DOHA retirement names a row the manifest does not have: {identity}")
+            already.append(identity)
+            continue
         if (root / row["robot_text_path"]).is_file() or (root / row["human_source_path"]).is_file():
             raise ValueError(f"DOHA retirement refused; the library holds this decision's files: {identity}")
         if identity in governed:
             raise ValueError(f"DOHA retirement refused; the source manifest carries this document: {identity}")
-        survivor = by_id.get(item["superseded_by"])
         if survivor is None or not (root / survivor["robot_text_path"]).is_file() or not (root / survivor["human_source_path"]).is_file():
             raise ValueError(f"DOHA retirement needs a surviving row with both artifacts: {identity}")
         if not digests.get(identity) or digests.get(identity) != digests.get(item["superseded_by"]):
             raise ValueError(f"DOHA retirement needs identical indexed content to its survivor: {identity}")
-    return [row for row in rows if row["document_id"] not in retirements]
+    return [row for row in rows if row["document_id"] not in retirements], already
 
 
 def _resolve(production: Path, root: Path, relative: str) -> Path:
@@ -166,7 +178,7 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
           provenance: dict[str, dict[str, Any]], retirements: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     """Write corrected DOHA stores into the candidate. The live library is only read."""
     retirements = retirements or {}
-    rows = _retire(root, classify_rows(root, reviews, provenance), retirements)
+    rows, already = _retire(root, classify_rows(root, reviews, provenance), retirements)
     by_id = {row["document_id"]: row for row in rows}
     before = {row["document_id"]: row for _, row in iter_jsonl(root / PATH_MANIFEST)}
     for relative in (ERA_MANIFEST, PATH_MANIFEST):
@@ -218,7 +230,9 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
             "rewritten": {"documents_rows": changed_documents, "path_index_rows": changed_paths,
                           "topic_index_rows": changed_content},
             "retired": [{"document_id": identity, "superseded_by": item["superseded_by"], "evidence": item["evidence"]}
-                        for identity, item in sorted(retirements.items())],
+                        for identity, item in sorted(retirements.items()) if identity not in already],
+            "already_retired": [{"document_id": identity, "superseded_by": retirements[identity]["superseded_by"]}
+                                for identity in sorted(already)],
             "undetermined": [{"document_id": row["document_id"], "case_stem": row["case_stem"], "era_basis": row["era_basis"],
                               "date_conflicts": row["date_conflicts"]} for row in rows if row["sead4_era"] == "undetermined"]}
 
