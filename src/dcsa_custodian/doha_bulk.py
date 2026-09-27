@@ -35,7 +35,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v2"
+REVIEWER = "doha-intake-plan rule-based review v3"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -66,7 +66,8 @@ CONCLUSION_HEADING = re.compile(r"^\s*Conclusions?\s*$", re.M | re.I)
 # decision must point one way.
 HEARING_OUTCOMES = (
     (re.compile(r"\bnot clearly consistent with the (?:interests? of )?national (?:security|interest)", re.I), "denied"),
-    (re.compile(r"(?<!not )\bclearly consistent with the (?:interests? of )?national (?:security|interest) to (?:grant|continue)", re.I), "approved"),
+    (re.compile(r"(?<!not )\bclearly consistent with the (?:interests? of )?national (?:security|interest)"
+                r"(?: (?:interests? )?of the United States)? to (?:grant|continue)", re.I), "approved"),
     (re.compile(r"\b(?:eligibility|clearance|access)[^.]{0,80}?\b(?:is|are) (granted|denied|revoked|continued)\b", re.I), None),
 )
 # The boilerplate that opens every decision: "DOHA could not make the preliminary
@@ -195,9 +196,9 @@ def appeal_ruling(text: str) -> dict[str, Any]:
             "outcome": effect, "evidence": next(iter(readings.values()))[:160]}
 
 
-def _hearing_outcome(text: str) -> dict[str, str]:
-    headings = list(CONCLUSION_HEADING.finditer(text))
-    region = _flat(text[headings[-1].start():] if headings else text[-3000:])
+def _statements(region: str) -> dict[str, str]:
+    """Outcome statements in a region, skipping boilerplate sentences."""
+    region = _flat(region)
     found: dict[str, str] = {}
     for pattern, value in HEARING_OUTCOMES:
         for match in pattern.finditer(region):
@@ -208,18 +209,71 @@ def _hearing_outcome(text: str) -> dict[str, str]:
     return found
 
 
+def _hearing_outcome(text: str) -> dict[str, str]:
+    headings = list(CONCLUSION_HEADING.finditer(text))
+    return _statements(text[headings[-1].start():] if headings else text[-3000:])
+
+
+# The opening summary ends where the case history begins; without that heading there is
+# no summary distinct from the conclusion, so none is read.
+CASE_HISTORY = re.compile(r"^\s*(?:Statement of the Case|History of the Case|Procedural History|Findings of Fact)\s*$",
+                          re.M | re.I)
+FORMAL_FINDINGS_HEADING = re.compile(r"^\s*Formal Findings\s*$", re.M | re.I)
+FINDING_DIRECTION = re.compile(r"\b(for|against)\s+applicant\b", re.I)
+
+
+def _summary_outcome(text: str) -> dict[str, str]:
+    history = CASE_HISTORY.search(text[:20000])
+    return _statements(text[:history.start()]) if history else {}
+
+
+def _findings_outcome(text: str) -> str | None:
+    """Denied if any formal finding is against Applicant; approved if all are for; else None."""
+    headings = list(FORMAL_FINDINGS_HEADING.finditer(text))
+    if not headings:
+        return None
+    start = headings[-1].end()
+    conclusion = CONCLUSION_HEADING.search(text, start)
+    section = text[start:conclusion.start() if conclusion else start + 6000]
+    section = re.sub(r"\bfor\s+or\s+against\s+applicant\b", " ", section, flags=re.I)  # the section's own preamble
+    directions = {m.group(1).lower() for m in FINDING_DIRECTION.finditer(section)}
+    if not directions:
+        return None
+    return "denied" if "against" in directions else "approved"
+
+
+def hearing_outcome(text: str) -> tuple[str | None, str]:
+    """The conclusion, cross-checked against the opening summary and the formal findings.
+
+    A conclusion that one of the others contradicts is a problem, not a choice. A missing
+    or self-contradictory conclusion is settled only when the summary and the findings
+    both exist and agree (a judge's slip such as "clearly consistent ... to grant ...
+    Eligibility ... is denied" under all-For findings and a "granted" summary)."""
+    conclusion, summary, findings = _hearing_outcome(text), _summary_outcome(text), _findings_outcome(text)
+    said = next(iter(summary)) if len(summary) == 1 else None
+    if len(conclusion) == 1:
+        (value, evidence), = conclusion.items()
+        against = [f"opening summary says {k} ('{v[:60]}')" for k, v in summary.items() if k != value]
+        if findings and findings != value:
+            against.append(f"formal findings are {'all for' if findings == 'approved' else 'partly against'} Applicant")
+        if against:
+            return None, f"conclusion says {value} ('{evidence[:60]}') but " + "; ".join(against)
+        return value, evidence[:160]
+    if said and findings == said:
+        state = "states no outcome" if not conclusion else "contradicts itself (" + "; ".join(
+            f"{k} ('{v[:50]}')" for k, v in sorted(conclusion.items())) + ")"
+        return said, f"conclusion {state}; opening summary ('{summary[said][:60]}') and formal findings agree"
+    if not conclusion:
+        return None, "no conclusion or order states the outcome"
+    return None, "conflicting outcome statements: " + "; ".join(f"{k} ('{v[:80]}')" for k, v in sorted(conclusion.items()))
+
+
 def outcome(text: str, level: str) -> tuple[str | None, str]:
     """(outcome, evidence) or (None, problem). Ambiguity is a problem, not a guess."""
     if level.startswith("a"):
         ruling = appeal_ruling(text)
         return (ruling["outcome"], ruling["evidence"]) if "outcome" in ruling else (None, ruling["problem"])
-    found = _hearing_outcome(text)
-    if len(found) == 1:
-        (value, evidence), = found.items()
-        return value, evidence[:160]
-    if not found:
-        return None, "no conclusion or order states the outcome"
-    return None, "conflicting outcome statements: " + "; ".join(f"{k} ('{v[:80]}')" for k, v in sorted(found.items()))
+    return hearing_outcome(text)
 
 
 # The published names of each guideline across the 1997, 2006 and 2017 Adjudicative
