@@ -44,6 +44,18 @@ class DohaTests(unittest.TestCase):
                              (self.root / records[0]['robot_text_path']).read_text())
         self.assertFalse((self.root / 'HUMAN_READABLE_DIRECTORY').exists(), 'Builder must not dereference human artifacts')
 
+    def test_new_decisions_are_staged_with_their_eras_retrieval_priority(self):
+        # The release build gives each era this priority; staging with it leaves the build nothing to correct.
+        records = [self.record(), self.record('old', group='PRE_SEAD_4', eligible=False),
+                   self.record('unresolved', group='UNDETERMINED', eligible=False)]
+        append_cases(self.root, records, self.taxonomy)
+        expected = {'case-one': 100, 'old': 25, 'unresolved': 10}
+        with closing(sqlite3.connect(self.root / CONTENT)) as db:
+            self.assertEqual(dict(db.execute('SELECT document_id,retrieval_priority FROM decisions')), expected)
+        with closing(sqlite3.connect(self.root / PATHS)) as db:
+            self.assertEqual(dict(db.execute('SELECT document_id,authority_priority FROM current_paths')), expected)
+        self.assertEqual(validate_cases(self.root, records, self.taxonomy), [])
+
     def test_unreviewed_or_ineligible_claim_refused_before_index_writes(self):
         base = self.record()
         variants = []
@@ -102,6 +114,15 @@ class DohaTests(unittest.TestCase):
         with (self.root / MANIFEST).open('a') as out:
             out.write((self.root / MANIFEST).read_text().splitlines()[0] + '\n')
         self.assertIn('Duplicate DOHA manifest IDs', validate_cases(self.root, [record], self.taxonomy))
+
+    def test_validation_detects_a_decision_indexed_twice(self):
+        record = self.record()
+        append_cases(self.root, [record], self.taxonomy)
+        with closing(sqlite3.connect(self.root / CONTENT)) as db, db:
+            db.execute('INSERT INTO corpus(document_id,content) SELECT document_id,content FROM corpus')
+        errors = validate_cases(self.root, [record], self.taxonomy)
+        self.assertIn('DOHA indexed evidence mismatch', errors)
+        self.assertIn('DOHA corpus coverage mismatch', errors)
 
     def test_doha_never_becomes_current_controlling_guidance(self):
         record = self.record()

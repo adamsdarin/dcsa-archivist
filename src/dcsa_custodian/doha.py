@@ -10,6 +10,8 @@ import re
 import sqlite3
 
 from .common import iter_jsonl, read_json, sha256_file, write_json, write_jsonl
+from .doha_era import ERAS
+from .doha_release import PRIORITY
 from .release_contract import bounded_path
 
 CONTENT = 'LOCAL_INDEXES/DOHA_CASE_TOPICS_FTS.sqlite'
@@ -36,6 +38,9 @@ SCHEMA = {
 FTS_COLUMNS = ('document_id', 'case_id', 'guideline_codes', 'current_group', 'decision_family',
                'outcome', 'human_source_path', 'robot_text_path')
 PATH_COLUMNS = ('document_id', 'case_stem', 'current_group', 'human_source_path', 'robot_text_path', 'authority_priority')
+# The priority the release build gives each era. Staging a new decision with it means the
+# build has nothing to correct, instead of re-indexing every new decision's full text.
+GROUP_PRIORITY = {ERAS[era]: value for era, value in PRIORITY.items()}
 
 
 def validate_taxonomy(taxonomy):
@@ -98,13 +103,14 @@ def case_row(root, record, taxonomy):
         case_year=date.fromisoformat(meta['decision_date']).year, decision_level=meta['decision_level'],
         decision_family='hearing' if meta['decision_level'][0] == 'h' else 'appeal',
         level_rank=int(meta['decision_level'][1:]), outcome=meta['outcome'], guideline_codes=','.join(topics),
-        current_group=meta['current_group'], retrieval_priority=0, answer_eligible=int(meta['answer_eligible']),
+        current_group=meta['current_group'], retrieval_priority=GROUP_PRIORITY[meta['current_group']],
+        answer_eligible=int(meta['answer_eligible']),
         eligibility_reason=meta['metadata_basis'], human_source_path=record['human_source_path'],
         robot_text_path=record['robot_text_path'], canonical_name=stem,
         content_sha256=record['robot_sha256'], content_bytes=robot.stat().st_size)
     path = dict(document_id=row['document_id'], case_stem=stem, current_group=meta['current_group'],
         human_source_path=row['human_source_path'], robot_text_path=row['robot_text_path'],
-        authority_priority=record['authority_tier'], sead4_era=meta['current_group'],
+        authority_priority=row['retrieval_priority'], sead4_era=meta['current_group'],
         answer_eligible=meta['answer_eligible'], decision_date=meta['decision_date'])
     return row, path, content, topics
 
@@ -182,21 +188,29 @@ def validate_cases(root, records, taxonomy):
             ids = [r[0] for r in connection.execute(f'SELECT document_id FROM {table}')]
             if len(set(ids)) != len(ids) or set(ids) != set(manifest_ids):
                 errors.append(f'DOHA {table} coverage mismatch')
+        # One pass each, not one per case: FTS5 cannot index document_id, so a lookup by it
+        # scans every decision's text; full-text rows are fetched by rowid instead.
+        texts, routed, listed = {}, {}, {}
+        for rowid, identity in db.execute('SELECT rowid,document_id FROM corpus'):
+            texts.setdefault(identity, []).append(rowid)
+        for identity, code in db.execute('SELECT document_id,guideline_code FROM decision_topics'):
+            routed.setdefault(identity, []).append(code)
+        for r in manifest:
+            listed.setdefault(r['document_id'], []).append(r)
         for row, path, content, topics in expected:
             identity = (row['document_id'],)
             actual = db.execute('SELECT * FROM decisions WHERE document_id=?', identity).fetchone()
             if actual is None or any(actual[k] != v for k, v in row.items()):
                 errors.append('DOHA reviewed decision metadata mismatch')
-            bodies = db.execute('SELECT * FROM corpus WHERE document_id=?', identity).fetchall()
+            bodies = [db.execute('SELECT * FROM corpus WHERE rowid=?', (rowid,)).fetchone() for rowid in texts.get(identity[0], [])]
             if len(bodies) != 1 or bodies[0]['content'] != content or any(bodies[0][k] != row[k] for k in FTS_COLUMNS):
                 errors.append('DOHA indexed evidence mismatch')
-            actual_topics = sorted(r[0] for r in db.execute('SELECT guideline_code FROM decision_topics WHERE document_id=?', identity))
-            if actual_topics != topics:
+            if sorted(routed.get(identity[0], [])) != topics:
                 errors.append('DOHA topic routing mismatch')
             actual_path = paths.execute('SELECT * FROM current_paths WHERE document_id=?', identity).fetchone()
             if actual_path is None or any(actual_path[k] != path[k] for k in PATH_COLUMNS):
                 errors.append('DOHA indexed path mismatch')
-            matching = [r for r in manifest if r['document_id'] == identity[0]]
+            matching = listed.get(identity[0], [])
             if len(matching) != 1 or any(matching[0].get(k) != v for k, v in path.items()):
                 errors.append('DOHA path manifest metadata mismatch')
     return errors
