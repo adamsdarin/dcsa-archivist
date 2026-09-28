@@ -80,30 +80,50 @@ def stated_date(text: str) -> tuple[date | None, str]:
     return value, where
 
 
-def _stated(text: str) -> tuple[date | None, str, tuple[date, date] | None]:
-    head = text[:_HEADER_WINDOW]
-    match = _HEADER_NUMERIC.search(head)
-    if match:
-        return (_date(match.group(3), match.group(1), match.group(2)), "header_date",
-                _month(match.group(3), match.group(1)))
-    match = _HEADER_LONG.search(head)
-    if match:
-        return _long(match), "header_date", None
-    # The caption's date line sits just above the "Decision" heading, below
-    # "Appearances" when the decision has that heading.
+def _caption_date(head: str) -> tuple[date | None, str, tuple[date, date] | None] | None:
+    """The caption's date line, just above the "Decision" heading and below
+    "Appearances" when the decision has that heading."""
     appearances = _APPEARANCES.search(head)
     start = appearances.end() if appearances else 0
     decision = _DECISION_LINE.search(head, start, start + _CAPTION_WINDOW)
     window = head[start:decision.start()] if decision else head[start:start + 1500]
     where = "appearances_date_line" if appearances else "caption_date_line"
     lines = [m for m in (*_LINE_NUMERIC.finditer(window), *_LINE_LONG.finditer(window))]
-    if lines:
-        match = max(lines, key=lambda m: m.start())
-        if match.re is _LINE_NUMERIC:
-            return (_date(match.group(3), match.group(1), match.group(2)), where,
-                    _month(match.group(3), match.group(1)))
-        return _long(match), where, None
-    return None, "no_stated_date", None
+    if not lines:
+        return None
+    match = max(lines, key=lambda m: m.start())
+    if match.re is _LINE_NUMERIC:
+        return (_date(match.group(3), match.group(1), match.group(2)), where,
+                _month(match.group(3), match.group(1)))
+    return _long(match), where, None
+
+
+def _stated(text: str) -> tuple[date | None, str, tuple[date, date] | None]:
+    """The decision's own date line wins (owner decision 2026-09-27): its "DATE: March 20,
+    2019" line, else the caption date line. DOHA's numeric index header ("DATE: 03/20/2019",
+    beside the KEYWORD and CASENO lines DOHA prepends) is used only when the decision states
+    no usable date of its own; the two disagree in about 1% of the decisions carrying both,
+    usually by a day or a mistyped year. An own line with an impossible date ("3009") gives
+    way to the next source."""
+    head = text[:_HEADER_WINDOW]
+    found = []
+    match = _HEADER_LONG.search(head)
+    if match:
+        found.append((_long(match), "header_date", None))
+    caption = _caption_date(head)
+    if caption:
+        found.append(caption)
+    match = _HEADER_NUMERIC.search(head)
+    if match:
+        found.append((_date(match.group(3), match.group(1), match.group(2)), "header_date",
+                      _month(match.group(3), match.group(1))))
+    for candidate in found:
+        if candidate[0]:
+            return candidate
+    for candidate in found:
+        if candidate[2]:
+            return candidate  # an impossible day still states the month
+    return (None, found[0][1], None) if found else (None, "no_stated_date", None)
 
 
 def procedural_floor(text: str) -> tuple[date | None, str | None]:

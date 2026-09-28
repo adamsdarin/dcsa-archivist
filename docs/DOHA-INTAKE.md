@@ -68,6 +68,20 @@ from the appeal's own text). A hearing decision issued after a remand carries
 the record; exposing them in the DOHA indexes needs a reviewed schema migration, and the
 library's existing appeals get them by a separate backfill over their robot text.
 
+Since review v7 (2026-09-28) neither link ever points at a decision dated on or after the
+one linking to it. DOHA does not list every first hearing decision, so a case's only
+listed hearing decision is often the one issued on remand, after the appeal; that appeal's
+`reviewed_decision` is "not identified" (with the reason), and a remand decision is never
+linked to an appeal decided after it. The v6 plan had 60 such links.
+
+### Decisions DOHA posts twice
+
+DOHA posts some hearing decisions twice, as h1 and h2, from different files of one text.
+Since review v7 a decision whose words match another decision of the same case, type and
+stated date (planned earlier or already held) to at least 0.95 is an exception naming its
+twin, so the library keeps one copy. The v6 plan held 8 such pairs, all at 0.997 or more;
+the closest genuinely different same-day pair reached 0.83.
+
 ### Measuring accuracy, batching, and re-checking held decisions
 
 Passing `validate` proves a candidate is consistent — hashes, eras that follow dates,
@@ -111,4 +125,26 @@ Topics are every guideline the case put in issue — all the guidelines the SOR 
 not only those DOHA's `KEYWORD:` line lists. The rule takes the union of the KEYWORD
 line, the formal findings and the guidelines the Statement of the Case says were
 alleged, and records which sources contributed. Only when none names a guideline is the
-whole text read.
+whole text read. A guideline added by an SOR amendment counts, and so does one alleged
+and later withdrawn (owner ruling on the v5 sample, 2026-09-27).
+
+Since review v6 (after the v5 accuracy sample failed on topics, 3 of 150) the formal
+findings and the Statement of the Case are also read when they name a guideline by title
+only ("Paragraph 1, Financial Considerations: AGAINST APPLICANT", "under the financial
+considerations guideline"), using formal names, never the taxonomy's search aliases; and
+every guideline the decision rules on ("Guideline F is found for applicant") is added.
+Topics are part of the document ID and file name, so a decision whose topics cannot be
+settled is an exception, never planned: nothing names a guideline, or the formal findings
+name a letter that nothing else in the decision names while the Statement of the Case
+alleges others (a judge's typo, "Paragraph 1. Guideline F" where paragraph 1 is criminal
+conduct).
+
+### Which date is a decision's date (owner decision 2026-09-27)
+
+The decision's own date line wins: its `DATE: March 20, 2019` line, else the caption date
+line above "Decision". DOHA's numeric index header (`DATE: 03/20/2019`, beside the
+`KEYWORD`/`CASENO` lines DOHA prepends) is used only when the decision states no usable
+date of its own. The two disagree in 35 of the 4,300 planned decisions carrying both and
+12 held ones, usually by a day or a mistyped year; none changes era. The rule lives in
+`doha_era`, which the release build applies to every held decision, so the next
+candidate corrects those 12 held dates too.
