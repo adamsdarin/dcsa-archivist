@@ -37,6 +37,15 @@ class ClassifyTests(unittest.TestCase):
         result = classify("CASENO: 16-12345.a1\n\nDATE: 12/29/2017\n\nSynthetic appeal.", "16-12345")
         self.assertEqual((result["sead4_era"], result["decision_date_basis"]), ("post_sead4", "header_date"))
 
+    def test_the_decisions_own_date_line_wins_over_the_doha_index_header(self) -> None:
+        # DOHA prepends KEYWORD/CASENO/DATE index lines; the decision's own date line follows.
+        text = "CASENO: 15-12345.a1\nDATE: 07/11/2016\n  DATE: July 12, 2016\n\nSynthetic appeal."
+        result = classify(text, "15-12345")
+        self.assertEqual((result["decision_date"], result["decision_date_basis"]), ("2016-07-12", "header_date"))
+        # An own line with an impossible date gives way to the index header.
+        text = "CASENO: 08-12345.a1\nDATE: 04/03/2009\n  DATE: April 3, 3009\n\nSynthetic appeal."
+        self.assertEqual(classify(text, "08-12345")["decision_date"], "2009-04-03")
+
     def test_date_before_the_docket_year_is_not_trusted(self) -> None:
         text = hearing("17-12345", "08/08/2016", "DOHA received the transcript (Tr.) on March 16, 2018.")
         result = classify(text, "17-12345")

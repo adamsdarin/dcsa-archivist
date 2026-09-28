@@ -10,8 +10,19 @@ Rule reviewer is now `doha-intake-plan rule-based review v5`. Owner's machine ou
 (C:\Users\darin\Documents\doha-plans): full-20260927-v5 (21,018 planned, 923 exceptions),
 recheck-20260927-v5 (held library: outcomes agree 10,248, conflict 21, missing 24,
 unsettled 340; topics agree 10,288 (96.8%), disagree 194; 289 appeal backfills, 156 appeals
-unsettled, 96 remand links), accuracy-v5.csv (158 rows = 150 scored + 8 edge; NOT yet
-marked). Older v1-v3 plan/recheck folders are stale and may be deleted.
+unsettled, 96 remand links), accuracy-v5.csv (158 rows = 150 scored + 8 edge; left
+unmarked). accuracy-v5-premarked.csv is the marked sheet (Claude pre-marked; owner
+verified all 14 rows of accuracy-v5-verify.csv against the PDFs). SCORED 2026-09-27:
+FAILED, 4 wrong of 150 (2.67%), 95% upper bound 6.0% > 5% target (#20 date; #40, #101,
+#150 topics). Outcomes 158/158 and appeal fields 39/39 right. v5 must not be batched.
+v6 (reviewer v6, Poppler): full-20260927-v6 (20,870 planned, 1,071 exceptions). New sample
+accuracy-v6.csv (seed 20260928) pre-marked by Claude as accuracy-v6-premarked.csv: 3 N
+(estimate #24 topics, #34 appeal link; edge #35 appeal link); accuracy-v6-verify.csv holds
+those 3 + 10 random Y; owner verified all 13 against the PDFs (2026-09-28). SCORED: PASSED,
+2 wrong of 150 (1.33%), 95% upper bound 4.14% <= 5% target. Dates 158/158, outcomes
+158/158, appeal fields 37/39, topics 157/158. Code on branch claude/doha-v6-rules,
+uncommitted. Nothing approved or published; batches still need owner sign-off each.
+Older v1-v3 plan/recheck folders are stale and may be deleted.
 Owner's checks of held-vs-rule outcome conflicts: rule right on 17-01558.h1, 06-23369.h1,
 24-00928.a1, 15-02333.a1 (the Board affirmed a remand GRANT on Department Counsel's
 appeal; a CAC case); library right on 19-01803.h1 (rule since fixed). So far the held
@@ -122,9 +133,16 @@ dcsa-library-rebuilder; regenerate is legacy. 81 tests pass. All work committed.
 
 ## Next
 0. DOHA completion, in order (docs/DOHA-INTAKE.md):
-   a. Accuracy sample: owner marks accuracy-v5.csv (Y/N per date, outcome, appeal,
-      topics; a guided PowerShell loop was offered) or sends the 158 texts for Claude to
-      pre-mark with the owner verifying Claude's N rows plus ~10 random Y rows. Then
+   a. Accuracy sample (v6): PASSED 2026-09-28 (see Current State). Open before batching,
+      owner to decide: the appeal-link fallback that ignores dates, the SOC source that reads
+      any letter in the first 8000 chars, and DOHA double postings (05-02406 h1/h2) planned
+      twice. History below.
+      v5 FAILED (see Current State). Done 2026-09-27 with owner approval: fix the
+      topic rule (read guideline names in findings/SOC; always add guidelines the decision
+      concludes on; hold back a findings-only letter that contradicts the SOC; hold back
+      empty topics) and the date rule (owner to choose: decision's own DATE line wins, or
+      hold disagreements for review; shared with the held library), re-plan, draw a NEW
+      sample (new --seed), mark, owner verifies, then
       `doha-accuracy-score --sheet ... --target 0.05` (passes with <=2 wrong of 150).
       A failed sample: fix the rule, re-plan, draw a NEW sample (new --seed).
    b. Exceptions (923): 182 no case number, 173 undated, 149 no Board order, 130
@@ -168,6 +186,76 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-28 Claude (local) — Owner verified all 13 v6 check rows as accurate. Scored
+accuracy-v6-premarked.csv: passed, 2/150 wrong, upper bound 4.14% (target 5%). Edge #35
+also wrong (not scored). Awaiting owner direction on the three known gaps, committing the
+branch, and batching.
+2026-09-28 Claude (local) — Pre-marked the v6 sample (accuracy-v6-premarked.csv) from the
+plan's text; dates 158/158 and outcomes 158/158 right (incl. #39 03-23504.a1, which the new
+date rule now dates correctly). 3 N, all from rule gaps that predate v6: #24 15-02326.a1
+topics E,F should be F (the Statement-of-the-Case source reads any guideline letter in the
+first 8000 chars; E came from the Applicant arguing it "should have been alleged under
+Guideline E"); #34 01-21030.a1 and edge #35 04-07187.a1 link the appeal to h2, the judge's
+decision ON REMAND issued after the appeal (reviewed_decision's "only hearing decision of
+the case" fallback ignores dates; should be "not identified"). Aside: 05-02406.h1 and .h2
+(#117, #97) are one decision posted twice by DOHA (FileIds 150858/150857); the plan keeps
+both and marks h2 "on remand". Owner verifies accuracy-v6-verify.csv (3 N + 10 Y, seed
+20260928) before any score.
+2026-09-27 Claude (local) — Poppler v6 plan done: doha-plans\full-20260927-v6 (20,870 planned,
+1,071 exceptions: +105 findings typos, +46 no guideline, 3 fewer undated). Sample
+accuracy-v6.csv drawn with --seed 20260928 (158 = 150 + 8 edge; 2 overlap v5). Claude
+pre-marking it next; marks go to accuracy-v6-premarked.csv, then owner verifies N + 10 Y.
+2026-09-27 Claude (local) — First v6 re-plan was run with Git for Windows' pdftotext, which
+is Xpdf 4.06, not Poppler; its layout lost ~3,500 dates (4,454 exceptions). Set aside as
+doha-plans\full-20260927-v6-xpdf-INVALID (and a stopped partial run as
+full-20260927-v6-stopped-partial); both can be deleted. pdftotext_extractor now refuses any
+non-Poppler binary. Poppler 25.07 (WinGet) reproduces v5's text byte for byte; pass it with
+--pdftotext. Previewing v6 topics on v5's texts showed the new sources switched off the
+whole-text fallback for 14 decisions and lost topics; fixed (v6 is now strictly additive to
+v5), plus plural rulings ("Guidelines E and J are found") and findings lines after a form
+feed. Preview over v5's 21,018 planned: 20,642 same, 225 gain topics, 105 held as findings
+typos (8 of 8 sampled are real typos), 46 held with no guideline. 151 tests pass. Poppler
+re-plan full-20260927-v6 relaunched.
+2026-09-27 Claude (local) — Owner approved the fix; ruled the decision's own date line
+wins. Branch claude/doha-v6-rules (uncommitted): doha_era._stated prefers the decision's
+own DATE line, then the caption line, over DOHA's numeric index header (35 plan / 12 held
+dates change, no era changes; the next candidate rewrites the 12 held ones). topics()
+(reviewer v6) reads guideline names in formal findings and the Statement of the Case
+(formal names only, not search aliases), adds guidelines the decision rules on, and
+returns no topics when a findings-only letter contradicts the SOC; build_plan turns any
+unsettled topics into an exception (topics are in the document ID). All four v5 failures
+now come out right (#101 held for review). 150 tests pass. docs/DOHA-INTAKE.md updated.
+Re-plan full-20260927-v6 started.
+2026-09-27 Claude (local) — Owner verified all 14 check rows (4 N + 10 random Y) against
+the PDFs and agreed with every mark; ruled that a guideline alleged then withdrawn still
+counts as a topic (#155). Scored accuracy-v5-premarked.csv: failed, 4/150 wrong, upper
+bound 6.0% vs 5% target. Per DOHA-INTAKE.md the v5 sample cannot be re-scored after the
+rule is tuned to it; the fix needs a re-plan and a new seed. Awaiting owner go-ahead.
+2026-09-27 Claude (local) — Traced the 4 N rows to the rule and sized each pattern over the
+v5 plan (read-only scan; regex proxies, unverified, so counts are candidates). Topics: the
+"alleged" source is any guideline letter in the first 8000 chars, and a partial hit there
+blocks the whole-text fallback (#150 got E from a findings-of-fact sentence, missed F;
+~48 plan items have a guideline the decision explicitly concludes on missing); formal
+findings that name a guideline without its letter are not read (#40; ~130 candidates, plus
+143 plan items with NO topics at all); a letter typo in formal findings is unioned in
+unchecked (#101; ~170 candidates where a topic is named once, only in the findings, against
+the SOC). Date: doha_era prefers DOHA's numeric DATE header over the decision's own DATE
+line; 35 of 4,300 decisions carrying both disagree (15 by >7 days, mostly year typos; one,
+08-04023.a1 "3009", the only era-crossing case). The date rule is shared with the held
+library. No code changed; fixes await the owner (they need a re-plan and a NEW sample).
+2026-09-27 Claude (local) — Pre-marked the v5 accuracy sample from the plan's robot text
+(header, Statement of the Case, SOR amendments/withdrawals, formal findings, order), not
+the PDFs; the owner still verifies. 4 of 158 rows marked N, all estimate rows: #20
+15-00022.a1 date (DOHA header line 07/11/2016, decision itself July 12, 2016); #40
+16-02780.h1 topics empty (Guideline F named only by title, "Financial Considerations");
+#101 02-30045.h1 topics add F from a judge's typo ("Paragraph 1. Guideline F" where para 1
+is J), should be E,J; #150 01-25068.h1 topics E only, missed F. Outcomes 158/158 and appeal
+fields 39/39 read right, including three judge slips the rule resolved correctly (#56,
+#82, #100). Definitions applied, for the owner to confirm: SOR amendments that add a
+guideline count (#27, #114); a guideline alleged then withdrawn still counts (#155); an
+appeal's reviewed decision "not identified" is right when no hearing decision of the case
+is planned, held or listed. Aside for the held-library recheck: the library holds
+17-03898.h1 as approved, but its appeal says that h1 denied.
 2026-09-27 Claude — Handed off to a local session (cloud cannot reach the owner's
 machine). Added tools/doha_diagnose.py (the ad-hoc diagnosis used all day). v5 plan and
 recheck are the current outputs; accuracy sample drawn but unmarked.

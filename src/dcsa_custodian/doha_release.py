@@ -198,7 +198,8 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
         "rule": ERA_RULE,
         "cutoff": SEAD4_EFFECTIVE.isoformat(),
         "cutoff_basis": "SEAD 4 effective date; DOHA applied it to decisions issued on or after that date",
-        "date_source": "the decision's own stated date (DATE: header, or the caption date line above 'Decision'), "
+        "date_source": "the decision's own stated date (its 'DATE: Month d, yyyy' line, or the caption date line "
+                       "above 'Decision'; DOHA's numeric DATE index header only when the decision states none), "
                        "checked against its docket year, recorded procedural events and, when provenance records it, "
                        "the year of the official DOHA listing page",
         "never_used": ["case number order", "file or folder name", "the PRE_SEAD_4/POST_SEAD_4 folder in a path"],

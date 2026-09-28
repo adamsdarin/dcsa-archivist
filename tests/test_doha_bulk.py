@@ -174,6 +174,58 @@ class DohaBulkTests(unittest.TestCase):
         reasons = {row["case_key"]: row["reason"] for _, row in iter_jsonl(self.out / "exceptions.jsonl")}
         self.assertIn("intake package unreadable", reasons["19-01234.h1"])
 
+    def test_only_poppler_pdftotext_is_accepted(self) -> None:
+        from subprocess import CompletedProcess
+        from unittest import mock
+        from dcsa_custodian import doha_bulk
+        xpdf = CompletedProcess([], 0, "", "pdftotext version 4.06 [www.xpdfreader.com]\n")
+        with mock.patch.object(doha_bulk.subprocess, "run", return_value=xpdf):
+            with self.assertRaises(SystemExit) as raised:
+                doha_bulk.pdftotext_extractor("pdftotext")
+        self.assertIn("not Poppler", str(raised.exception))
+        poppler = CompletedProcess([], 0, "", "pdftotext version 25.07.0\nCopyright 2005-2025 The Poppler Developers\n")
+        with mock.patch.object(doha_bulk.subprocess, "run", return_value=poppler):
+            self.assertTrue(callable(doha_bulk.pdftotext_extractor("pdftotext")))
+
+    def test_a_decision_naming_no_guideline_is_an_exception(self) -> None:
+        # Topics are part of the document ID and file name, so an unsettled one is never planned.
+        self.add("20-00006.h1", hearing("20-00006", "h1", "02/03/2021", "Synthetic subject",
+                                        "Eligibility for access to classified information is denied."))
+        self.build()
+        reasons = {row["case_key"]: row["reason"] for _, row in iter_jsonl(self.out / "exceptions.jsonl")}
+        self.assertIn("topics not settled", reasons["20-00006.h1"])
+
+    def test_topics_read_guideline_names_and_rulings_and_hold_a_findings_typo(self) -> None:
+        full = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "ABCDEFGHIJKLM"}}
+        # Named only by title, in the Statement of the Case and the formal findings.
+        text = ("Statement of the Case\nDOD issued an SOR detailing security concerns under the financial considerations "
+                "guideline.\n" + FILLER + "Formal Findings\nParagraph 1, Financial Considerations: AGAINST APPLICANT\n")
+        self.assertEqual(topics(text, full)[0], ["F"])
+        self.assertEqual(topics("Formal Findings\nParagraph 1 (drug involvement): AGAINST THE APPLICANT.\n", full)[0], ["H"])
+        # A guideline the decision rules on counts even when another source already named one.
+        text = ("Statement of the Case\nThe SOR alleges security concerns under Guideline E.\n" + FILLER * 30 +
+                "Guideline E is found for applicant.\nGuideline F is found for applicant.\n"
+                "FORMAL FINDINGS\nPARAGRAPH 1: FOR THE APPLICANT\nPARAGRAPH 2: FOR THE APPLICANT\n")
+        self.assertEqual(topics(text, full)[0], ["E", "F"])
+        # A letter only the formal findings name, against the SOR, is left to a person.
+        text = ("Statement of the Case\nThe SOR raised security concerns under Guideline J (Criminal Conduct) and "
+                "Guideline E (Personal Conduct).\n" + FILLER * 30 +
+                "FORMAL FINDINGS\nParagraph 1. Guideline F: AGAINST APPLICANT\nParagraph 2. Guideline E: FOR APPLICANT\n")
+        codes, basis = topics(text, full)
+        self.assertEqual(codes, [])
+        self.assertIn("likely a typo", basis)
+        # The same letter is kept when the decision discusses that guideline by name.
+        self.assertEqual(topics(text + "Financial considerations are also raised.\n", full)[0], ["E", "F", "J"])
+        # Plural rulings, and a findings line after a page break.
+        text = FILLER * 30 + "For this reason, Guidelines E and J are found against applicant.\n"
+        self.assertEqual(topics(text, full)[0], ["E", "J"])
+        self.assertEqual(topics("Formal Findings\n\f   Paragraph 1, Criminal Conduct:   FOR APPLICANT\n", full)[0], ["J"])
+        # The name and ruling sources add to the whole-text reading; they never switch it off.
+        text = (FILLER * 30 + "Analysis\nGuideline F, Financial Considerations applies.\n"
+                "Formal Findings\nParagraph 1, Financal Considerations: FOR APPLICANT\n"
+                "Paragraph 2, Personal Conduct: FOR APPLICANT\n")
+        self.assertEqual(topics(text, full)[0], ["E", "F"])
+
     def test_a_wrong_library_root_names_what_is_missing(self) -> None:
         with self.assertRaises(ValueError) as raised:
             build_plan(self.library / "nowhere", self.run, self.not_held, self.out, self.extract)
@@ -205,7 +257,7 @@ class DohaBulkTests(unittest.TestCase):
         self.add("21-01882.h1", None)
         self.add("21-01882.a1", appeal("21-01882", "04/08/2024", "Guideline F",
                                        "Applicant appealed.\n The Decision is AFFIRMED."))
-        self.add("98-00252.a1", "CASENO: 98-00252.a1\nDATE: 09/15/1999\n" + FILLER +
+        self.add("98-00252.a1", "CASENO: 98-00252.a1\nDATE: 09/15/1999\nThe SOR was based on Criterion F.\n" + FILLER +
                  "The case is before the Board on Department Counsel's appeal from that favorable decision. "
                  "For the reasons set forth below, the Board reverses the Administrative Judge's decision.\n")
         summary = self.build()

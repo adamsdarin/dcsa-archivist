@@ -35,7 +35,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v5"
+REVIEWER = "doha-intake-plan rule-based review v6"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -57,6 +57,20 @@ FORMAL_FINDING = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n:]{0,60}:\s
 # Formal findings without a colon, e.g. "Paragraph 1, Guideline F (Financial Considerations)   FOR APPLICANT".
 # Upper case only, so running prose ("... for Applicant") does not count.
 FORMAL_FINDING_COLUMN = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n]{0,60}?\s(?:FOR|AGAINST)\s+(?:THE\s+)?APPLICANT\b")
+# Formal findings naming a guideline without its letter: "Paragraph 1, Financial
+# Considerations: AGAINST APPLICANT", "Paragraph 1 (drug involvement): AGAINST THE APPLICANT".
+FINDING_BY_NAME = re.compile(r"^[ \t\f]*(?:SOR\s*¶+\s*|Paragraph\s*)\d+\s*[.,:]?\s*[-(]?\s*([A-Za-z][A-Za-z ,&/'-]{2,60}?)"
+                             r"\s*\)?\s*[:-]?\s*(?:FOR|AGAINST)\s+(?:THE\s+)?APPLICANT\b", re.M | re.I)
+# The Statement of the Case naming them the same way: "security concerns under the financial
+# considerations guideline", "under the guidelines for use of information technology systems".
+SOR_BY_NAME = re.compile(r"\bunder\s+the\s+(?:guidelines?\s+for\s+([a-z][a-z ,&/-]{3,90}?)(?=\s*[.;:(])"
+                         r"|([a-z][a-z ,&/-]{3,60}?)\s+guidelines?\b)", re.I)
+# The decision ruling on guidelines: "Guideline F is found for applicant", "Guidelines E and J
+# are found against applicant", "I find for Applicant under Guideline F". Letters must be upper case.
+_LETTERS = r"([A-M](?:\s*(?:,\s*(?:and\s+)?|and\s+|&\s*)[A-M])*)"
+CONCLUDED = re.compile(r"\b(?:Guidelines?|Criteri(?:on|a))\s+" + _LETTERS + r"\s+(?i:is|are)\s+(?i:found)\s+(?i:for|against)\b"
+                       r"|\b(?i:find(?:s|ing)?\s+(?:for|against)\s+(?:the\s+)?applicant\s+(?:under|on|as\s+to))\s+"
+                       r"(?:Guidelines?|Criteri(?:on|a))\s+" + _LETTERS + r"\b")
 # "security concerns under Guidelines F and E", "under Guideline F (Financial Considerations)".
 SOR_GUIDELINES = re.compile(r"\b(?i:guidelines?|criteri(?:on|a))\s+([A-M])\b((?:\s*(?:\([^)]{0,40}\))?\s*(?:,|and|&)\s*"
                             r"(?:Guidelines?\s+)?[A-M]\b)*)")
@@ -113,6 +127,14 @@ def pdftotext_extractor(binary: str | None = None) -> Callable[[Path, Path], Non
     tool = binary or shutil.which("pdftotext")
     if not tool:
         raise SystemExit("pdftotext (Poppler) is required: install it or pass --pdftotext <path>")
+    # Xpdf ships a pdftotext too, and Git for Windows puts one first on PATH. Its layout
+    # differs from Poppler's, which the date and topic rules read: a re-plan extracted with
+    # it lost about 3,500 decision dates (2026-09-27).
+    version = subprocess.run([tool, "-v"], capture_output=True, text=True, timeout=60)
+    banner = (version.stdout + version.stderr).strip()
+    if "poppler" not in banner.lower():
+        raise SystemExit(f"{tool} is not Poppler's pdftotext ({banner.splitlines()[0] if banner else 'no version'}); "
+                         "the rules read Poppler's layout. Pass --pdftotext <path to Poppler's pdftotext>")
 
     def extract(source: Path, target: Path) -> None:
         subprocess.run([tool, "-layout", "-enc", "UTF-8", str(source), str(target)], check=True,
@@ -334,19 +356,53 @@ def _alleged(region: str, guidelines: dict[str, Any]) -> set[str]:
     return found & set(guidelines)
 
 
+def _formal_names(code: str, guidelines: dict[str, Any]) -> list[str]:
+    """A guideline's formal names only. The taxonomy's search aliases ("arrest", "debt",
+    "classified information") appear in almost every decision and name nothing here."""
+    return [name.lower() for name in (guidelines[code].get("label", ""), *GUIDELINE_NAMES.get(code, ())) if name]
+
+
+def _named_codes(phrase: str, guidelines: dict[str, Any]) -> set[str]:
+    """Codes a phrase names by formal name, or by a first word only one guideline starts with."""
+    lowered = re.sub(r"\s+", " ", phrase).strip(" ,.()").lower()
+    found = {code for code in guidelines
+             if any(re.search(r"\b" + re.escape(name) + r"\b", lowered) for name in _formal_names(code, guidelines))}
+    first = FIRST_WORD.get(lowered.split(" ")[0]) if lowered else None
+    if not found and first in guidelines:
+        found.add(first)
+    return found
+
+
+def _alleged_by_name(region: str, guidelines: dict[str, Any]) -> set[str]:
+    found: set[str] = set()
+    for match in SOR_BY_NAME.finditer(_flat(region)):
+        found |= _named_codes(match.group(1) or match.group(2), guidelines)
+    return found
+
+
 def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
     """Every guideline the case put in issue (owner decision 2026-09-27: topics are all the
     guidelines the SOR alleged, not only DOHA's KEYWORD line).
 
     The union of three statements of the same thing, each recorded in the basis: the
     KEYWORD line, the formal findings (one per SOR paragraph), and the guidelines the
-    Statement of the Case says the SOR alleged. Any one alone can be incomplete: a KEYWORD
-    line often lists only the main concern, and older decisions have no KEYWORD line. Only
-    when none of them names a guideline is the whole text read ("with regard to criteria
-    H, E and J")."""
+    Statement of the Case says the SOR alleged, whether by letter or by name ("Paragraph 1,
+    Financial Considerations: AGAINST APPLICANT"), plus every guideline the decision rules
+    on ("Guideline F is found for applicant"). Any one alone can be incomplete: a KEYWORD
+    line often lists only the main concern, and older decisions have no KEYWORD line. When
+    neither the KEYWORD line nor a guideline letter in the findings or the Statement of the
+    Case names one, the whole text is read too ("with regard to criteria H, E and J"); the
+    name and ruling sources, added in review v6, add to that and never replace it.
+
+    No topics come back, with the reason, when the topics cannot be settled: nothing names a
+    guideline, or the formal findings name one that nothing else in the decision names while
+    the Statement of the Case names others ("Paragraph 1. Guideline F" where paragraph 1 is
+    criminal conduct), which is a typo for a person to resolve. The plan holds such a
+    decision back as an exception."""
     guidelines = validate_taxonomy(taxonomy)
     codes: set[str] = set()
     parts = []
+    named: set[str] = set()
     line = KEYWORD.search(text[:20000])
     if line:
         keywords = line.group(1)
@@ -355,23 +411,40 @@ def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
             codes |= named
             parts.append(f"KEYWORD line '{keywords.strip()[:80]}'" + (
                 f" (segments naming no guideline: {'; '.join(u[:30] for u in unmapped[:3])})" if unmapped else ""))
-    findings = (set(code.upper() for code in FORMAL_FINDING.findall(text)) | set(FORMAL_FINDING_COLUMN.findall(text))) & set(guidelines)
+    by_letter = (set(code.upper() for code in FORMAL_FINDING.findall(text)) | set(FORMAL_FINDING_COLUMN.findall(text))) & set(guidelines)
+    by_name = set().union(*(_named_codes(name, guidelines) for name in FINDING_BY_NAME.findall(text)))
+    findings = by_letter | by_name
     if findings:
         codes |= findings
         parts.append("formal findings for " + ", ".join(f"Guideline {code}" for code in sorted(findings)))
     opening = text[:8000]
     if line and line.start() < 8000:  # the KEYWORD line is not a statement of what the SOR alleged
         opening = opening[:line.start()] + opening[line.end():]
-    alleged = _alleged(opening, guidelines)
+    by_letter_alleged = _alleged(opening, guidelines)
+    alleged = by_letter_alleged | _alleged_by_name(opening, guidelines)
     if alleged:
         codes |= alleged
         parts.append("guidelines alleged in the Statement of the Case (" + ",".join(sorted(alleged)) + ")")
+    concluded = set().union(*(re.findall(r"[A-M]", a or b) for a, b in CONCLUDED.findall(text))) & set(guidelines)
+    if concluded:
+        codes |= concluded
+        parts.append("guidelines the decision rules on (" + ",".join(sorted(concluded)) + ")")
+    lowered = text.lower()
+    letters = GUIDELINE_LETTER.findall(text)
+    typos = sorted(code for code in by_letter - by_name - named - alleged - concluded
+                   if alleged and letters.count(code) == 1
+                   and not any(name in lowered for name in _formal_names(code, guidelines)))
+    if typos:
+        return [], (f"formal findings name Guideline {', '.join(typos)}, which nothing else in the decision names, "
+                    f"while the Statement of the Case alleges {','.join(sorted(alleged))}; likely a typo, needs review")
+    if not (named or by_letter or by_letter_alleged):
+        applied = _alleged(text, guidelines) - codes
+        if applied:
+            codes |= applied
+            parts.append("guidelines the decision applies" + (f" ({','.join(sorted(applied))})" if parts else ""))
     if codes:
         return sorted(codes), " + ".join(parts)
-    applied = _alleged(text, guidelines)
-    if applied:
-        return sorted(applied), "guidelines the decision applies"
-    return [], "no KEYWORD line, formal findings or SOR guidelines name a guideline"
+    return [], "no KEYWORD line, formal findings, SOR guidelines or ruling names a guideline"
 
 
 def load_packages(run_dir: Path) -> tuple[list[tuple[Path, dict[str, Any]]], list[tuple[Path, str]]]:
@@ -573,6 +646,9 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
             refuse(key, outcome_basis)
             continue
         codes, topic_basis = topics(text, taxonomy)
+        if not codes:  # topics are part of the document ID and file name; never guess them
+            refuse(key, f"topics not settled: {topic_basis}")
+            continue
         ruling = appeal_ruling(text) if level.startswith("a") else {}
         group_name = ERA_FOLDERS[era_result["sead4_era"]]
         eligible = group_name == "POST_SEAD_4" and level.startswith("h") and result in ("approved", "denied") and bool(codes)
