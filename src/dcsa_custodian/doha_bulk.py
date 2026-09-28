@@ -24,6 +24,7 @@ Reads the library and quarantine only; writes only to the output directory.
 from __future__ import annotations
 
 import collections
+import difflib
 import json
 import re
 import shutil
@@ -35,7 +36,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v6"
+REVIEWER = "doha-intake-plan rule-based review v7"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -488,6 +489,34 @@ def held_cases(library: Path) -> tuple[dict[str, str | None], set[str], set[str]
     return cases, ids, paths
 
 
+# DOHA posts some decisions twice, under h1 and h2, from different files of one text.
+# Word-for-word the copies agree to at least 0.997 while the closest genuinely different
+# decisions of one case on one date reach 0.83 (v6 plan, 2026-09-28).
+DUPLICATE_RATIO = 0.95
+
+
+def _words(text: str) -> list[str]:
+    """A decision's words, without the page lines a PDF print of DOHA's HTML adds (file URL, case label)."""
+    kept = (line for line in text.splitlines() if "file:///" not in line and not BARE_KEY.fullmatch(line))
+    return re.findall(r"[a-z0-9]+", "\n".join(kept).lower())
+
+
+def same_decision(text: str, other: str) -> bool:
+    a, b = _words(text), _words(other)
+    return bool(a and b) and difflib.SequenceMatcher(None, a, b, autojunk=False).ratio() >= DUPLICATE_RATIO
+
+
+def _held_texts(library: Path) -> dict[str, list[tuple[str, str | None, Path]]]:
+    """Held decisions by case: (key, decision date, robot text path)."""
+    found: dict[str, list[tuple[str, str | None, Path]]] = collections.defaultdict(list)
+    if (library / DOHA_MANIFEST).is_file():
+        for row in _rows(library / DOHA_MANIFEST):
+            key = str(row.get("case_stem", "")).split("_")[0].lower()
+            if "." in key and row.get("robot_text_path"):
+                found[key.split(".")[0]].append((key, row.get("decision_date"), library / row["robot_text_path"]))
+    return found
+
+
 LEVEL = re.compile(r"^(\d{2}-\d{4,6})\.([ha])(\d)$")
 
 
@@ -503,29 +532,38 @@ def _related(case_id: str, family: str, known: dict[str, tuple[str | None, str]]
 
 def reviewed_decision(case_id: str, level: str, decided: str, known: dict[str, tuple[str | None, str]]) -> dict[str, Any]:
     """The hearing decision an appeal reviewed: the latest one dated before the appeal;
-    else the case's only hearing decision; else the one with the appeal's number."""
+    else the case's only hearing decision; else the one with the appeal's number. A hearing
+    decision dated on or after the appeal is never taken: it cannot be the one reviewed and
+    is usually the decision on remand (DOHA does not list every first decision)."""
     hearings = _related(case_id, "h", known)
-    dated = [h for h in hearings if h[1] and h[1] < decided]
+    possible = [h for h in hearings if not (h[1] and decided and h[1] >= decided)]
+    later = sorted(h[0] for h in hearings if h not in possible)
+    dated = [h for h in possible if h[1] and h[1] < decided]
     if dated:
         key, date_, status, _ = max(dated, key=lambda h: (h[1], h[3]))
         return {"case_key": key, "decision_date": date_, "status": status,
                 "basis": "latest hearing decision of the case dated before the appeal"}
-    if len(hearings) == 1:
+    if len(hearings) == 1 and possible:
         key, date_, status, _ = hearings[0]
         return {"case_key": key, "decision_date": date_, "status": status,
                 "basis": "the only hearing decision of the case that DOHA lists or the library holds"}
-    same = [h for h in hearings if h[3] == int(level[1:])]
+    same = [h for h in possible if h[3] == int(level[1:])]
     if same:
         key, date_, status, _ = same[0]
         return {"case_key": key, "decision_date": date_, "status": status,
                 "basis": "hearing decision with the appeal's number; the case has several and their dates are not all known"}
+    if later:
+        return {"case_key": None, "decision_date": None, "status": "not identified",
+                "basis": f"the case's listed or held hearing decisions ({', '.join(later)}) are dated after the appeal; "
+                         "the one it reviewed is not listed by DOHA"}
     return {"case_key": None, "decision_date": None, "status": "not identified",
             "basis": "no hearing decision of this case is listed by DOHA or held by the library"}
 
 
 def remanded_from(case_id: str, level: str, decided: str, known: dict[str, tuple[str | None, str]]) -> dict[str, Any] | None:
-    """For a hearing decision issued on remand, the appeal that sent the case back."""
-    appeals = _related(case_id, "a", known)
+    """For a hearing decision issued on remand, the appeal that sent the case back. An appeal
+    dated on or after this decision is never taken: it cannot have sent this one back."""
+    appeals = [a for a in _related(case_id, "a", known) if not (a[1] and decided and a[1] >= decided)]
     dated = [a for a in appeals if a[1] and a[1] < decided]
     if dated:
         key, date_, status, _ = max(dated, key=lambda a: (a[1], a[3]))
@@ -569,6 +607,7 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
     validate_taxonomy(taxonomy)
     listings = {row["case_key"]: row for row in _rows(not_held)}
     held, used_ids, used_paths = held_cases(library)
+    twins = _held_texts(library)  # case -> decisions to compare a same-dated one against
     # Every decision this plan can point at, with what is known of it.
     known: dict[str, tuple[str | None, str]] = {key: (None, "listed by DOHA, not acquired") for key in listings}
     packages = {}
@@ -640,6 +679,15 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
         if era and era_result["sead4_era"] != era:
             counts["outside_requested_era"] += 1
             text_path.unlink(missing_ok=True)
+            continue
+        # Keys are planned in order, so the lower-numbered copy of a double posting is kept.
+        twin = next((other for other, other_date, other_path in twins.get(case_id, ())
+                     if other.rsplit(".", 1)[1][0] == level[0] and other_date == decided
+                     and same_decision(text, other_path.read_text(encoding="utf-8", errors="replace"))), None)
+        if twin:
+            text_path.unlink(missing_ok=True)
+            refuse(key, f"the same decision as {twin}: DOHA posts it twice (same date, near-identical text); "
+                        f"kept once as {twin}")
             continue
         result, outcome_basis = outcome(text, level)
         if result is None:
@@ -719,6 +767,7 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
         on_remand = level.startswith("h") and (int(level[1:]) > 1 or bool(REMAND_TEXT.search(text)))
         links.append((review, key, case_id, level, decided if not on_remand or level.startswith("a") else "remand"))
         known[key] = (decided, "in this plan")
+        twins[case_id].append((key, decided, text_path))
         counts["answer_eligible"] += eligible
     # Links are resolved once every decision in the plan is known, so an appeal can
     # point at a hearing decision planned after it.

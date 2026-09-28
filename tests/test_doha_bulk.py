@@ -174,6 +174,32 @@ class DohaBulkTests(unittest.TestCase):
         reasons = {row["case_key"]: row["reason"] for _, row in iter_jsonl(self.out / "exceptions.jsonl")}
         self.assertIn("intake package unreadable", reasons["19-01234.h1"])
 
+    def test_a_link_never_points_at_a_later_decision(self) -> None:
+        from dcsa_custodian.doha_bulk import remanded_from, reviewed_decision
+        # The only hearing decision is dated after the appeal: it is the decision on remand.
+        known = {"04-01234.h2": ("2006-12-06", "in this plan")}
+        link = reviewed_decision("04-01234", "a1", "2006-11-17", known)
+        self.assertIsNone(link["case_key"])
+        self.assertIn("dated after the appeal", link["basis"])
+        # Undated (only listed), it may still be the one reviewed.
+        known = {"04-01234.h1": (None, "listed by DOHA, not acquired")}
+        self.assertEqual(reviewed_decision("04-01234", "a1", "2006-11-17", known)["case_key"], "04-01234.h1")
+        # An appeal decided after a remand decision cannot have sent it back.
+        known = {"02-01234.a1": ("2004-03-04", "in this plan")}
+        self.assertIsNone(remanded_from("02-01234", "h2", "2003-10-29", known)["case_key"])
+        self.assertEqual(remanded_from("02-01234", "h2", "2004-05-01", known)["case_key"], "02-01234.a1")
+
+    def test_a_decision_doha_posts_twice_is_planned_once(self) -> None:
+        for level in ("h1", "h2"):
+            self.add(f"20-00007.{level}", hearing("20-00007", level, "03/03/2021", "Guideline F",
+                                                  "Eligibility for access to classified information is denied."))
+        self.build()
+        planned = {item["record"]["doha_review"]["case_id"] + "." + item["record"]["doha_review"]["decision_level"]
+                   for item in read_json(self.out / "intake-plan.json")["items"]}
+        reasons = {row["case_key"]: row["reason"] for _, row in iter_jsonl(self.out / "exceptions.jsonl")}
+        self.assertIn("20-00007.h1", planned)
+        self.assertIn("the same decision as 20-00007.h1", reasons["20-00007.h2"])
+
     def test_only_poppler_pdftotext_is_accepted(self) -> None:
         from subprocess import CompletedProcess
         from unittest import mock
