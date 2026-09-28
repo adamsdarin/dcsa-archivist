@@ -1,8 +1,39 @@
 # HANDOFF — dcsa-archivist
 
-Last updated: 2026-09-27 by Claude
+Last updated: 2026-09-28 by Claude
 
 ## Current State
+2026-09-28 (local): Batch 1 candidate `doha-bulk-batch01-20260928` built (89 min),
+validate valid/publishable (0 errors, 0 blockers), evaluate 18/18. 16,133 decisions
+(5,500 new, all pre-SEAD 4, all dated, none undetermined or in date conflict); held
+decisions change only 11 dates (own date line rule), no era, path or URL. Spot-check
+verified. Owner decision (2026-09-28): publish nothing until all batches are processed and
+validated, then publish the whole corpus once. Since publish refuses a candidate built
+against an older library, that means ONE candidate from full-20260928-v7 (= batches 1-4,
+20,862); the batch 1 candidate is then superseded (keep until the combined one passes).
+Blocked: appending the full plan's provenance (15,362 new rows; batch 1's 5,500 already
+there, re-append is idempotent) was refused by the permission classifier; the owner must run
+or allow `doha-append-provenance --additions full-20260928-v7\doha_source_urls.additions.jsonl`.
+Spot-checks drawn and pre-marked (batch-0N\spotcheck-batch0N-premarked.csv / -verify.csv):
+batch 2 20/20 Y (owner verifies 5), batch 3 20/20 Y (verifies 3), batch 4 19/20 (verifies
+Claude's N + 2): #17 15-00207.h1 topics E,H should be H, the known opening-text gap (394
+scan candidates; some are right, e.g. batch 2 #13 05-04266.h1 where the SOR alleged E but the
+findings list only F). Owner: "fix the gap first, then run the combined build". Done as review
+v8 (doha_bulk NOT-alleged denials, SOR statements outweigh them, other-case remarks ignored,
+first-person "I" is not Guideline I): against v7 it removes a letter from 30 decisions (all
+read and confirmed, incl. 15-00207.h1 and 15-02326.a1), adds none, unsettles none. 158 tests
+pass. Re-plan full-20260928-v8 running; then compare with v7, reset
+decisions/doha_source_urls.jsonl to HEAD (11 batch-1 rows carry pre-v8 IDs) and append the v8
+additions, build one candidate from the v8 plan, validate, evaluate; publish only on the
+owner's go-ahead after the batch 2-4 verify lists are checked. Build-speed fix
+for batch 2 onward, uncommitted on main's working tree (156 tests pass): new decisions are
+staged with their era's retrieval priority (was 0, and authority tier 5 in the path index),
+and the release build rewrites a full-text row only when its era group changes, by rowid.
+Batch 1 runs the old code and spends ~40 min re-indexing every new decision's text for a
+priority-only difference. Consistency with held decisions: every build re-derives era and
+date for all held decisions; held outcomes, topics and appeal fields are not re-derived
+(Next 0c).
+
 2026-09-27 (end of cloud session; resume locally): DOHA bulk intake is NOT complete.
 Library holds 10,633 DOHA decisions; 21,941 more are downloaded (Librarian run
 quarantine/doha-acquire/20260925T151200Z). Nothing has been approved or published.
@@ -192,6 +223,18 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-28 Claude (local) — Batch 1 candidate passed validate (0 errors) and evaluate
+(18/18). Owner chose one publish for the whole corpus, so batches 2-4 will not get their own
+candidates; one combined build instead. Second speed fix: stage_intake's validate_cases
+looked each new decision up in the FTS5 table by document_id (26 of batch 1's 89 minutes;
+~3 h for all 20,862); now one pass by rowid (16 s on batch 1's real data, all stores agree).
+157 tests pass. Spot-checks for batches 2-4 drawn and pre-marked; batch 4 has one N from the
+known opening-text topic gap.
+2026-09-28 Claude (local) — Batch 1 build was slow in the topic-index step: staging gave new
+decisions retrieval priority 0, so the release build counted all 5,500 as stale and updated
+the FTS5 table by document_id (a full scan plus a full re-index per row) though no era
+changed. Fixed for batch 2 at the owner's request (doha.py case_row, doha_release
+_patch_index); 3 new tests fail on the old code and pass on the new. Batch 1 left running.
 2026-09-28 Claude (local) — Batch 1 started on branch claude/doha-batch-01: 5,500
 provenance rows appended to decisions/doha_source_urls.jsonl (dry run clean, no
 conflicts); candidate doha-bulk-batch01-20260928 building. Spot-check

@@ -271,7 +271,10 @@ def _patch_index(root: Path, production: Path, relative: str, table: str, column
     """Copy an index into the candidate, correct its era columns and drop retired rows.
 
     The index is left out of the candidate when nothing differs, so publication
-    does not rewrite a 350 MB store for an unchanged release.
+    does not rewrite a 350 MB store for an unchanged release. Full-text rows are
+    addressed by rowid, since FTS5 cannot index document_id and each lookup by it
+    scans every decision, and rewritten only when their group changes, since an
+    FTS5 update re-indexes the whole decision text.
     """
     group_column, priority_column = columns
     retired = retired or set()
@@ -280,7 +283,11 @@ def _patch_index(root: Path, production: Path, relative: str, table: str, column
                  for identity, group, priority in db.execute(f"SELECT document_id,{group_column},{priority_column} FROM {table}")
                  if (row := by_id.get(identity)) and (group, priority) != (row["current_group"], row["retrieval_priority"])]
         removable = [(identity,) for identity, in db.execute(f"SELECT document_id FROM {table}") if identity in retired]
-    if not stale and not removable:
+        texts = db.execute(f"SELECT rowid,document_id,current_group FROM {fts_table}").fetchall() if fts_table else []
+    regroup = [(row["current_group"], rowid, identity) for rowid, identity, group in texts
+               if identity not in retired and (row := by_id.get(identity)) and group != row["current_group"]]
+    dropped = [(rowid, identity) for rowid, identity, _ in texts if identity in retired]
+    if not stale and not removable and not regroup and not dropped:
         return 0
     target = production / relative
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -288,12 +295,12 @@ def _patch_index(root: Path, production: Path, relative: str, table: str, column
     with contextlib.closing(sqlite3.connect(target)) as db, db:
         db.executemany(f"UPDATE {table} SET {group_column}=?,{priority_column}=? WHERE document_id=?", stale)
         if fts_table:
-            db.executemany(f"UPDATE {fts_table} SET current_group=? WHERE document_id=?",
-                           [(group, identity) for group, _, identity in stale])
-        for removed in (table, fts_table, topics_table):
+            db.executemany(f"UPDATE {fts_table} SET current_group=? WHERE rowid=?", [(g, r) for g, r, _ in regroup])
+            db.executemany(f"DELETE FROM {fts_table} WHERE rowid=?", [(r,) for r, _ in dropped])
+        for removed in (table, topics_table):
             if removed:
                 db.executemany(f"DELETE FROM {removed} WHERE document_id=?", removable)
-    return len(stale) + len(removable)
+    return len({i for *_, i in stale} | {i for i, in removable} | {i for *_, i in regroup} | {i for _, i in dropped})
 
 
 def apply_to_records(records: list[dict[str, Any]], production: Path, root: Path) -> int:

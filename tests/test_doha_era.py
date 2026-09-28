@@ -143,6 +143,29 @@ class ReleaseTests(unittest.TestCase):
             with contextlib.closing(sqlite3.connect(root / doha_release.CONTENT)) as db:
                 self.assertEqual(db.execute("SELECT current_group FROM decisions WHERE document_id='late-2016-case'").fetchone()[0], "PRE_SEAD_4")
 
+    def test_only_decisions_whose_era_changes_are_rewritten_in_the_topic_index(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "library"
+            root.mkdir()
+            self.make_library(root)
+            production = Path(temp) / "production"
+            report = doha_release.build(root, production, {}, {})
+            # late-2016-case and effective-day move to post-SEAD 4; the others were staged in the right era.
+            self.assertEqual(report["rewritten"]["topic_index_rows"], 2)
+            self.assertEqual(doha_release.check(production, root), [])
+
+    def test_decisions_staged_in_the_right_era_leave_the_topic_index_out_of_the_candidate(self) -> None:
+        self.CASES = {k: v for k, v in ReleaseTests.CASES.items() if k in ("day-before", "typo-header")}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "library"
+            root.mkdir()
+            self.make_library(root)
+            production = Path(temp) / "production"
+            report = doha_release.build(root, production, {}, {})
+            self.assertEqual((report["rewritten"]["path_index_rows"], report["rewritten"]["topic_index_rows"]), (0, 0))
+            self.assertFalse((production / doha_release.CONTENT).exists())
+            self.assertEqual(doha_release.check(production, root), [])
+
     def test_validation_refuses_a_case_number_era_even_when_every_store_agrees(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root, result = self.build(Path(temp))

@@ -51,7 +51,7 @@ retained bytes are those fetched from that official URL) before building, then
 `build-candidate --intake-plan <out>\intake-plan.json`, `validate`, `evaluate`.
 
 Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
-`doha-intake-plan rule-based review v5` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only). Do not `publish` a DOHA bulk batch until
+`doha-intake-plan rule-based review v8` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only; v5 failed its accuracy sample; v6 read guideline names and the decision's own date line; v7 fixed appeal links and double postings; v8 drops guidelines the decision says were not alleged). Do not `publish` a DOHA bulk batch until
 the owner has spot-checked a sample of its plan items against their PDFs.
 
 ### Ruling types and the decision an appeal reviews (owner decision 2026-09-27)
@@ -138,6 +138,19 @@ settled is an exception, never planned: nothing names a guideline, or the formal
 name a letter that nothing else in the decision names while the Statement of the Case
 alleges others (a judge's typo, "Paragraph 1. Guideline F" where paragraph 1 is criminal
 conduct).
+
+Since review v8 (2026-09-28, owner decision to close the gap before the combined build) a
+guideline the decision says is not part of the case is no topic, however often it is mentioned:
+"Guideline C is not alleged", "the SOR did not cite Guideline H", "a Guideline E allegation that
+was not listed in the SOR", "should have been alleged under Guideline E", "Guidelines F and J,
+which are not at issue in this case" (a denial covers the rest of its list, "under Guideline D
+or Guideline J"). A sentence about the SOR outweighs such a denial ("The SOR was based on
+Guideline E and Guideline J"), as does an amendment adding the guideline; "not at issue on
+appeal" means alleged and not appealed. Remarks about other cases ("this program has
+adjudicated Guideline B and C cases") count for nothing, and the judge's first-person "I" after
+a guideline ("Under Guideline E, I conclude") is not Guideline I. Against the v7 plan this
+removed a letter from 30 decisions, each read and confirmed, and added none; it includes the
+two known errors (15-00207.h1 in the batch 4 spot-check, 15-02326.a1 in the v6 sample).
 
 ### Which date is a decision's date (owner decision 2026-09-27)
 

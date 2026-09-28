@@ -36,7 +36,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v7"
+REVIEWER = "doha-intake-plan rule-based review v8"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -72,9 +72,37 @@ _LETTERS = r"([A-M](?:\s*(?:,\s*(?:and\s+)?|and\s+|&\s*)[A-M])*)"
 CONCLUDED = re.compile(r"\b(?:Guidelines?|Criteri(?:on|a))\s+" + _LETTERS + r"\s+(?i:is|are)\s+(?i:found)\s+(?i:for|against)\b"
                        r"|\b(?i:find(?:s|ing)?\s+(?:for|against)\s+(?:the\s+)?applicant\s+(?:under|on|as\s+to))\s+"
                        r"(?:Guidelines?|Criteri(?:on|a))\s+" + _LETTERS + r"\b")
+# The judge's first-person "I" after a guideline is not Guideline I: "Under Guideline E, I
+# conclude", "under guideline H and I find" (review v8).
+_PRONOUN_I = (r"I\s+(?:[a-z]+ly\s+)?(?:conclude|concluded|find|found|have|had|am|will|would|must|note|noted|consider"
+              r"|considered|also|therefore|further|agree|believe|do|did|cannot|can|shall|should|may|might|decline|weigh"
+              r"|weighed|give|gave|accept|reject|see|turn|review|reviewed|evaluate|evaluated|analyze|analyzed|make|made"
+              r"|determine|determined|resolve|resolved|apply|applied)\b")
 # "security concerns under Guidelines F and E", "under Guideline F (Financial Considerations)".
 SOR_GUIDELINES = re.compile(r"\b(?i:guidelines?|criteri(?:on|a))\s+([A-M])\b((?:\s*(?:\([^)]{0,40}\))?\s*(?:,|and|&)\s*"
-                            r"(?:Guidelines?\s+)?[A-M]\b)*)")
+                            r"(?:Guidelines?\s+)?(?!" + _PRONOUN_I + r")[A-M]\b)*)")
+# A guideline the decision says is NOT part of the case (review v8, after 15-00207.h1 and
+# 15-02326.a1). Said after it: "Guideline C is not alleged", "a Guideline E allegation that was
+# not listed in the SOR", "Guidelines F and J, which are not at issue in this case" (but "not at
+# issue on appeal" means alleged and not appealed). Or before it, with no other guideline between:
+# "not alleged under Guideline D", "the SOR did not cite Guideline H", "there was no Guideline E
+# allegation", "should have been alleged under Guideline E".
+DENIED_AFTER = re.compile(r"\s*\)?\s*(?:\([^)]{0,60}\)\s*)?(?:allegations?\s+|concerns?\s+)?,?\s*(?:(?:which|that)\s+)?"
+                          r"(?:is|are|was|were|has\s+been|have\s+been)\s+not\s+(?:alleged|listed|included|cited|charged"
+                          r"|mentioned|at\s+issue\s+(?:in\s+this\s+case|here))\b", re.I)
+DENIED_BEFORE = re.compile(r"(?:\bnot\s+(?:been\s+)?(?:alleged|listed|cited|charged)|\b(?:did|does|do|has|have)\s+not\s+"
+                           r"(?:allege|cite|charge|include|contain)\w*|\b(?:should|could|might|would)\s+(?:also\s+)?have\s+"
+                           r"been\s+(?:alleged|raised|charged|cited))\b[^.;]{0,90}$|\bno\s+$", re.I)
+# A sentence about the SOR names what it alleged ("The SOR was based on Guideline E and Guideline
+# J"); that outweighs a denial of part of it elsewhere ("conduct ... not alleged in the SOR under
+# Guideline J"). An amendment adding a guideline is an allegation even beside a denial ("not in
+# the original SOR but added by amendment").
+SOR_NAMED = re.compile(r"\bSOR\b|(?i:statement\s+of\s+reasons)")
+LIST_JOIN = re.compile(r"\s*\)?\s*(?:\([^)]{0,60}\)\s*)?,?\s*(?:or|and|nor)\s+(?:under\s+)?", re.I)
+AMENDED = re.compile(r"(?<!not been )\bamended\s+to\s+(?:add|include)|\baddendum\b|\badded\b", re.I)
+# Guidelines named only in a remark about other cases: "this program has adjudicated Guideline B
+# and C cases", "(case involving ... under former Criterion K)". Neither alleges nor denies.
+OTHER_CASES = re.compile(r"\bcases?\s+involving\b|\bhas\s+adjudicated\b", re.I)
 # Older decisions put the order under a bare "DECISION" heading after the formal findings;
 # newer ones under "Conclusion". The last of either is the order (a newer decision's
 # "Decision" title line comes first).
@@ -349,12 +377,38 @@ def _keyword_codes(keywords: str, guidelines: dict[str, Any]) -> tuple[set[str],
     return codes & set(guidelines), unmapped
 
 
+def _sentence(flat: str, match: re.Match[str]) -> tuple[int, int]:
+    end = flat.find(". ", match.end())
+    return flat.rfind(". ", 0, match.start()) + 1, end if end >= 0 else len(flat)
+
+
 def _alleged(region: str, guidelines: dict[str, Any]) -> set[str]:
-    found: set[str] = set()
-    for match in SOR_GUIDELINES.finditer(_flat(region)):
-        found.add(match.group(1))
-        found.update(re.findall(r"\b([A-M])\b", match.group(2)))
-    return found & set(guidelines)
+    """Guideline letters the text names as in the case: those a sentence about the SOR names,
+    and those any other sentence mentions unless the decision says they are not part of the case."""
+    stated: set[str] = set()
+    mentioned: set[str] = set()
+    denied: set[str] = set()
+    flat = _flat(region)
+    previous, carried = 0, False
+    for match in SOR_GUIDELINES.finditer(flat):
+        letters = {match.group(1), *re.findall(r"\b([A-M])\b", match.group(2))}
+        start, end = _sentence(flat, match)
+        sentence = flat[start:end]
+        before = flat[max(start, previous):match.start()]
+        # "not alleged under Guideline D (Sexual Behavior) or Guideline J": the denial covers the list.
+        carried = carried and previous > start and bool(LIST_JOIN.fullmatch(before))
+        previous = match.end()
+        if OTHER_CASES.search(sentence):
+            continue
+        carried = (carried or DENIED_AFTER.match(flat, match.end(), end) is not None
+                   or DENIED_BEFORE.search(before) is not None) and not AMENDED.search(sentence)
+        if carried:
+            denied |= letters
+        elif SOR_NAMED.search(sentence):
+            stated |= letters
+        else:
+            mentioned |= letters
+    return (stated | (mentioned - denied)) & set(guidelines)
 
 
 def _formal_names(code: str, guidelines: dict[str, Any]) -> list[str]:
