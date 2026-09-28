@@ -68,6 +68,20 @@ from the appeal's own text). A hearing decision issued after a remand carries
 the record; exposing them in the DOHA indexes needs a reviewed schema migration, and the
 library's existing appeals get them by a separate backfill over their robot text.
 
+Since review v7 (2026-09-28) neither link ever points at a decision dated on or after the
+one linking to it. DOHA does not list every first hearing decision, so a case's only
+listed hearing decision is often the one issued on remand, after the appeal; that appeal's
+`reviewed_decision` is "not identified" (with the reason), and a remand decision is never
+linked to an appeal decided after it. The v6 plan had 60 such links.
+
+### Decisions DOHA posts twice
+
+DOHA posts some hearing decisions twice, as h1 and h2, from different files of one text.
+Since review v7 a decision whose words match another decision of the same case, type and
+stated date (planned earlier or already held) to at least 0.95 is an exception naming its
+twin, so the library keeps one copy. The v6 plan held 8 such pairs, all at 0.997 or more;
+the closest genuinely different same-day pair reached 0.83.
+
 ### Measuring accuracy, batching, and re-checking held decisions
 
 Passing `validate` proves a candidate is consistent — hashes, eras that follow dates,
