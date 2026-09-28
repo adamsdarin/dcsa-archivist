@@ -21,8 +21,13 @@ accuracy-v6.csv (seed 20260928) pre-marked by Claude as accuracy-v6-premarked.cs
 those 3 + 10 random Y; owner verified all 13 against the PDFs (2026-09-28). SCORED: PASSED,
 2 wrong of 150 (1.33%), 95% upper bound 4.14% <= 5% target. Dates 158/158, outcomes
 158/158, appeal fields 37/39, topics 157/158. v6 and v7 rule code merged to main
-(PR #15, merge 49ce2eb, 2026-09-28). v7 re-plan full-20260928-v7 in progress; compare with
-v6 before batching. Nothing approved or published; batches still need owner sign-off each.
+(PR #15, merge 49ce2eb, 2026-09-28). v7 plan full-20260928-v7: 20,862 planned, 1,079
+exceptions. Compared item by item with v6: identical except 8 double postings held back
+(each kept once: 7 h1 in the plan, 17-03627.h1 held) and 60 links corrected (49 appeals and
+10 remand decisions no longer point at a later decision; 06-03230.a1 moved to the kept
+copy), so the passed v6 sample stands. Split into batches-20260928-v7: batch-01..04 =
+5,500 / 5,500 / 5,500 / 4,362 decisions, no case split. Nothing approved or published;
+each batch still needs provenance append, build, validate, evaluate and owner sign-off.
 Older v1-v3 plan/recheck folders were sent to the Recycle Bin 2026-09-28 at the owner's request.
 Owner's checks of held-vs-rule outcome conflicts: rule right on 17-01558.h1, 06-23369.h1,
 24-00928.a1, 15-02333.a1 (the Board affirmed a remand GRANT on Department Counsel's
@@ -187,6 +192,20 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-28 Claude (local) — Batch 1 started on branch claude/doha-batch-01: 5,500
+provenance rows appended to decisions/doha_source_urls.jsonl (dry run clean, no
+conflicts); candidate doha-bulk-batch01-20260928 building. Spot-check
+batch-01\spotcheck-batch01.csv (20 decisions, seed 20260929) pre-marked all Y; owner
+verified 10 random rows, all accurate. Owner direction: verification should decline
+batch by batch as the rules keep proving out (batch 2: verify 5, batch 3: 3, batch 4:
+Claude's N rows plus 1-2 random; go back up if a verified row is wrong). Publishing
+still needs the owner's explicit go-ahead per batch.
+2026-09-28 Claude (local) — v7 plan built with Poppler and compared with v6: only the 8
+double postings left (DOHA's second copies; no case lost, nothing deleted) and only the 60
+links changed. Owner confirmed and said go ahead; split into 4 batches under
+doha-plans\batches-20260928-v7. Branches from PRs #15/#16 and three older merged branches
+deleted at the owner's request. Next: batch-01 provenance/build/validate/evaluate, then
+owner spot-check before any publish.
 2026-09-28 Claude (local) — Owner verified all 13 v6 check rows as accurate. Scored
 accuracy-v6-premarked.csv: passed, 2/150 wrong, upper bound 4.14% (target 5%). Edge #35
 also wrong (not scored). Awaiting owner direction on the three known gaps, committing the
