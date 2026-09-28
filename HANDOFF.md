@@ -20,9 +20,10 @@ accuracy-v6.csv (seed 20260928) pre-marked by Claude as accuracy-v6-premarked.cs
 (estimate #24 topics, #34 appeal link; edge #35 appeal link); accuracy-v6-verify.csv holds
 those 3 + 10 random Y; owner verified all 13 against the PDFs (2026-09-28). SCORED: PASSED,
 2 wrong of 150 (1.33%), 95% upper bound 4.14% <= 5% target. Dates 158/158, outcomes
-158/158, appeal fields 37/39, topics 157/158. Code on branch claude/doha-v6-rules,
-uncommitted. Nothing approved or published; batches still need owner sign-off each.
-Older v1-v3 plan/recheck folders are stale and may be deleted.
+158/158, appeal fields 37/39, topics 157/158. v6 and v7 rule code merged to main
+(PR #15, merge 49ce2eb, 2026-09-28). v7 re-plan full-20260928-v7 in progress; compare with
+v6 before batching. Nothing approved or published; batches still need owner sign-off each.
+Older v1-v3 plan/recheck folders were sent to the Recycle Bin 2026-09-28 at the owner's request.
 Owner's checks of held-vs-rule outcome conflicts: rule right on 17-01558.h1, 06-23369.h1,
 24-00928.a1, 15-02333.a1 (the Board affirmed a remand GRANT on Department Counsel's
 appeal; a CAC case); library right on 19-01803.h1 (rule since fixed). So far the held
@@ -208,7 +209,7 @@ pre-marking it next; marks go to accuracy-v6-premarked.csv, then owner verifies 
 2026-09-27 Claude (local) — First v6 re-plan was run with Git for Windows' pdftotext, which
 is Xpdf 4.06, not Poppler; its layout lost ~3,500 dates (4,454 exceptions). Set aside as
 doha-plans\full-20260927-v6-xpdf-INVALID (and a stopped partial run as
-full-20260927-v6-stopped-partial); both can be deleted. pdftotext_extractor now refuses any
+full-20260927-v6-stopped-partial); both sent to the Recycle Bin 2026-09-28 at the owner's request. pdftotext_extractor now refuses any
 non-Poppler binary. Poppler 25.07 (WinGet) reproduces v5's text byte for byte; pass it with
 --pdftotext. Previewing v6 topics on v5's texts showed the new sources switched off the
 whole-text fallback for 14 decisions and lost topics; fixed (v6 is now strictly additive to
