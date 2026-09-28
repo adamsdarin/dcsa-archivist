@@ -22,10 +22,23 @@ findings list only F). Owner: "fix the gap first, then run the combined build". 
 v8 (doha_bulk NOT-alleged denials, SOR statements outweigh them, other-case remarks ignored,
 first-person "I" is not Guideline I): against v7 it removes a letter from 30 decisions (all
 read and confirmed, incl. 15-00207.h1 and 15-02326.a1), adds none, unsettles none. 158 tests
-pass. Re-plan full-20260928-v8 running; then compare with v7, reset
-decisions/doha_source_urls.jsonl to HEAD (11 batch-1 rows carry pre-v8 IDs) and append the v8
-additions, build one candidate from the v8 plan, validate, evaluate; publish only on the
-owner's go-ahead after the batch 2-4 verify lists are checked. Build-speed fix
+pass; merged to main (PR #18, ae03277). Plan full-20260928-v8 (58 min): 20,862 planned,
+1,079 exceptions; differs from v7 only in those 30 decisions' topics/ID/paths/title, robot
+text byte-identical. decisions/doha_source_urls.jsonl reset to HEAD and the v8 additions
+appended (31,520 rows; uncommitted). Combined candidate `doha-bulk-all-20260928` built
+(42 min) from the v8 plan: validate clean, evaluate 18/18.
+PUBLISHED 2026-09-28 20:24 UTC on the owner's go-ahead ("Go ahead"): the library now holds
+31,495 DOHA decisions (10,633 held + 20,862 new; live folders PRE_SEAD_4 22,230 and
+POST_SEAD_4 9,267 PDFs, the same number of texts). 41,750 files copied, 19 replaced files
+snapshotted (rollback .custodian\rollback\20260928T202415944711Z; previous release
+fcl-intake-20260924b). doctor: integrity_healthy, production_response_ready, 8 verified
+indexes, no release metadata errors, 0 DOHA era inconsistencies (unresolved_currency 3 is the
+pre-existing DTM 24-004 item). Handoff event actionable for Guidance Watch/comparison.
+Approval receipt was written by publish (autonomous-pipeline, scope source_intake_and_derived);
+the manual `approve` command hardcodes scope derived_artifacts_only (flagged as a separate task).
+Still open: commit decisions/doha_source_urls.jsonl (31,520 rows) on a branch/PR; the
+superseded batch 1 candidate can be recycled; Next 0b (1,079 exceptions), 0c (held-library
+corrections, re-run doha-recheck with v8 rules), 0e (Librarian doha-provenance reverse check). Build-speed fix
 for batch 2 onward, uncommitted on main's working tree (156 tests pass): new decisions are
 staged with their era's retrieval priority (was 0, and authority tier 5 in the path index),
 and the release build rewrites a full-text row only when its era group changes, by rowid.
@@ -223,6 +236,15 @@ None open. The DD 254 relabel question (options a/b/c) was resolved on 2026-09-1
 with option (c) plus a reviewed canonical choice, at the owner's direction.
 
 ## Log
+2026-09-28 Claude (local) — Owner said "Go ahead": dry run first (41,750 changed files; no
+existing decision overwritten; the three SEAD directive manifests differ only in
+generated_utc, as in the previous release), then published doha-bulk-all-20260928 (8 min).
+doctor healthy. DOHA intake of the 20,862 acquired decisions is complete; exceptions and
+held-library corrections remain.
+2026-09-28 Claude (local) — Review v8 merged (PR #18). v8 plan equals v7 except the 30
+reviewed topic fixes. Provenance reset and re-appended from the v8 plan (first rename hit a
+transient Windows lock; retried). Combined candidate doha-bulk-all-20260928 built in 42 min
+(batch 1 alone took 89 on the old code), validate clean, evaluate 18/18. Awaiting owner.
 2026-09-28 Claude (local) — Batch 1 candidate passed validate (0 errors) and evaluate
 (18/18). Owner chose one publish for the whole corpus, so batches 2-4 will not get their own
 candidates; one combined build instead. Second speed fix: stage_intake's validate_cases
