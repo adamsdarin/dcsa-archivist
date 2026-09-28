@@ -252,6 +252,41 @@ class DohaBulkTests(unittest.TestCase):
                 "Paragraph 2, Personal Conduct: FOR APPLICANT\n")
         self.assertEqual(topics(text, full)[0], ["E", "F"])
 
+    def test_a_guideline_the_decision_says_was_not_alleged_is_no_topic(self) -> None:
+        # Review v8. Synthetic sentences shaped like the real ones that put a wrong letter in topics.
+        full = {"schema_version": "1.0", "guidelines": {c: {"aliases": [c.lower() + "-alias"]} for c in "ABCDEFGHIJKLM"}}
+        findings = "Formal Findings\nParagraph 1, Guideline H: AGAINST APPLICANT\n"
+        for denial in ("The FORM made reference to a Guideline E allegation that was not listed in the SOR. "
+                       "I verified that there was no Guideline E allegation.",
+                       "Guideline E (Personal Conduct) is not alleged in the SOR.",
+                       "The SOR does not allege concerns under Guideline E, related to his statements.",
+                       "The Government did not allege this omission as a falsification under Guideline E.",
+                       "Applicant contends her conduct should have been alleged under Guideline E (Personal Conduct).",
+                       "The prior case also included allegations under Guidelines E and J, which are not at issue in this case.",
+                       "The Board notes that this program has adjudicated Guideline E and J cases involving many countries."):
+            with self.subTest(denial=denial):
+                self.assertEqual(topics("Statement of the Case\n" + denial + "\n" + findings, full)[0], ["H"])
+        # A denial covers the rest of its list.
+        text = ("I note that Applicant's conduct is not alleged under Guideline D (Sexual Behavior) or Guideline J "
+                "(Criminal Conduct).\n" + findings)
+        self.assertEqual(topics(text, full)[0], ["H"])
+        # "Not at issue on appeal" means alleged and not appealed.
+        text = ("The SOR was based on Guideline H and Guideline E.\nThe Judge's favorable findings under Guideline E "
+                "are not at issue on appeal.\n")
+        self.assertEqual(topics(text, full)[0], ["E", "H"])
+        # What the SOR is said to allege outweighs a denial of part of it.
+        text = ("The SOR was based on Guideline E and Guideline J.\nHis conduct in 1995 was not alleged in the SOR "
+                "under Guideline J.\n")
+        self.assertEqual(topics(text, full)[0], ["E", "J"])
+        # A guideline added by amendment is alleged, even beside a denial.
+        text = "Guideline E was not alleged in the original SOR but was added by amendment.\n" + findings
+        self.assertEqual(topics(text, full)[0], ["E", "H"])
+        # The judge's first-person I is not Guideline I; a listed Guideline I still is.
+        text = "Under Guideline H, I conclude the concern is not mitigated.\n" + findings
+        self.assertEqual(topics(text, full)[0], ["H"])
+        text = "The SOR alleged security concerns under Guidelines H and I (Psychological Conditions).\n"
+        self.assertEqual(topics(text, full)[0], ["H", "I"])
+
     def test_a_wrong_library_root_names_what_is_missing(self) -> None:
         with self.assertRaises(ValueError) as raised:
             build_plan(self.library / "nowhere", self.run, self.not_held, self.out, self.extract)
