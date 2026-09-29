@@ -36,7 +36,7 @@ from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, wri
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy
 from .doha_era import classify
 
-REVIEWER = "doha-intake-plan rule-based review v8"
+REVIEWER = "doha-intake-plan rule-based review v9"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -45,11 +45,17 @@ ERA_FOLDERS = {"post_sead4": "POST_SEAD_4", "pre_sead4": "PRE_SEAD_4"}
 AUTHORITY_TIER = 5  # what the library's existing DOHA records carry
 
 KEY = re.compile(r"^(?P<case>\d{2}-\d{4,6})(?P<suffix>-[a-z0-9]+)?\.(?P<level>[ha][1-9])$")
-CASENO = re.compile(r"^\s*CASENO:\s*(\d{2})-(\d{4,6})\.?([ha]\d)?\s*$", re.M | re.I)
+DASHES = "-‐‑‒–—―−"  # judges type en and em dashes too
+# DOHA's index header. Older layouts run it into the line before ("... is denied.CASENO:
+# 02-12196.h1") or drop the colon (review v9).
+CASENO = re.compile(rf"\bCASENO\b:?\s*(\d{{2}})\s*[{DASHES}]\s*(\d{{3,6}})(?:\.([ha]\d))?", re.I)
 # Older decisions converted from HTML open (and page-foot) with the bare key, e.g. "97-0050.h1".
 BARE_KEY = re.compile(r"^\s*(\d{2})-(\d{4,6})\.([ha]\d)\s*$", re.M | re.I)
-# "ISCR Case No. 12-09565", and in the 1990s "ISCR OSD Case No. 97-0050".
-CAPTION = re.compile(r"(?:D?ISCR|ADP)(?:\s+OSD)?\s+Case\s+No\.?:?\s*(\d{2})-(\d{4,6})", re.I)
+# "ISCR Case No. 12-09565", and in the 1990s "ISCR OSD Case No. 97-0050". Also (review v9) the
+# "ICSR" typo, "CR" where extraction lost "IS", CAC, a footnote digit ("ADP1 Case No.", "Case
+# No.1"), "ISCR Case:", "ISCR No.", and a doubled or typographic dash ("08--01935", "09–06567").
+CAPTION = re.compile(rf"(?<![A-Za-z])(?:D?ISCR|ICSR|CR|ADP|CAC)(?:\s+OSD)?(?:\s*\d)?(?:\s+Case)?"
+                     rf"(?:\s+No\.?(?:\s*\d(?=\s))?|\s+Number)?\s*[:.]?\s*(\d{{2}})\s*[{DASHES}]{{1,2}}\s*(\d{{3,6}})", re.I)
 KEYWORD = re.compile(r"^\s*KEYWORD:\s*(.+)$", re.M | re.I)
 # "Guideline F" since 1997; "Criterion F" in earlier decisions. The letters mean the same.
 GUIDELINE_LETTER = re.compile(r"\b(?:Guideline|Criterion)\s+([A-M])\b")
@@ -112,44 +118,77 @@ CONCLUSION_HEADING = re.compile(r"^\s*(?:Conclusions?|Decision)\s*$", re.M | re.
 # "clearly" by a line break still counts. Every match is collected and the
 # decision must point one way.
 HEARING_OUTCOMES = (
-    (re.compile(r"\bnot clearly consistent with the (?:interests? of )?national (?:security|interest)", re.I), "denied"),
-    (re.compile(r"(?<!not )\bclearly consistent with the (?:interests? of )?national (?:security|interest)"
+    # "the" and the singular are optional (review v9): "not clearly consistent with national
+    # interest", "with the national interests to grant".
+    (re.compile(r"\bnot clearly consistent with (?:the )?(?:interests? of )?national (?:security|interests?)", re.I), "denied"),
+    (re.compile(r"(?<!not )\bclearly consistent with (?:the )?(?:interests? of )?national (?:security|interests?)"
                 r"(?: (?:interests? )?of the United States)? to (?:grant|continue)", re.I), "approved"),
-    (re.compile(r"\b(?:eligibility|clearance|access)[^.]{0,80}?\b(?:is|are) (granted|denied|revoked|continued)\b", re.I), None),
+    (re.compile(r"\b(?:eligibility|clearance|access|position of trust)[^.]{0,80}?\b(?:is|are) (granted|denied|revoked|continued)\b",
+                re.I), None),
+    # The 2016-17 summary dispositions: "I conclude that he met his ultimate burden of persuasion
+    # to show ... This case is decided for Applicant." (review v9)
+    (re.compile(r"\bthis case is decided (for|against) (?:the )?applicant\b", re.I), None),
+    (re.compile(r"\b(?:he|she|Applicant) (?:has )?met (?:his|her) (?:ultimate )?burden of persuasion\b", re.I), "approved"),
+    (re.compile(r"\b(?:he|she|Applicant) (?:has not met|did not meet|(?:has )?failed to meet) (?:his|her) (?:ultimate )?"
+                r"burden of persuasion\b", re.I), "denied"),
 )
 # The boilerplate that opens every decision: "DOHA could not make the preliminary
 # affirmative finding ... that it is clearly consistent ... to grant". Not an outcome.
 # Also the burden-of-proof sentence: "the ultimate burden of persuasion in proving that it is
-# clearly consistent ..." and "must demonstrate that ... it is clearly consistent ...".
+# clearly consistent ..." and "must demonstrate that ... it is clearly consistent ...". And
+# (review v9) the question a hearing was convened to decide, "to consider whether it is
+# clearly consistent ... to grant", and 10 U.S.C. 986's "ineligible ... unless a waiver is granted".
 BOILERPLATE = re.compile(r"affirmative finding|could not make|unable to find|burden|persuasion|\bprov(?:e|es|ing)\b"
-                         r"|demonstrat", re.I)
+                         r"|demonstrat|\bwhether\b|\bunless\b|\bwaiver\b", re.I)
 # A grant phrase inside a negated finding is a denial's reasoning, not a grant: "... precludes
 # a finding that it is clearly consistent ... to grant", "failed to establish that it is ...".
 # Checked for the grant phrase only: "has not mitigated ... it is not clearly consistent" is a denial.
 NEGATED_GRANT = re.compile(r"preclud|\bfail(?:ed|s|ure)?\b|\b(?:has|have|had|did|does)\s+not\b|\bcannot\b", re.I)
 # "Adverse decision affirmed"; "the decision of the Administrative Judge denying Applicant a
-# security clearance is AFFIRMED".
+# security clearance is AFFIRMED"; (review v9) "The Administrative Judge's favorable security
+# clearance is REVERSED", "The judgment of the Administrative Judge granting ... is REMANDED",
+# "the Board reverses the Administrative Judge's favorable security clearance decision".
 APPEAL_EXPLICIT = re.compile(
-    r"\b(adverse|unfavorable|favorable)\s+(?:security\s+clearance\s+)?(?:decision|determination)\s+(?:is\s+)?"
-    r"(affirmed|reversed|remanded)\b", re.I)
+    r"\b(adverse|unfavorable|favorable)\s+(?:security\s+clearance\s+(?:(?:decision|determination)\s+)?|(?:decision|determination)\s+)"
+    r"(?:is\s+)?(affirmed|reversed|remanded)\b", re.I)
 APPEAL_DIRECTED = re.compile(
-    r"\bdecision\s+of\s+the\s+Administrative\s+Judge\s+(denying|granting|revoking|continuing)\b[^.]{0,120}?\bis\s+"
-    r"(affirmed|reversed|remanded)\b", re.I)
-# "The Decision is AFFIRMED." Its meaning depends on who appealed.
-APPEAL_BARE = re.compile(r"\b(?:the\s+)?(?:Administrative\s+)?(?:Judge'?s\s+)?decision(?:\s+below)?\s+is\s+"
-                         r"(affirmed|reversed|remanded)\b", re.I)
+    r"\b(?:decision|judgment)\s+of\s+the\s+(?:Administrative\s+)?Judge\s+(denying|granting|revoking|continuing)\b"
+    r"[^.]{0,120}?\bis\s+(affirmed|reversed|remanded)\b", re.I)
+# The object must be the decision: "the Board reverses the Administrative Judge's adverse formal finding
+# concerning ... The Board also affirms the Judge's overall adverse security clearance decision" is an affirmance.
+APPEAL_BOARD_DIRECTED = re.compile(
+    r"\bthe\s+Board\s+(?:also\s+)?(affirms|reverses|remands)\s+the\s+(?:Administrative\s+)?Judge'?s\s+(?:overall\s+)?"
+    r"(?:[A-Z][a-z]+\s+\d{1,2},\s+\d{4}\s+)?(favorable|unfavorable|adverse)\s+(?:security\s+clearance\s+)?"
+    r"(?:decision|determination)\b", re.I)
+# "The Decision is AFFIRMED." Its meaning depends on who appealed. Also (review v9) "The decision
+# in ISCR Case No. 20-01126 is AFFIRMED", "The decision of the Judge is REVERSED", "The case is
+# REMANDED".
+APPEAL_BARE = re.compile(r"\b(?:the\s+)?(?:Administrative\s+)?(?:Judge'?s\s+)?(?:decision|judgment)"
+                         r"(?:\s+below|\s+of\s+the\s+(?:Administrative\s+)?Judge"
+                         rf"|\s+in\s+(?:D?ISCR|ADP|CAC)\s+Case\s+No\.?\s*\d{{2}}\s*[{DASHES}]{{1,2}}\s*\d{{4,6}})?\s+is\s+"
+                         r"(affirmed|reversed|remanded)\b|\bthe\s+case\s+is\s+(remanded)\b", re.I)
 # "the Board affirms the Administrative Judge's decision" (1990s orders).
 APPEAL_BOARD_VERB = re.compile(r"\bthe\s+Board\s+(affirms|reverses|remands)\b", re.I)
 BOARD_VERB = {"affirms": "affirmed", "reverses": "reversed", "remands": "remanded"}
 # "Department Counsel's appeal from that favorable decision" states the direction itself.
 APPEAL_FROM = re.compile(r"\bappeal\s+from\s+(?:that|the|an?)\s+(favorable|unfavorable|adverse)\s+decision\b", re.I)
-APPELLANT_APPLICANT = re.compile(r"\bApplicant\s+(?:has\s+)?(?:timely\s+)?appealed\b|\bApplicant's\s+appeal\b", re.I)
+# The appealing party bears the burden of showing error, so (review v9) "Applicant has failed to
+# meet his burden on appeal", "Department Counsel has met its burden of demonstrating error",
+# "Applicant has failed to establish error" name it. Not the merits burden ("Applicant has not
+# met his burden of persuasion"), which says nothing about who appealed.
+_BURDEN = (r"\s+has\s+(?:not\s+|failed\s+to\s+)?(?:(?:met|meet)\s+(?:his|her|its|their)\s+burden\s+(?:on\s+appeal\s+)?of\s+"
+           r"(?:demonstrating|establishing|showing)\s+(?:harmful\s+)?error|(?:establish\w*|demonstrat\w*|identif\w*|show\w*)"
+           r"\s+(?:harmful\s+)?error)")
+APPELLANT_APPLICANT = re.compile(r"\bApplicant\s+(?:has\s+)?(?:timely\s+)?appealed\b|\bApplicant's\s+appeal\b|\bApplicant"
+                                 + _BURDEN, re.I)
 APPELLANT_GOVERNMENT = re.compile(r"\b(?:Department\s+Counsel|the\s+Government)\s+(?:has\s+)?(?:timely\s+)?appealed\b"
-                                  r"|\b(?:Department\s+Counsel's|Government's)\s+appeal\b", re.I)
+                                  r"|\b(?:Department\s+Counsel's|Government's)\s+appeal\b|\bDepartment\s+Counsel" + _BURDEN,
+                                  re.I)
 APPEAL_MEANING = {("adverse", "affirmed"): "denied", ("adverse", "reversed"): "approved",
                   ("favorable", "affirmed"): "approved", ("favorable", "reversed"): "denied"}
 DIRECTION = {"denying": "adverse", "revoking": "adverse", "granting": "favorable", "continuing": "favorable"}
-WORD_OUTCOME = {"granted": "approved", "continued": "approved", "denied": "denied", "revoked": "denied"}
+WORD_OUTCOME = {"granted": "approved", "continued": "approved", "denied": "denied", "revoked": "denied",
+                "for": "approved", "against": "denied"}
 
 
 def pdftotext_extractor(binary: str | None = None) -> Callable[[Path, Path], None]:
@@ -177,22 +216,44 @@ def _snippet(text: str, match: re.Match[str], width: int = 90) -> str:
     return re.sub(r"\s+", " ", text[max(0, match.start() - 10):match.end() + 10]).strip()[:width]
 
 
+def one_edit(a: str, b: str) -> bool:
+    """a and b differ by one substituted, inserted, deleted or adjacent-transposed character."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        diff = [i for i, (x, y) in enumerate(zip(a, b)) if x != y]
+        return len(diff) == 1 or (len(diff) == 2 and diff[1] == diff[0] + 1
+                                  and (a[diff[0]], a[diff[1]]) == (b[diff[1]], b[diff[0]]))
+    short, long_ = sorted((a, b), key=len)
+    return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
+
+
 def identity(text: str, case_id: str, level: str) -> tuple[str | None, str]:
-    """Problem, or None, and the evidence. The text must name the listed case."""
-    number = int(case_id.split("-")[1])
-    year = case_id.split("-")[0]
+    """Problem, or None, and the evidence. The text must name the listed case.
+
+    A header naming another case is a problem, except a one-character typo of the listed
+    number in DOHA's index header when the caption names the listed case exactly (review v9):
+    two sources then agree with the listing and the third differs only by a slip.
+    """
+    year, number = case_id.split("-")[:2]
+    head = text[:20000]
+    caption = CAPTION.search(head)
+    names = lambda match: match.group(1) == year and int(match.group(2)) == int(number)
     for pattern, name in ((CASENO, "CASENO header"), (BARE_KEY, "case key line")):
-        header = pattern.search(text[:20000])
+        header = pattern.search(head)
         if header:
-            same = header.group(1) == year and int(header.group(2)) == number
-            if not same or (header.group(3) and header.group(3).lower() != level):
-                return f"{name} '{_snippet(text, header)}' does not match {case_id}.{level}", ""
-            return None, f"{name} '{header.group(0).strip()}'"
-    caption = CAPTION.search(text[:20000])
+            level_ok = not header.group(3) or header.group(3).lower() == level
+            if names(header) and level_ok:
+                return None, f"{name} '{_flat(header.group(0)).strip()}'"
+            if level_ok and header.group(1) == year and one_edit(header.group(2).lstrip("0"), number.lstrip("0")) \
+                    and caption and names(caption):
+                return None, (f"caption '{_flat(caption.group(0)).strip()}'; {name} "
+                              f"'{_flat(header.group(0)).strip()}' is a one-character typo of it")
+            return f"{name} '{_snippet(text, header)}' does not match {case_id}.{level}", ""
     if caption:
-        if caption.group(1) != year or int(caption.group(2)) != number:
+        if not names(caption):
             return f"caption '{_snippet(text, caption)}' does not match {case_id}", ""
-        return None, f"caption '{caption.group(0).strip()}'; level {level} from the official listing label"
+        return None, f"caption '{_flat(caption.group(0)).strip()}'; level {level} from the official listing label"
     return "no case number found in the extracted text", ""
 
 
@@ -221,8 +282,11 @@ def appeal_ruling(text: str) -> dict[str, Any]:
         readings.setdefault((match.group(2).lower(), kind), match.group(0))
     for match in APPEAL_DIRECTED.finditer(flat):
         readings.setdefault((match.group(2).lower(), DIRECTION[match.group(1).lower()]), _snippet(flat, match, 160))
+    for match in APPEAL_BOARD_DIRECTED.finditer(flat):
+        kind = match.group(2).lower()
+        readings.setdefault((BOARD_VERB[match.group(1).lower()], "adverse" if kind == "unfavorable" else kind), match.group(0))
     if not readings:
-        bare = {match.group(1).lower(): match.group(0) for match in APPEAL_BARE.finditer(flat)}
+        bare = {(match.group(1) or match.group(2)).lower(): match.group(0) for match in APPEAL_BARE.finditer(flat)}
         for match in APPEAL_BOARD_VERB.finditer(flat):
             bare.setdefault(BOARD_VERB[match.group(1).lower()], match.group(0))
         if len(bare) == 1:

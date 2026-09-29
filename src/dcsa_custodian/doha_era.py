@@ -46,6 +46,8 @@ _PROCEDURAL = re.compile(
     r"|(?:DOHA\s+)?received\s+the\s+(?:hearing\s+)?transcript(?:\s+of\s+the\s+hearing)?(?:\s*\(Tr\.?\))?"
     r"|transcript(?:\s+of\s+the\s+hearing)?(?:\s*\(Tr\.?\))?\s+was\s+received(?:\s+by\s+DOHA)?)"
     r"\s+on\s+(?:or\s+about\s+)?" + _LONG, re.I)
+_OPENING_LABELLED = re.compile(r"^\s*Date:\s*_*\s*" + _LONG + r"\s*_*\s*$", re.M | re.I)
+_OPENING_WINDOW = 1500
 _HEADER_WINDOW = 20000
 _CAPTION_WINDOW = 5000
 _PROCEDURAL_WINDOW = 30000
@@ -82,7 +84,9 @@ def stated_date(text: str) -> tuple[date | None, str]:
 
 def _caption_date(head: str) -> tuple[date | None, str, tuple[date, date] | None] | None:
     """The caption's date line, just above the "Decision" heading and below
-    "Appearances" when the decision has that heading."""
+    "Appearances" when the decision has that heading. Failing that (review v9), the
+    1996-97 layouts' date line at the very top, above "Appearances", which may read
+    "Date: _August 22, 1997_"."""
     appearances = _APPEARANCES.search(head)
     start = appearances.end() if appearances else 0
     decision = _DECISION_LINE.search(head, start, start + _CAPTION_WINDOW)
@@ -90,7 +94,14 @@ def _caption_date(head: str) -> tuple[date | None, str, tuple[date, date] | None
     where = "appearances_date_line" if appearances else "caption_date_line"
     lines = [m for m in (*_LINE_NUMERIC.finditer(window), *_LINE_LONG.finditer(window))]
     if not lines:
-        return None
+        top = head[:min(appearances.start() if appearances else _OPENING_WINDOW, _OPENING_WINDOW)]
+        opening = [m for m in (*_LINE_NUMERIC.finditer(top), *_LINE_LONG.finditer(top), *_OPENING_LABELLED.finditer(top))]
+        if not opening:
+            return None
+        match = min(opening, key=lambda m: m.start())
+        if match.re is _LINE_NUMERIC:
+            return _date(match.group(3), match.group(1), match.group(2)), "opening_date_line", _month(match.group(3), match.group(1))
+        return _long(match), "opening_date_line", None
     match = max(lines, key=lambda m: m.start())
     if match.re is _LINE_NUMERIC:
         return (_date(match.group(3), match.group(1), match.group(2)), where,

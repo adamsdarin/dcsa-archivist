@@ -65,6 +65,17 @@ class ClassifyTests(unittest.TestCase):
         # does not make an undated 2015 case post-SEAD 4.
         self.assertEqual(classify(text, "15-12345", listing_title="2019 ISCR Hearing Decisions")["sead4_era"], "undetermined")
 
+    def test_1996_and_1997_layouts_state_the_date_above_appearances(self) -> None:
+        text = ("96-0177.h1\n\n\n  November 7, 1996\n\n  In RE:\n\n  ISCR OSD Case No. 96-0177\n\n"
+                "  DECISION OF ADMINISTRATIVE JUDGE\n\n  Appearances\n\n  FOR THE GOVERNMENT\n")
+        result = classify(text, "96-00177")
+        self.assertEqual((result["decision_date"], result["decision_date_basis"]), ("1996-11-07", "opening_date_line"))
+        labelled = "97-0384.h1\n\n\n  Date: _August 22, 1997_\n\n  In re:\n  ISCR Case No. 97-0384\n  APPEARANCES\n"
+        self.assertEqual(classify(labelled, "97-00384")["decision_date"], "1997-08-22")
+        # A caption date line below "Appearances" still wins over anything above it.
+        both = "  January 2, 2001\n" + hearing("15-12345", "06/07/2017")
+        self.assertEqual(classify(both, "15-12345")["decision_date"], "2017-06-07")
+
     def test_impossible_day_keeps_the_month_as_evidence(self) -> None:
         result = classify(hearing("16-12345", "03/32/2018"), "16-12345")
         self.assertEqual((result["sead4_era"], result["decision_date"]), ("post_sead4", None))

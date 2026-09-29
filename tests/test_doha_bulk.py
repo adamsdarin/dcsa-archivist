@@ -13,7 +13,7 @@ import unittest
 
 from dcsa_custodian.common import iter_jsonl, read_json, sha256_file, write_json, write_jsonl
 from dcsa_custodian.doha import MANIFEST, TAXONOMY, append_cases
-from dcsa_custodian.doha_bulk import build_plan, identity, outcome, topics
+from dcsa_custodian.doha_bulk import appeal_ruling, build_plan, identity, outcome, topics
 from dcsa_custodian.intake import stage_intake
 
 DOHA = "https://doha.ogc.osd.mil/Industrial-Security-Program/Industrial-Security-Clearance-Decisions"
@@ -526,6 +526,75 @@ class RealWordingTests(unittest.TestCase):
         self.assertIn("formal findings for Guideline E, Guideline M", basis)
         # The KEYWORD line itself is not read as a statement of what the SOR alleged.
         self.assertEqual(topics("KEYWORD: Guideline F\n" + FILLER, full)[1], "KEYWORD line 'Guideline F'")
+
+
+class ReviewV9WordingTests(unittest.TestCase):
+    """Wording from the v8 plan's exceptions that review v9 reads (2026-09-29). Texts are paraphrased."""
+
+    def test_captions_with_other_dashes_typos_and_footnote_digits_identify_the_case(self) -> None:
+        for caption in ("ISCR Case No. 09–06567", "ISCR Case: 09-06567", "ICSR Case No. 09-06567", "ISCR No. 09-06567",
+                        "ADP1 Case No. 09-06567", "ADP Case No.1 09-06567", "ISCR Case No. 09--06567", "CR Case No. 09-06567"):
+            self.assertIsNone(identity(f"In the matter of: )\n   ) {caption}\n", "09-06567", "h1")[0], caption)
+        # DOHA's index header run into the line before, or without its colon.
+        self.assertIsNone(identity("Clearance is denied.CASENO: 02-12196.h1\n", "02-12196", "h1")[0])
+        self.assertIsNone(identity("CASENO 01-09719.h1\n", "01-09719", "h1")[0])
+        # A citation is never the caption: the number must be the listed case's.
+        self.assertIn("does not match", identity("see ISCR Case No. 99-0424 (App. Bd. 2006)", "08-00662", "h1")[0])
+
+    def test_a_one_character_caseno_typo_gives_way_only_to_a_caption_naming_the_listed_case(self) -> None:
+        confirmed = "CASENO: 03-1519.h1\nDATE: 01/05/2005\n   ISCR Case No. 03-15191\n"
+        problem, basis = identity(confirmed, "03-15191", "h1")
+        self.assertIsNone(problem)
+        self.assertIn("one-character typo", basis)
+        # The listing may be the one in error: both text sources name 03-07412.
+        self.assertIn("does not match", identity("CASENO: 03-07412.a1\n ISCR Case No. 03-07412\n", "03-07214", "a1")[0])
+        self.assertIn("does not match", identity("CASENO: 03-1519.h1\n", "03-15191", "h1")[0], "no caption to confirm it")
+
+    def test_the_question_a_hearing_decides_is_not_its_answer(self) -> None:
+        text = ("Applicant requested a hearing. A hearing was held for the purpose of considering whether it would be "
+                "clearly consistent with the national interest to grant, continue, deny, or revoke a clearance.\n"
+                "Statement of the Case\n" + FILLER + "Conclusion\nIt is not clearly consistent with the national interest "
+                "to grant Applicant eligibility for a security clearance. Eligibility is denied.\n")
+        self.assertEqual(outcome(text, "h1")[0], "denied")
+
+    def test_conclusions_without_the_or_with_a_plural_interest_and_summary_dispositions(self) -> None:
+        self.assertEqual(outcome("Conclusion\nIt is not clearly consistent with national interest to grant Applicant a "
+                                 "security clearance.\n", "h1")[0], "denied")
+        self.assertEqual(outcome("Conclusion\nIt is clearly consistent with the national interests to grant or continue "
+                                 "a security clearance.\n", "h1")[0], "approved")
+        summary = (FILLER + "Accordingly, I conclude that he met his ultimate burden of persuasion to show that it is "
+                   "clearly consistent with the national interest to grant him eligibility for access to classified "
+                   "information. This case is decided for Applicant.\n")
+        self.assertEqual(outcome(summary, "h1")[0], "approved")
+        self.assertEqual(outcome("Conclusion\nThis case is decided against Applicant.\n", "h1")[0], "denied")
+        self.assertEqual(outcome("Conclusion\nApplicant's request for a position of trust is granted.\n", "h1")[0], "approved")
+
+    def test_board_orders_in_their_later_and_earlier_wordings(self) -> None:
+        applicant = "Applicant appealed pursuant to the Directive.\n" + FILLER
+        self.assertEqual(outcome(applicant + "Order\nThe decision in ISCR Case No. 20-01126 is AFFIRMED.\n", "a1")[0], "denied")
+        self.assertEqual(outcome(applicant + "Order\nThe decision of the Judge is REVERSED.\n", "a1")[0], "approved")
+        self.assertEqual(outcome(applicant + "Order\nThe case is REMANDED to the Judge.\n", "a1")[0], "remanded")
+        self.assertEqual(outcome(FILLER + "Order\nThe judgment of the Administrative Judge granting Applicant a clearance is "
+                                 "REMANDED.\n", "a1")[0], "remanded")
+        self.assertEqual(outcome(FILLER + "The Administrative Judge's favorable security clearance is REVERSED.\n", "a1")[0],
+                         "denied")
+        self.assertEqual(outcome(FILLER + "Department Counsel has demonstrated error below that warrants reversal. The Board "
+                                 "reverses the Administrative Judge's favorable security clearance decision.\n", "a1")[0], "denied")
+        # Reversing one adverse finding while affirming the adverse decision is an affirmance (97-00752.a1, v9 spot-check).
+        partial = ("Applicant appealed. Conclusion\nApplicant has failed to meet his burden on appeal of demonstrating error. "
+                   "The Board reverses the Administrative Judge's adverse formal finding concerning the falsification "
+                   "allegation (SOR 1.b.), but affirms the Judge's formal findings concerning the rest of the SOR paragraphs. "
+                   "The Board also affirms the Judge's overall adverse security clearance decision.\n")
+        ruling = appeal_ruling(partial)
+        self.assertEqual((ruling["disposition"], ruling["reviewed_outcome"], ruling["outcome"]), ("affirmed", "denied", "denied"))
+
+    def test_the_appellant_is_named_by_the_burden_of_showing_error_not_by_the_merits_burden(self) -> None:
+        order = "Order\nAccordingly, the Board affirms the Administrative Judge's January 10, 2001 decision.\n"
+        self.assertEqual(outcome("Applicant has failed to meet his burden on appeal of demonstrating error below. " + order,
+                                 "a1")[0], "denied")
+        self.assertEqual(outcome("Department Counsel has failed to establish error. " + order, "a1")[0], "approved")
+        self.assertIsNone(outcome("The Judge found that Applicant has not met his burden of persuasion. " + order, "a1")[0],
+                          "the merits burden does not say who appealed")
 
 if __name__ == "__main__":
     unittest.main()
