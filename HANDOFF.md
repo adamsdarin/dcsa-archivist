@@ -4,8 +4,8 @@ Last updated: 2026-09-29 by Claude
 
 ## Current State
 2026-09-29: DOHA LINE ENDINGS. The 20,862 texts published in doha-bulk-all-20260928 are CRLF
-(Poppler's Windows default); the 10,633 held texts are LF. The fix is implemented (branch
-claude/doha-line-endings): the extractor passes `-eol unix`; the reviewed rows in
+(Poppler's Windows default); the 10,633 held texts are LF. The fix is merged (PR #20,
+d6b5dbe): the extractor passes `-eol unix`; the reviewed rows in
 decisions/doha_robot_line_endings.jsonl (20,862, written by `doha-line-endings-plan`) make the
 build rewrite each text as LF with the three stores that hash it (documents.jsonl robot_sha256,
 topic index content_sha256/content_bytes, enriched robot_content_sha256); validation refuses any
@@ -13,7 +13,11 @@ DOHA text with CR and any store whose hash or indexed copy does not match the fi
 any decision differently: all readers use read_text, rules re-run reproduce every published
 field, the FTS corpus already holds the LF text, and a fresh `-eol unix` extraction of every
 published PDF equals the converted text. Design and evidence: docs/DOHA-LINE-ENDINGS.md. 163
-tests pass. Not yet built, approved or published.
+tests pass. CANDIDATE READY, NOT PUBLISHED: doha-robot-lf-20260929 (built from main, --deep,
+16 min): valid and publishable, 0 errors; evaluate 18/18; publish dry run ready_to_publish with
+20,881 files (20,862 texts, documents.jsonl, DOCUMENTS_ENRICHED, topic index, change summary,
+per-release metadata, 3 directive manifests differing only in generated_utc). Awaits the owner's
+publish go-ahead; the dry run wrote the usual autonomous-pipeline receipt into the candidate.
 
 Library: doha-bulk-all-20260928 (published 2026-09-28 20:24 UTC on the owner's go-ahead) holds
 31,495 DOHA decisions; doctor healthy; rollback .custodian\rollback\20260928T202415944711Z. The
@@ -29,10 +33,9 @@ import sibling repos and load only from the main checkout.
 
 ## Next
 0. DOHA, in order (docs/DOHA-INTAKE.md, docs/DOHA-LINE-ENDINGS.md):
-   a. Line endings: from main, `build-candidate --deep` (no intake plan), validate, evaluate,
-      `publish --dry-run` (only the 20,862 texts, documents.jsonl, DOCUMENTS_ENRICHED, the topic
-      index, the change summary and per-release metadata may change), owner go-ahead, publish.
-      Tell Guidance Watch/comparison: line endings only, the text every reader gets is unchanged.
+   a. Line endings: on the owner's go-ahead, `publish --release-id doha-robot-lf-20260929` from
+      main, then doctor. Tell Guidance Watch/comparison: line endings only, the text every reader
+      gets is unchanged. If the library advances first, rebuild (publish refuses a stale base).
    b. Exceptions (1,079 in plan full-20260928-v8): no case number, undated, no Board order,
       identity mismatches, no outcome, findings conflicts, suffixed keys, scans (OCR). Refetch
       10-03426.h1 via Librarian doha-acquire resume.
@@ -61,6 +64,11 @@ None open.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-09-29 Claude — Owner merged PR #20. Candidate diffed against the live library: only the
+planned fields change (robot_sha256; index content_sha256/content_bytes; corpus text and topics
+identical; change packet = the 20,862 planned, robot_content_sha256 only). Enriched records of the
+new decisions also gain current_group/doha_group/retrieval_priority, absent since the intake build
+(values agree with the era manifest). Merging is the owner's step (auto mode refuses self-merge).
 2026-09-29 Claude — Owner said "go do the things". Implemented the LF rewrite as a reviewed input
 (like retirements: rows stay after publication and then count as already applied; the build
 fails closed if a text no longer matches its row) rather than a one-off script, so the change is
@@ -89,5 +97,3 @@ chose one publish for the whole corpus instead of four batches.
 2026-09-28 Claude (local) — Build speed: new decisions are staged with their era's retrieval
 priority, and the release build rewrites a full-text row only when its era changes, by rowid.
 Spot-checks for batches 1-4 drawn and pre-marked; owner verification tapered batch by batch.
-2026-09-28 Claude (local) — v6 accuracy sample PASSED (2/150 wrong, 95% upper bound 4.14% vs
-5%). v7 fixed appeal links and double postings; v7 plan split into four batches.
