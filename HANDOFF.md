@@ -38,11 +38,13 @@ up (tests/_workspace.py), so they run from worktrees too.
    b. Exceptions (1,079 in plan full-20260928-v8): no case number, undated, no Board order,
       identity mismatches, no outcome, findings conflicts, suffixed keys, scans (OCR). Refetch
       10-03426.h1 via Librarian doha-acquire resume.
-   c. Held library: re-run doha-recheck with v8 rules; owner reviews disagreements; build the
-      reviewed change (ruling backfills, accepted outcome/topic corrections that rename file and
-      ID, a reviewed index migration so appeal fields are searchable). Add the three new appeals
-      whose ruling followed DOHA's digest over the Board's Order (Atlas finding): 06-15770.a1 and
-      12-01038.a1 were remanded, 14-04825.a1 reversed.
+   c. Held library (Claude takes it once review v9 is on main; 0b is the v9 session's): re-run
+      doha-recheck with v9 rules; owner reviews disagreements; build the reviewed change (ruling
+      backfills, accepted outcome/topic corrections that rename file and ID, a reviewed index
+      migration so appeal fields are searchable). Put on the sheet the Atlas's three (06-15770.a1
+      and 12-01038.a1 remanded, 14-04825.a1 reversed; ruling followed the digest over the Order)
+      and v9's four: 04-11414.a1 (same pattern), 08-07803.h1 and 10-03757.h1 (outcome conflicts),
+      06-20964.a1 (appealed_by probably Department Counsel).
    d. Coverage: Librarian doha-provenance reverse check; only 06-25928.h1 should remain.
    e. Owner to decide: the appeal-link fallback that ignores dates; the SOC source that reads any
       letter in the first 8000 chars; whether CAC decisions stay in DOHA_DECISIONS.
