@@ -19,7 +19,8 @@ class HandoffTests(unittest.TestCase):
         folder = self.project / 'quarantine'
         folder.mkdir()
         (folder / 'source.pdf').write_bytes(b'%PDF-synthetic-reviewed')
-        (folder / 'robot.txt').write_text('TIER: 7\nSTATUS: current\nDOC TYPE: guidance\n\nA newly reviewed synthetic newsletter passage.\n', encoding='utf-8')
+        (folder / 'robot.txt').write_text('TIER: 7\nSTATUS: current\nDOC TYPE: guidance\n\nA newly reviewed synthetic newsletter passage.\n',
+                                          encoding='utf-8', newline='\n')  # robot text is LF on every platform
         write_json(folder / 'source.pdf.intake.json', {
             'approval_state': 'quarantined_unreviewed', 'requested_source_uri': 'https://www.dcsa.mil/source.pdf',
             'resolved_source_uri': 'https://www.dcsa.mil/source.pdf', 'retrieved_at': '2026-09-11T00:00:00Z',

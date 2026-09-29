@@ -103,7 +103,8 @@ class DohaBulkTests(unittest.TestCase):
         write_jsonl(self.not_held, self.listings)
 
     def extract(self, source: Path, target: Path) -> None:
-        target.write_text(self.texts[source.stem], encoding="utf-8")
+        # LF, as pdftotext -eol unix writes on every platform.
+        target.write_text(self.texts[source.stem], encoding="utf-8", newline="\n")
 
     def build(self, **kwargs):
         return build_plan(self.library, self.run, self.not_held, self.out, self.extract, **kwargs)
@@ -212,6 +213,20 @@ class DohaBulkTests(unittest.TestCase):
         poppler = CompletedProcess([], 0, "", "pdftotext version 25.07.0\nCopyright 2005-2025 The Poppler Developers\n")
         with mock.patch.object(doha_bulk.subprocess, "run", return_value=poppler):
             self.assertTrue(callable(doha_bulk.pdftotext_extractor("pdftotext")))
+
+    def test_extraction_writes_unix_line_ends(self) -> None:
+        # Poppler's default end of line follows the platform: CRLF on Windows, where the held
+        # DOHA texts are LF. The extractor must ask for LF whatever the platform.
+        from subprocess import CompletedProcess
+        from unittest import mock
+        from dcsa_custodian import doha_bulk
+        poppler = CompletedProcess([], 0, "", "pdftotext version 25.07.0\nCopyright 2005-2025 The Poppler Developers\n")
+        with mock.patch.object(doha_bulk.subprocess, "run", return_value=poppler) as run:
+            doha_bulk.pdftotext_extractor("pdftotext")(Path("decision.pdf"), Path("decision.txt"))
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("-eol") + 1], "unix")
+        self.assertEqual(command[-2:], ["decision.pdf", "decision.txt"])
+        self.assertIn("-layout", command)
 
     def test_a_decision_naming_no_guideline_is_an_exception(self) -> None:
         # Topics are part of the document ID and file name, so an unsettled one is never planned.

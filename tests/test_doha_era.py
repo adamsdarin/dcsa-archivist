@@ -87,7 +87,8 @@ class ReleaseTests(unittest.TestCase):
         "typo-header": ("17-33333", "08/08/2016", "DOHA received the transcript (Tr.) on March 16, 2018.", "POST_SEAD_4"),
     }
 
-    def make_library(self, root: Path) -> None:
+    def make_library(self, root: Path, crlf: tuple[str, ...] = (), keep_hashes: bool = False) -> None:
+        """DOHA texts are LF on every platform, except those named in ``crlf``."""
         test_custodian.CustodianTests().make_library(root)
         taxonomy = {"schema_version": "1.0", "guidelines": {"F": {"aliases": ["financial considerations"]}}}
         records = []
@@ -96,7 +97,8 @@ class ReleaseTests(unittest.TestCase):
             human = f"HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS/{group}/{identity}.pdf"
             (root / robot).parent.mkdir(parents=True, exist_ok=True)
             (root / human).parent.mkdir(parents=True, exist_ok=True)
-            (root / robot).write_text(hearing(case_id, date_line, extra), encoding="utf-8")
+            text = hearing(case_id, date_line, extra)
+            (root / robot).write_bytes((text.replace("\n", "\r\n") if identity in crlf else text).encode("utf-8"))
             (root / human).write_bytes(b"%PDF-synthetic-" + identity.encode())
             records.append({"document_id": identity, "collection_id": "doha_decisions", "domain": "personnel_vetting",
                             "authority_tier": 5, "current_status": "historical_case_research",
@@ -109,14 +111,17 @@ class ReleaseTests(unittest.TestCase):
         append_cases(root, records, taxonomy)
         manifest = root / "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
         base = [row for _, row in iter_jsonl(manifest)]
-        write_jsonl(manifest, base + [{k: v for k, v in r.items() if k not in ("doha_review", "robot_sha256")} for r in records])
+        dropped = ("doha_review",) if keep_hashes else ("doha_review", "robot_sha256")
+        write_jsonl(manifest, base + [{k: v for k, v in r.items() if k not in dropped} for r in records])
         write_json(root / doha_release.RULES, {"cutoff": "2017-07-31", "delineation_case": "synthetic"})
 
-    def build(self, base: Path) -> tuple[Path, dict]:
+    def build(self, base: Path, crlf: tuple[str, ...] = (), line_endings: bool = False) -> tuple[Path, dict]:
         root, project = base / "library", base / "project"
         root.mkdir()
         (project / "evals").mkdir(parents=True)
-        self.make_library(root)
+        self.make_library(root, crlf, keep_hashes=bool(crlf))
+        if line_endings:
+            write_jsonl(project / "decisions/doha_robot_line_endings.jsonl", doha_release.plan_line_endings(root)[0])
         write_json(project / "evals/golden_queries.json", {"schema_version": "1.0", "cases": [{"id": "rule", "query": "contractor safeguarding requirement", "require_hit": True, "expected_first_role": "controlling_regulation"}]})
         config = {"state_directory": ".custodian", "default_chunk_characters": 100, "maximum_chunk_characters": 160, "chunk_overlap_characters": 10}
         return root, build_candidate(project, root, config, "doha-era-release")
@@ -291,6 +296,103 @@ class ReleaseTests(unittest.TestCase):
             audit = audit_library(root)
             self.assertTrue(audit["summary"]["integrity_healthy"])
             self.assertGreater(audit["quality_blockers"]["doha_era_inconsistencies"], 0)
+
+
+class LineEndingTests(unittest.TestCase):
+    """CRLF robot texts become LF by reviewed rows, with every store that hashes them, and never return."""
+
+    CRLF = ("late-2016-case", "day-before")
+
+    def stores(self, base: Path) -> dict[str, dict[str, object]]:
+        """Each decision's hash as the documents manifest, the topic index and the enriched manifest record it."""
+        with contextlib.closing(sqlite3.connect(base / doha_release.CONTENT)) as db:
+            index = {i: (h, n) for i, h, n in db.execute("SELECT document_id,content_sha256,content_bytes FROM decisions")}
+        documents = {r["document_id"]: r.get("robot_sha256") for _, r in iter_jsonl(base / doha_release.DOCUMENTS)
+                     if r.get("collection_id") == "doha_decisions"}
+        return {"index": index, "documents": documents}
+
+    def test_reviewed_rows_rewrite_the_text_and_every_hash_and_nothing_else(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root, result = ReleaseTests().build(Path(temp), crlf=self.CRLF, line_endings=True)
+            self.assertTrue(result["validation"]["valid"], result["validation"]["errors"])
+            release = Path(result["release_directory"])
+            production = release / "production"
+            report = json.loads((release / "reports/DOHA_ERA_REPORT.json").read_text(encoding="utf-8"))
+            self.assertEqual((report["line_endings"]["rewritten"], report["rewritten"]["robot_texts"]), (2, 2))
+            before, after = self.stores(root), self.stores(production)
+            enriched = {r["document_id"]: r["robot_content_sha256"] for _, r in
+                        iter_jsonl(production / "ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl")
+                        if r.get("collection_id") == "doha_decisions"}
+            for identity, (case_id, date_line, extra, group) in ReleaseTests.CASES.items():
+                relative = f"ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/DOHA_DECISIONS/{group}/{identity}.txt"
+                live = (root / relative).read_bytes()
+                if identity in self.CRLF:
+                    staged = (production / relative).read_bytes()
+                    self.assertEqual(staged, hearing(case_id, date_line, extra).encode("utf-8"))
+                    self.assertIn(b"\r\n", live, "the live library is only read")
+                    digest = (sha256_file(production / relative), len(staged))
+                    self.assertEqual((after["index"][identity], after["documents"][identity], enriched[identity]),
+                                     (digest, digest[0], digest[0]))
+                    self.assertNotEqual(before["index"][identity], digest)
+                else:
+                    self.assertFalse((production / relative).exists(), "an LF text is not rewritten")
+                    self.assertEqual(after["index"][identity], before["index"][identity])
+            with contextlib.closing(sqlite3.connect(production / doha_release.CONTENT)) as db:
+                content = db.execute("SELECT content FROM corpus WHERE document_id='late-2016-case'").fetchone()[0]
+            self.assertEqual(content, hearing("16-12345", "03/05/2018"), "the indexed text never had CR in it")
+            eras = {r["document_id"]: (r["sead4_era"], r["decision_date"]) for _, r in iter_jsonl(production / doha_release.ERA_MANIFEST)}
+            self.assertEqual(eras["late-2016-case"], ("post_sead4", "2018-03-05"))
+
+    def test_a_crlf_text_or_a_hash_that_does_not_bind_the_file_fails_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root, result = ReleaseTests().build(Path(temp), crlf=self.CRLF)
+            errors = result["validation"]["errors"]
+            self.assertTrue(any("CR line ends" in error and "2 decisions" in error for error in errors), errors)
+        with tempfile.TemporaryDirectory() as temp:
+            root, result = ReleaseTests().build(Path(temp), crlf=self.CRLF, line_endings=True)
+            release = Path(result["release_directory"])
+            with contextlib.closing(sqlite3.connect(release / "production" / doha_release.CONTENT)) as db, db:
+                db.execute("UPDATE decisions SET content_bytes=content_bytes+1 WHERE document_id='day-before'")
+            errors = doha_release.check_texts(release / "production", root)
+            self.assertEqual(len(errors), 1, errors)
+            self.assertIn("content_sha256/content_bytes differ", errors[0])
+
+    def test_a_text_that_is_not_as_reviewed_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "library"
+            root.mkdir()
+            ReleaseTests().make_library(root, crlf=self.CRLF, keep_hashes=True)
+            rows = {row["document_id"]: row for row in doha_release.plan_line_endings(root)[0]}
+            production = Path(temp) / "production"
+            text = root / rows["day-before"]["robot_text_path"]
+            text.write_bytes(text.read_bytes() + b"edited after review\r\n")
+            with self.assertRaisesRegex(ValueError, "changed since its line-ending review"):
+                doha_release.build(root, production, {}, {}, line_endings=rows)
+            # A lone CR or LF is not the rule's to settle.
+            text.write_bytes(b"line one\r\nline two\n")
+            planned, summary = doha_release.plan_line_endings(root)
+            self.assertEqual([item["document_id"] for item in summary["refused"]], ["day-before"])
+            self.assertNotIn("day-before", {row["document_id"] for row in planned})
+
+    def test_published_rows_are_already_applied_in_later_builds(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            crlf_root = base / "before"
+            crlf_root.mkdir()
+            ReleaseTests().make_library(crlf_root, crlf=self.CRLF, keep_hashes=True)
+            rows = {row["document_id"]: row for row in doha_release.plan_line_endings(crlf_root)[0]}
+            # The library as published: LF texts, and every store carrying the LF hash.
+            root = base / "library"
+            root.mkdir()
+            ReleaseTests().make_library(root, keep_hashes=True)
+            production = base / "production"
+            report = doha_release.build(root, production, {}, {}, line_endings=rows)
+            self.assertEqual((report["line_endings"]["rewritten"], report["line_endings"]["already_applied"]), (0, 2))
+            self.assertEqual(doha_release.check_texts(production, root), [])
+            documents = [r for _, r in iter_jsonl(production / doha_release.DOCUMENTS)] \
+                if (production / doha_release.DOCUMENTS).exists() else [r for _, r in iter_jsonl(root / doha_release.DOCUMENTS)]
+            self.assertEqual({r["document_id"]: r.get("robot_sha256") for r in documents if r["document_id"] in rows},
+                             {identity: row["after_sha256"] for identity, row in rows.items()})
 
 
 if __name__ == "__main__":
