@@ -19,8 +19,8 @@ Library: doha-bulk-all-20260928 (published 2026-09-28 20:24 UTC on the owner's g
 31,495 DOHA decisions; doctor healthy; rollback .custodian\rollback\20260928T202415944711Z. The
 superseded batch 1 and v1 pilot candidates were recycled at the owner's request; the four
 .custodian\doha-pilot-20260927* plan folders remain. Builds re-derive held eras and dates, not
-held outcomes, topics or appeal fields (Next 0c). The manual `approve` command hardcodes scope
-derived_artifacts_only (another worktree, claude/friendly-bhabha-c0081a, is fixing it).
+held outcomes, topics or appeal fields (Next 0c). The manual `approve` command now records the
+same scope as autonomous publish (release.approval_scope; branch claude/approval-scope, PR open).
 
 Owner rules: no DOHA publish without the owner's explicit go-ahead; a DOHA bulk batch needs an
 owner spot-check of its plan first. Tests in a worktree need PYTHONPATH=<worktree>\src (the
@@ -61,6 +61,10 @@ None open.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-09-29 Claude — approve_candidate hardcoded scope derived_artifacts_only, so `approve` on a
+source-intake release recorded the wrong scope. It and the autonomous publish path now share
+release.approval_scope (LIBRARY_STATE source_intake_files decides). tests/test_approval_scope.py
+covers both kinds; the source-intake case fails on the old code. 165 tests pass; nothing approved.
 2026-09-29 Claude — Owner said "go do the things". Implemented the LF rewrite as a reviewed input
 (like retirements: rows stay after publication and then count as already applied; the build
 fails closed if a text no longer matches its row) rather than a one-off script, so the change is
