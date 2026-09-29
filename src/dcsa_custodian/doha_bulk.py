@@ -165,8 +165,10 @@ def pdftotext_extractor(binary: str | None = None) -> Callable[[Path, Path], Non
         raise SystemExit(f"{tool} is not Poppler's pdftotext ({banner.splitlines()[0] if banner else 'no version'}); "
                          "the rules read Poppler's layout. Pass --pdftotext <path to Poppler's pdftotext>")
 
+    # -eol unix: Poppler's default end of line is the platform's, so on Windows every text came
+    # out CRLF while the library's held DOHA texts are LF (release doha-bulk-all-20260928).
     def extract(source: Path, target: Path) -> None:
-        subprocess.run([tool, "-layout", "-enc", "UTF-8", str(source), str(target)], check=True,
+        subprocess.run([tool, "-layout", "-enc", "UTF-8", "-eol", "unix", str(source), str(target)], check=True,
                        capture_output=True, timeout=300)
     return extract
 

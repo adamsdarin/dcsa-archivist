@@ -10,12 +10,22 @@ longer follows the decision date.
 Paths and folders are untouched: the ``PRE_SEAD_4``/``POST_SEAD_4`` folder in a
 path is a storage location from an earlier import, not an era, and moving
 files would break every citation that names them.
+
+A reviewed line-ending change (``decisions/doha_robot_line_endings.jsonl``)
+rewrites CRLF robot texts as LF together with the three stores that hash them:
+``robot_sha256`` in the source manifest, ``content_sha256``/``content_bytes`` in
+the topic index, and ``robot_content_sha256`` in the enriched manifest. The text
+every reader gets through ``read_text`` is unchanged, so no era, date, outcome or
+topic can move with it.
 """
 from __future__ import annotations
 
 import collections
 import contextlib
+import hashlib
+import io
 import json
+import re
 import shutil
 import sqlite3
 from datetime import date
@@ -39,6 +49,10 @@ PROVENANCE_FIELDS = ("source_url", "source_url_basis", "source_listing_page", "s
 # acquisition_bytes_identical: the retained bytes are the ones the Librarian fetched from
 # that official URL (doha-acquire), so identity is proven, not inferred from a label.
 PROVENANCE_BASES = ("official_listing_label", "legacy_download_bytes_identical", "acquisition_bytes_identical")
+LINE_ENDINGS_RULE = "crlf_to_lf"
+LINE_ENDINGS_REVIEWER = "doha-line-endings-plan rule-based review v1"
+LINE_ENDING_FIELDS = ("document_id", "robot_text_path", "rule", "before_sha256", "before_bytes",
+                      "after_sha256", "after_bytes", "reviewed_by", "reviewed_utc")
 
 
 def load_reviews(path: Path) -> dict[str, dict[str, Any]]:
@@ -89,6 +103,112 @@ def load_retirements(path: Path) -> dict[str, dict[str, Any]]:
             raise ValueError(f"duplicate DOHA retirement: {item['document_id']}")
         retirements[item["document_id"]] = item
     return retirements
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _read(data: bytes) -> str:
+    """The text ``Path.read_text(encoding='utf-8')`` gives every DOHA reader: CRLF reads as LF."""
+    return io.TextIOWrapper(io.BytesIO(data), encoding="utf-8").read()
+
+
+def to_lf(data: bytes) -> tuple[bytes | None, str | None]:
+    """LF bytes for a text whose every line ends CRLF, or why the rule cannot convert it."""
+    crlf = data.count(b"\r\n")
+    if not crlf:
+        return None, "no CRLF line ends"
+    if data.count(b"\r") != crlf or data.count(b"\n") != crlf:
+        return None, "mixed line ends (a lone CR or LF); needs its own review"
+    after = data.replace(b"\r\n", b"\n")
+    try:
+        same = _read(after) == _read(data)
+    except UnicodeDecodeError:
+        return None, "not valid UTF-8"
+    return (after, None) if same else (None, "the text read would change")
+
+
+def load_line_endings(path: Path) -> dict[str, dict[str, Any]]:
+    """Reviewed CRLF-to-LF rewrites of DOHA robot texts, by document."""
+    if not path.is_file():
+        return {}
+    rows = {}
+    for _, row in iter_jsonl(path):
+        identity = row.get("document_id")
+        if any(row.get(key) in (None, "") for key in LINE_ENDING_FIELDS) or row["rule"] != LINE_ENDINGS_RULE:
+            raise ValueError(f"DOHA line-ending row needs {', '.join(LINE_ENDING_FIELDS)} and rule {LINE_ENDINGS_RULE}: {identity}")
+        if not all(re.fullmatch("[0-9a-f]{64}", row[key]) for key in ("before_sha256", "after_sha256")) \
+                or not isinstance(row["before_bytes"], int) or not isinstance(row["after_bytes"], int) \
+                or row["after_bytes"] >= row["before_bytes"]:
+            raise ValueError(f"DOHA line-ending row has invalid hashes or sizes: {identity}")
+        if identity in rows:
+            raise ValueError(f"duplicate DOHA line-ending row: {identity}")
+        rows[identity] = row
+    return rows
+
+
+def plan_line_endings(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Rows for the reviewed line-ending change: every DOHA robot text with CR in it. Reads only."""
+    reviewed = utc_now()
+    rows, refused = [], []
+    counts: collections.Counter[str] = collections.Counter()
+    before = after = 0
+    for _, row in iter_jsonl(root / PATH_MANIFEST):
+        path = root / row["robot_text_path"]
+        if not path.is_file():
+            counts["robot text missing"] += 1
+            continue
+        data = path.read_bytes()
+        if b"\r" not in data:
+            counts["already LF"] += 1
+            continue
+        converted, problem = to_lf(data)
+        if problem:
+            refused.append({"document_id": row["document_id"], "problem": problem})
+            continue
+        counts["CRLF to LF"] += 1
+        before, after = before + len(data), after + len(converted)
+        rows.append({"document_id": row["document_id"], "robot_text_path": row["robot_text_path"], "rule": LINE_ENDINGS_RULE,
+                     "before_sha256": _sha256(data), "before_bytes": len(data),
+                     "after_sha256": _sha256(converted), "after_bytes": len(converted),
+                     "reviewed_by": LINE_ENDINGS_REVIEWER, "reviewed_utc": reviewed})
+    return rows, {"decisions": sum(counts.values()) + len(refused), "counts": dict(counts), "refused": refused,
+                  "bytes_before": before, "bytes_after": after}
+
+
+def _apply_line_endings(root: Path, production: Path, line_endings: dict[str, dict[str, Any]],
+                        by_id: dict[str, dict[str, Any]]) -> tuple[dict[str, tuple[str, int]], list[str], list[str]]:
+    """Write each reviewed LF text into the candidate. Fails closed on any text that is not as reviewed.
+
+    The rows stay in the decisions file after publication, so a text already LF with the
+    reviewed hash counts as applied. Returns the hash and size every store must carry for
+    each row, the rows written now and the rows already applied.
+    """
+    hashes: dict[str, tuple[str, int]] = {}
+    written, already = [], []
+    for identity, item in sorted(line_endings.items()):
+        row = by_id.get(identity)
+        if row is None or row["robot_text_path"] != item["robot_text_path"]:
+            raise ValueError(f"DOHA line-ending row names a decision or path the library does not have: {identity}")
+        source = root / item["robot_text_path"]
+        if not source.is_file():
+            raise ValueError(f"DOHA line-ending row names robot text the library does not hold: {identity}")
+        data = source.read_bytes()
+        hashes[identity] = (item["after_sha256"], item["after_bytes"])
+        if (_sha256(data), len(data)) == hashes[identity]:
+            already.append(identity)
+            continue
+        if (_sha256(data), len(data)) != (item["before_sha256"], item["before_bytes"]):
+            raise ValueError(f"DOHA robot text changed since its line-ending review: {identity}")
+        converted, problem = to_lf(data)
+        if problem or (_sha256(converted), len(converted)) != hashes[identity]:
+            raise ValueError(f"DOHA line-ending rewrite does not give the reviewed text: {identity} ({problem or 'hash differs'})")
+        target = production / item["robot_text_path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(converted)
+        written.append(identity)
+    return hashes, written, already
 
 
 def _retire(root: Path, rows: list[dict[str, Any]],
@@ -177,11 +297,13 @@ def classify_rows(root: Path, reviews: dict[str, dict[str, Any]], provenance: di
 
 
 def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
-          provenance: dict[str, dict[str, Any]], retirements: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+          provenance: dict[str, dict[str, Any]], retirements: dict[str, dict[str, Any]] | None = None,
+          line_endings: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     """Write corrected DOHA stores into the candidate. The live library is only read."""
     retirements = retirements or {}
     rows, already = _retire(root, classify_rows(root, reviews, provenance), retirements)
     by_id = {row["document_id"]: row for row in rows}
+    hashes, relined, already_lf = _apply_line_endings(root, production, line_endings or {}, by_id)
     before = {row["document_id"]: row for _, row in iter_jsonl(root / PATH_MANIFEST)}
     for relative in (ERA_MANIFEST, PATH_MANIFEST):
         write_jsonl(production / relative, rows)
@@ -219,11 +341,12 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
     router.update(era_manifest=ERA_MANIFEST, era_rules=RULES, era_rule=ERA_RULE,
                   source_url_field="source_url; null when no official URL is recorded. Never derive one from a case number.")
     write_json(production / ROUTER, router)
-    changed_documents = _patch_documents(root, production, by_id)
+    changed_documents = _patch_documents(root, production, by_id, hashes)
     changed_paths = _patch_index(root, production, PATHS, "current_paths", ("current_group", "authority_priority"), by_id,
                                  retired=set(retirements))
     changed_content = _patch_index(root, production, CONTENT, "decisions", ("current_group", "retrieval_priority"), by_id,
-                                   fts_table="corpus", retired=set(retirements), topics_table="decision_topics")
+                                   fts_table="corpus", retired=set(retirements), topics_table="decision_topics",
+                                   hashes=hashes)
     return {"schema_version": "1.0", "generated_utc": utc_now(), "rule_id": RULE_ID, "decisions": len(rows),
             "era_counts": dict(counts), "corrections": dict(corrections),
             "date_conflicts": sum(bool(row["date_conflicts"]) for row in rows),
@@ -231,7 +354,10 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
             "source_urls_recorded": sum(bool(row["source_url"]) for row in rows),
             "source_url_basis": dict(collections.Counter(row["source_url_basis"] for row in rows if row["source_url"])),
             "rewritten": {"documents_rows": changed_documents, "path_index_rows": changed_paths,
-                          "topic_index_rows": changed_content},
+                          "topic_index_rows": changed_content, "robot_texts": len(relined)},
+            "line_endings": {"rule": LINE_ENDINGS_RULE, "rewritten": len(relined), "already_applied": len(already_lf),
+                             "bytes_before": sum(line_endings[i]["before_bytes"] for i in relined),
+                             "bytes_after": sum(line_endings[i]["after_bytes"] for i in relined)} if line_endings else None,
             "retired": [{"document_id": identity, "superseded_by": item["superseded_by"], "evidence": item["evidence"]}
                         for identity, item in sorted(retirements.items()) if identity not in already],
             "already_retired": [{"document_id": identity, "superseded_by": retirements[identity]["superseded_by"]}
@@ -240,8 +366,10 @@ def build(root: Path, production: Path, reviews: dict[str, dict[str, Any]],
                               "date_conflicts": row["date_conflicts"]} for row in rows if row["sead4_era"] == "undetermined"]}
 
 
-def _patch_documents(root: Path, production: Path, by_id: dict[str, dict[str, Any]]) -> int:
-    """Rewrite only the DOHA lines whose era changed; every other line stays byte-identical."""
+def _patch_documents(root: Path, production: Path, by_id: dict[str, dict[str, Any]],
+                     hashes: dict[str, tuple[str, int]] | None = None) -> int:
+    """Rewrite only the DOHA lines whose era or robot text hash changed; every other line stays byte-identical."""
+    hashes = hashes or {}
     lines = (root / DOCUMENTS).read_text(encoding="utf-8").splitlines(keepends=True)
     changed = 0
     for number, line in enumerate(lines):
@@ -253,6 +381,8 @@ def _patch_documents(root: Path, production: Path, by_id: dict[str, dict[str, An
             continue
         wanted = {"current_group": row["current_group"], "doha_group": row["current_group"],
                   "retrieval_priority": row["retrieval_priority"], "authority_priority": row["retrieval_priority"]}
+        if record["document_id"] in hashes and "robot_sha256" in record:
+            wanted["robot_sha256"] = hashes[record["document_id"]][0]
         if all(record.get(key) == value for key, value in wanted.items()):
             continue
         record.update(wanted)
@@ -267,14 +397,16 @@ def _patch_documents(root: Path, production: Path, by_id: dict[str, dict[str, An
 
 def _patch_index(root: Path, production: Path, relative: str, table: str, columns: tuple[str, str],
                  by_id: dict[str, dict[str, Any]], fts_table: str | None = None,
-                 retired: set[str] | None = None, topics_table: str | None = None) -> int:
-    """Copy an index into the candidate, correct its era columns and drop retired rows.
+                 retired: set[str] | None = None, topics_table: str | None = None,
+                 hashes: dict[str, tuple[str, int]] | None = None) -> int:
+    """Copy an index into the candidate, correct its era columns and robot text hashes, and drop retired rows.
 
     The index is left out of the candidate when nothing differs, so publication
-    does not rewrite a 350 MB store for an unchanged release. Full-text rows are
+    does not rewrite a 1 GB store for an unchanged release. Full-text rows are
     addressed by rowid, since FTS5 cannot index document_id and each lookup by it
     scans every decision, and rewritten only when their group changes, since an
-    FTS5 update re-indexes the whole decision text.
+    FTS5 update re-indexes the whole decision text. A line-ending change never
+    touches the full text: it was loaded through read_text and is already LF.
     """
     group_column, priority_column = columns
     retired = retired or set()
@@ -284,33 +416,43 @@ def _patch_index(root: Path, production: Path, relative: str, table: str, column
                  if (row := by_id.get(identity)) and (group, priority) != (row["current_group"], row["retrieval_priority"])]
         removable = [(identity,) for identity, in db.execute(f"SELECT document_id FROM {table}") if identity in retired]
         texts = db.execute(f"SELECT rowid,document_id,current_group FROM {fts_table}").fetchall() if fts_table else []
+        rehash = [(*wanted, identity) for identity, digest, size in
+                  db.execute(f"SELECT document_id,content_sha256,content_bytes FROM {table}")
+                  if (wanted := hashes.get(identity)) and (digest, size) != wanted] if hashes else []
     regroup = [(row["current_group"], rowid, identity) for rowid, identity, group in texts
                if identity not in retired and (row := by_id.get(identity)) and group != row["current_group"]]
     dropped = [(rowid, identity) for rowid, identity, _ in texts if identity in retired]
-    if not stale and not removable and not regroup and not dropped:
+    if not stale and not removable and not regroup and not dropped and not rehash:
         return 0
     target = production / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(root / relative, target)
     with contextlib.closing(sqlite3.connect(target)) as db, db:
         db.executemany(f"UPDATE {table} SET {group_column}=?,{priority_column}=? WHERE document_id=?", stale)
+        if rehash:  # only the topic index carries text hashes
+            db.executemany(f"UPDATE {table} SET content_sha256=?,content_bytes=? WHERE document_id=?", rehash)
         if fts_table:
             db.executemany(f"UPDATE {fts_table} SET current_group=? WHERE rowid=?", [(g, r) for g, r, _ in regroup])
             db.executemany(f"DELETE FROM {fts_table} WHERE rowid=?", [(r,) for r, _ in dropped])
         for removed in (table, topics_table):
             if removed:
                 db.executemany(f"DELETE FROM {removed} WHERE document_id=?", removable)
-    return len({i for *_, i in stale} | {i for i, in removable} | {i for *_, i in regroup} | {i for _, i in dropped})
+    return len({i for *_, i in stale} | {i for i, in removable} | {i for *_, i in regroup} | {i for _, i in dropped}
+               | {i for *_, i in rehash})
 
 
 def apply_to_records(records: list[dict[str, Any]], production: Path, root: Path) -> int:
-    """Carry the candidate's eras into enriched records, which enrich read from the live index."""
+    """Carry the candidate's eras and robot text hashes into enriched records, which enrich read from the live index."""
     by_id = {row["document_id"]: row for _, row in iter_jsonl(_resolve(production, root, ERA_MANIFEST))}
+    with contextlib.closing(_read_only(_resolve(production, root, CONTENT))) as db:
+        digests = dict(db.execute("SELECT document_id,content_sha256 FROM decisions"))
     applied = 0
     for record in records:
         row = by_id.get(record.get("document_id"))
         if row is None or record.get("collection_id") != "doha_decisions":
             continue
+        if "robot_content_sha256" in record and digests.get(record["document_id"]):
+            record["robot_content_sha256"] = digests[record["document_id"]]
         for key in ("current_group", "doha_group"):
             if key in record:
                 record[key] = row["current_group"]
@@ -402,3 +544,45 @@ def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | Non
     for problem, identities in bad.items():
         errors.append(f"DOHA {problem}: {len(identities)} decisions, e.g. {', '.join(sorted(identities)[:5])}")
     return errors
+
+
+def check_texts(production: Path, root: Path, enriched: Path | None = None) -> list[str]:
+    """Errors when a DOHA robot text is not LF, or a store's copy or hash of it differs from the file.
+
+    The hash sits in the source manifest (``robot_sha256``, on records that carry it), the
+    topic index (``content_sha256``, ``content_bytes``) and the enriched manifest
+    (``robot_content_sha256``); the topic index also holds the text itself. Each must
+    describe the file consumers read, so no reader can get a representation the hash
+    does not bind.
+    """
+    bad: collections.defaultdict[str, list[str]] = collections.defaultdict(list)
+    files: dict[str, tuple[str, int]] = {}
+    for _, row in iter_jsonl(_resolve(production, root, ERA_MANIFEST)):
+        path = _resolve(production, root, str(row.get("robot_text_path", "")))
+        if not path.is_file():
+            continue  # check() reports a missing text
+        data = path.read_bytes()
+        files[row["document_id"]] = (_sha256(data), len(data))
+        if b"\r" in data:
+            bad["robot text has CR line ends (DOHA robot text is LF)"].append(row["document_id"])
+    for _, record in iter_jsonl(_resolve(production, root, DOCUMENTS)):
+        identity = record.get("document_id")
+        if record.get("collection_id") == "doha_decisions" and identity in files and "robot_sha256" in record \
+                and record["robot_sha256"] != files[identity][0]:
+            bad["documents.jsonl robot_sha256 differs from the robot text"].append(identity)
+    with contextlib.closing(_read_only(_resolve(production, root, CONTENT))) as db:
+        for identity, digest, size in db.execute("SELECT document_id,content_sha256,content_bytes FROM decisions"):
+            if identity in files and (digest, size) != files[identity]:
+                bad[f"{CONTENT} content_sha256/content_bytes differ from the robot text"].append(identity)
+        # An LF text's bytes are its UTF-8 encoding, so the indexed copy matches only if it is that text.
+        for identity, content in db.execute("SELECT document_id,content FROM corpus"):
+            if identity in files and _sha256(content.encode("utf-8")) != files[identity][0]:
+                bad[f"{CONTENT} corpus text differs from the robot text"].append(identity)
+    if enriched is not None and enriched.is_file():
+        for _, record in iter_jsonl(enriched):
+            identity = record.get("source_document_id") or record.get("document_id")
+            if record.get("collection_id") == "doha_decisions" and identity in files \
+                    and record.get("robot_content_sha256") != files[identity][0]:
+                bad["enriched manifest robot_content_sha256 differs from the robot text"].append(identity)
+    return [f"DOHA {problem}: {len(identities)} decisions, e.g. {', '.join(sorted(identities)[:5])}"
+            for problem, identities in bad.items()]

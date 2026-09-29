@@ -77,6 +77,11 @@ def parser() -> argparse.ArgumentParser:
     append = commands.add_parser("doha-append-provenance", help="Add a batch's provenance rows to decisions/doha_source_urls.jsonl")
     append.add_argument("--additions", type=Path, required=True)
     append.add_argument("--dry-run", action="store_true")
+    endings = commands.add_parser("doha-line-endings-plan",
+                                  help="List every DOHA robot text with CRLF line ends as reviewed LF rewrites; reads the library only")
+    endings.add_argument("--library-root")
+    endings.add_argument("--out", type=Path, help="Default: decisions/doha_robot_line_endings.jsonl; never overwritten")
+    endings.add_argument("--dry-run", action="store_true")
     for name in ("doctor", "audit", "build-candidate"):
         cmd = commands.add_parser(name)
         cmd.add_argument("--library-root")
@@ -174,6 +179,18 @@ def main() -> int:
                 result = quality.append_provenance(args.additions.resolve(), target, args.dry_run)
             print(json.dumps(result, indent=2))
             return 2 if result.get("passed") is False else 0
+        if args.command == "doha-line-endings-plan":
+            from .common import write_jsonl
+            from .doha_release import plan_line_endings
+            target = args.out.resolve() if args.out else PROJECT_ROOT / config.get("doha_line_endings_file", "decisions/doha_robot_line_endings.jsonl")
+            if target.exists() and not args.dry_run:
+                raise FileExistsError(f"reviewed line-ending rows already exist: {target}")
+            rows, summary = plan_line_endings(library_root)
+            if rows and not args.dry_run:
+                write_jsonl(target, rows)
+            print(json.dumps({**summary, "rows": len(rows), "written_to": None if args.dry_run or not rows else str(target),
+                              "next": "review, then build-candidate --deep, validate, evaluate, publish --dry-run" if rows else None}, indent=2))
+            return 2 if summary["refused"] else 0
         if args.command == "doctor":
             report = audit_library(library_root, deep=False)
             result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"], "release_metadata_errors": report["release_metadata_errors"], "verified_indexes": len(report["approved_indexes"])}

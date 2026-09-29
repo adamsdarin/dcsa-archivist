@@ -29,8 +29,10 @@ libraries that already exist.
 ## Bulk intake from a Librarian acquisition run
 
 `doha-intake-plan` turns a Librarian `doha-acquire` run into a plan this intake
-accepts unchanged. It extracts each PDF with `pdftotext -layout` (the form of the
-existing DOHA robot text) and derives `doha_review` from the decision text only:
+accepts unchanged. It extracts each PDF with Poppler's `pdftotext -layout -eol unix`
+(the form of the existing DOHA robot text; before 2026-09-28 it omitted `-eol unix`,
+so the 20,862 texts of `doha-bulk-all-20260928` are CRLF, see DOHA-LINE-ENDINGS.md)
+and derives `doha_review` from the decision text only:
 case identity from the `CASENO:` header or caption, checked against the listing
 label; decision date and era from `doha_era.classify`, the rule the release build
 applies; outcome from the conclusion or order; topics from the `KEYWORD:` line
