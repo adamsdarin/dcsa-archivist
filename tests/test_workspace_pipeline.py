@@ -12,7 +12,9 @@ import sys
 import unittest
 from unittest.mock import patch
 
-WORKSPACE = Path(__file__).resolve().parents[2]
+from _workspace import workspace_root
+
+WORKSPACE = workspace_root()
 sys.path.insert(0, str(WORKSPACE / "dcsa-librarian/src"))
 from library_custodian.discovery import discover
 from dcsa_custodian.common import write_json, write_jsonl, sha256_file

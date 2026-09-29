@@ -28,8 +28,8 @@ same scope as autonomous publish (release.approval_scope, PR #21).
 
 Owner rules: no DOHA publish without the owner's explicit go-ahead; a DOHA bulk batch needs an
 owner spot-check of its plan first. Tests in a worktree need PYTHONPATH=<worktree>\src (the
-installed package points at the main checkout); test_source_requests and test_workspace_pipeline
-import sibling repos and load only from the main checkout.
+installed package points at the main checkout); the cross-repo tests find the workspace by walking
+up (tests/_workspace.py), so they run from worktrees too.
 
 ## Next
 0. DOHA, in order (docs/DOHA-INTAKE.md, docs/DOHA-LINE-ENDINGS.md):
@@ -63,6 +63,8 @@ None open.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-09-29 Claude — test_source_requests and test_workspace_pipeline counted parent folders to
+find the workspace, which fails in a worktree; tests/_workspace.py walks up instead. 165 pass.
 2026-09-29 Claude — Owner merged PR #20. Candidate diffed against the live library: only the
 planned fields change (robot_sha256; index content_sha256/content_bytes; corpus text and topics
 identical; change packet = the 20,862 planned, robot_content_sha256 only). Enriched records of the
@@ -93,7 +95,3 @@ ruling follows DOHA's digest where it contradicts the Board's Order (Next 0c).
 existing decision overwritten), then published doha-bulk-all-20260928 (8 min). doctor healthy.
 DOHA intake of the 20,862 acquired decisions is complete; exceptions and held-library
 corrections remain. Provenance rows committed (PR #19).
-2026-09-28 Claude (local) — Review v8 merged (PR #18): a guideline the decision says was not
-alleged is no topic (30 decisions lose a letter, none gain). Combined candidate built from the v8
-plan in 42 min (batch 1 alone took 89 on the old code), validate clean, evaluate 18/18. Owner
-chose one publish for the whole corpus instead of four batches.

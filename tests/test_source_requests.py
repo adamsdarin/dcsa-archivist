@@ -3,7 +3,8 @@ import sys
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from _workspace import workspace_root
+sys.path.insert(0,str(workspace_root()))
 import workflow_requests
 from dcsa_custodian.common import iter_jsonl, write_jsonl
 from dcsa_custodian.release import build_candidate, publish_candidate
