@@ -470,6 +470,12 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
     }
 
 
+def approval_scope(release_dir: Path) -> str:
+    # Manual and autonomous approvals must record the same scope for the same candidate.
+    state = read_json(release_dir / "production" / STATE)
+    return "source_intake_and_derived" if state.get("source_intake_files") else "derived_artifacts_only"
+
+
 def approve_candidate(release_dir: Path, approved_by: str, note: str) -> dict[str, Any]:
     validation = read_json(release_dir / "VALIDATION.json")
     if not validation.get("valid"):
@@ -478,7 +484,7 @@ def approve_candidate(release_dir: Path, approved_by: str, note: str) -> dict[st
         raise RuntimeError(f"cannot approve an unpublishable candidate: {validation.get('publication_blockers', [])}")
     receipt = {
         "schema_version": "1.0", "release_id": release_dir.name, "approved_utc": utc_now(),
-        "approved_by": approved_by, "note": note, "scope": "derived_artifacts_only",
+        "approved_by": approved_by, "note": note, "scope": approval_scope(release_dir),
     }
     write_json(release_dir / "APPROVAL.json", receipt)
     return receipt
@@ -504,7 +510,7 @@ def _publish_candidate(project_root: Path, root: Path, config: dict[str, Any], r
         write_json(approval_path, {
             "schema_version": "1.0", "release_id": release_dir.name, "approved_utc": utc_now(),
             "approved_by": "autonomous-pipeline", "note": "auto-approved: validation and retrieval evaluation passed with no publication blockers",
-            "scope": "source_intake_and_derived" if read_json(release_dir / "production" / STATE).get("source_intake_files") else "derived_artifacts_only",
+            "scope": approval_scope(release_dir),
         })
     release_id = release_dir.name
     changes_path = release_dir / "reports/RELEASE_CHANGES.json"

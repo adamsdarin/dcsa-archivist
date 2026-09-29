@@ -23,8 +23,8 @@ store agrees (check_texts on the live library: no errors). Handoff event actiona
 Library: 31,495 DOHA decisions since doha-bulk-all-20260928 (2026-09-28 20:24 UTC). The
 superseded batch 1 and v1 pilot candidates were recycled at the owner's request; the four
 .custodian\doha-pilot-20260927* plan folders remain. Builds re-derive held eras and dates, not
-held outcomes, topics or appeal fields (Next 0c). The manual `approve` command hardcodes scope
-derived_artifacts_only (another worktree, claude/friendly-bhabha-c0081a, is fixing it).
+held outcomes, topics or appeal fields (Next 0c). The manual `approve` command now records the
+same scope as autonomous publish (release.approval_scope, PR #21).
 
 Owner rules: no DOHA publish without the owner's explicit go-ahead; a DOHA bulk batch needs an
 owner spot-check of its plan first. Tests in a worktree need PYTHONPATH=<worktree>\src (the
@@ -69,6 +69,9 @@ identical; change packet = the 20,862 planned, robot_content_sha256 only). Enric
 new decisions also gain current_group/doha_group/retrieval_priority, absent since the intake build
 (values agree with the era manifest). Merging is the owner's step (auto mode refuses self-merge).
 Owner said "publish": published doha-robot-lf-20260929; doctor healthy; library all LF.
+2026-09-29 Claude — Manual `approve` hardcoded scope derived_artifacts_only; it and autonomous
+publish now share release.approval_scope (LIBRARY_STATE source_intake_files decides).
+tests/test_approval_scope.py covers both kinds (fails on the old code); 165 tests pass. PR #21.
 2026-09-29 Claude — Owner said "go do the things". Implemented the LF rewrite as a reviewed input
 (like retirements: rows stay after publication and then count as already applied; the build
 fails closed if a text no longer matches its row) rather than a one-off script, so the change is
@@ -94,6 +97,3 @@ corrections remain. Provenance rows committed (PR #19).
 alleged is no topic (30 decisions lose a letter, none gain). Combined candidate built from the v8
 plan in 42 min (batch 1 alone took 89 on the old code), validate clean, evaluate 18/18. Owner
 chose one publish for the whole corpus instead of four batches.
-2026-09-28 Claude (local) — Build speed: new decisions are staged with their era's retrieval
-priority, and the release build rewrites a full-text row only when its era changes, by rowid.
-Spot-checks for batches 1-4 drawn and pre-marked; owner verification tapered batch by batch.
