@@ -20,7 +20,7 @@ Library: doha-bulk-all-20260928 (published 2026-09-28 20:24 UTC on the owner's g
 superseded batch 1 and v1 pilot candidates were recycled at the owner's request; the four
 .custodian\doha-pilot-20260927* plan folders remain. Builds re-derive held eras and dates, not
 held outcomes, topics or appeal fields (Next 0c). The manual `approve` command now records the
-same scope as autonomous publish (release.approval_scope; branch claude/approval-scope, PR open).
+same scope as autonomous publish (release.approval_scope, PR #21).
 
 Owner rules: no DOHA publish without the owner's explicit go-ahead; a DOHA bulk batch needs an
 owner spot-check of its plan first. Tests in a worktree need PYTHONPATH=<worktree>\src (the
