@@ -28,8 +28,8 @@ same scope as autonomous publish (release.approval_scope, PR #21).
 
 Owner rules: no DOHA publish without the owner's explicit go-ahead; a DOHA bulk batch needs an
 owner spot-check of its plan first. Tests in a worktree need PYTHONPATH=<worktree>\src (the
-installed package points at the main checkout); test_source_requests and test_workspace_pipeline
-import sibling repos and load only from the main checkout.
+installed package points at the main checkout); the cross-repo tests find the workspace by walking
+up (tests/_workspace.py), so they run from worktrees too.
 
 ## Next
 0. DOHA, in order (docs/DOHA-INTAKE.md, docs/DOHA-LINE-ENDINGS.md):
@@ -38,11 +38,13 @@ import sibling repos and load only from the main checkout.
    b. Exceptions (1,079 in plan full-20260928-v8): no case number, undated, no Board order,
       identity mismatches, no outcome, findings conflicts, suffixed keys, scans (OCR). Refetch
       10-03426.h1 via Librarian doha-acquire resume.
-   c. Held library: re-run doha-recheck with v8 rules; owner reviews disagreements; build the
-      reviewed change (ruling backfills, accepted outcome/topic corrections that rename file and
-      ID, a reviewed index migration so appeal fields are searchable). Add the three new appeals
-      whose ruling followed DOHA's digest over the Board's Order (Atlas finding): 06-15770.a1 and
-      12-01038.a1 were remanded, 14-04825.a1 reversed.
+   c. Held library (Claude takes it once review v9 is on main; 0b is the v9 session's): re-run
+      doha-recheck with v9 rules; owner reviews disagreements; build the reviewed change (ruling
+      backfills, accepted outcome/topic corrections that rename file and ID, a reviewed index
+      migration so appeal fields are searchable). Put on the sheet the Atlas's three (06-15770.a1
+      and 12-01038.a1 remanded, 14-04825.a1 reversed; ruling followed the digest over the Order)
+      and v9's four: 04-11414.a1 (same pattern), 08-07803.h1 and 10-03757.h1 (outcome conflicts),
+      06-20964.a1 (appealed_by probably Department Counsel).
    d. Coverage: Librarian doha-provenance reverse check; only 06-25928.h1 should remain.
    e. Owner to decide: the appeal-link fallback that ignores dates; the SOC source that reads any
       letter in the first 8000 chars; whether CAC decisions stay in DOHA_DECISIONS.
@@ -63,6 +65,8 @@ None open.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-09-29 Claude — test_source_requests and test_workspace_pipeline counted parent folders to
+find the workspace, which fails in a worktree; tests/_workspace.py walks up instead. 165 pass.
 2026-09-29 Claude — Owner merged PR #20. Candidate diffed against the live library: only the
 planned fields change (robot_sha256; index content_sha256/content_bytes; corpus text and topics
 identical; change packet = the 20,862 planned, robot_content_sha256 only). Enriched records of the
@@ -93,7 +97,3 @@ ruling follows DOHA's digest where it contradicts the Board's Order (Next 0c).
 existing decision overwritten), then published doha-bulk-all-20260928 (8 min). doctor healthy.
 DOHA intake of the 20,862 acquired decisions is complete; exceptions and held-library
 corrections remain. Provenance rows committed (PR #19).
-2026-09-28 Claude (local) — Review v8 merged (PR #18): a guideline the decision says was not
-alleged is no topic (30 decisions lose a letter, none gain). Combined candidate built from the v8
-plan in 42 min (batch 1 alone took 89 on the old code), validate clean, evaluate 18/18. Owner
-chose one publish for the whole corpus instead of four batches.
