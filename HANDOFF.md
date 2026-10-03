@@ -40,15 +40,18 @@ installed package points at the main checkout); cross-repo tests find the worksp
       (listing-label typos, redacted captions), ~160 unsettled topics (not yet diagnosed), the
       pre-1996 lettering (owner: reviewed mapping or exceptions?), 22 suffixed keys, 5 scans.
       Refetch 10-03426.h1 via Librarian doha-acquire resume.
-   c. Held library (the "Fix approve command" Claude session has it; recheck with v9 rules from
-      main 24d6f98 running 2026-10-03, output under doha-plans): owner reviews disagreements; build the reviewed change (ruling backfills, accepted
-      outcome/topic corrections that rename file and ID, a reviewed index migration so appeal
-      fields are searchable). On the sheet: the Atlas's three (06-15770.a1 and 12-01038.a1
-      remanded, 14-04825.a1 reversed; ruling followed the digest over the Order); v9's four:
-      04-11414.a1 (same pattern), 08-07803.h1 and 10-03757.h1 (outcome conflicts), 06-20964.a1
-      (appealed_by probably Department Counsel); and the published ones v9 holds back for the
-      pre-1996 lettering (topic I there is poor judgment): 95-00566.h1, 95-00622.a1, 95-00817.a1,
-      95-00818.a1, 95-00904.a1, 95-00918.a1, and 96-00460.h1 (check).
+   c. Held library (the "Fix approve command" Claude session has it). Recheck with v9 rules done
+      2026-10-03 (doha-plans\recheck-20261003-v9; library not written). Of 31,495: outcomes agree
+      31,268, conflict 121, missing 44, unsettled 62; topics agree 31,190, conflict 230, unsettled
+      75; backfills ready: 4,751 appeal rulings (5 unsettled), 230 remand links. Owner marks
+      disagreements_sample.csv (100 random) and named_cases.csv (the 14 below) library/rule/neither;
+      then build the reviewed change (backfills, accepted corrections that rename file and ID, a
+      reviewed index migration so appeal fields are searchable). v9 still reads the Atlas's three
+      as affirmed (06-15770.a1, 12-01038.a1 remanded; 14-04825.a1 reversed: digest over the Order):
+      check them before any backfill. Also named: 04-11414.a1 (same pattern), 08-07803.h1 and
+      10-03757.h1 (v9 leaves the outcome open), 06-20964.a1 (rule: remanded, by Department
+      Counsel), and the pre-1996 lettering ones v9 holds back: 95-00566.h1, 95-00622.a1,
+      95-00817.a1, 95-00818.a1, 95-00904.a1, 95-00918.a1, 96-00460.h1.
    d. Coverage: Librarian doha-provenance reverse check; only 06-25928.h1 should remain.
    e. Owner to decide: the appeal-link fallback that ignores dates; the SOC source that reads any
       letter in the first 8000 chars; whether CAC decisions stay in DOHA_DECISIONS.
@@ -70,6 +73,8 @@ The DOHA policy questions in Next 0b and 0e wait on the owner.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-10-03 Claude — Ran 0c's recheck with v9 rules over all 31,495 held decisions (read-only); all
+14 named decisions are flagged; sheets for the owner in doha-plans\recheck-20261003-v9 (Next 0c).
 2026-10-03 Claude — Merged Codex's uncommitted 2026-10-02 rewrite of this file (VOI release and
 consumer state) with the DOHA state from PR #24; Codex's archive additions kept. Three older
 Claude entries moved to the archive.
