@@ -11,9 +11,10 @@ only gain readings; four published ones read differently (on the 0c sheet). Re-p
 doha-plans\full-20260929-v9b: 585 planned, 494 exceptions (of 1,079). Spot-check 1 (seed 20261003)
 found a v9 bug (97-00752.a1, a reversed finding read as a reversed decision; fixed). Spot-check 2
 (seed 20261004, full-20260929-v9b\spotcheck-v9.csv): Claude's pre-marks 19/20; the N, 95-00863.h1
-(pre-1996 lettering), is now held back. To do: re-plan (v9c) with the hold-back, write premarked +
-verify sheets, owner verifies; PR for v9; then provenance append, build-candidate --intake-plan,
-validate, evaluate, owner go-ahead, publish.
+(pre-1996 lettering), is now held back. Final plan doha-plans\full-20261003-v9c: 584 planned, 495
+exceptions (= v9b less 95-00863.h1). Sheets there: spotcheck-v9c-premarked.csv (40), -verify.csv
+(7 for the owner). Next: owner verifies and merges the v9 PR; then provenance append,
+build-candidate --intake-plan, validate, evaluate, owner go-ahead, publish.
 
 Line endings done: doha-robot-lf-20260929 (2026-09-29, owner's go-ahead), all 31,495 DOHA texts
 LF; validation refuses CR in DOHA text (docs/DOHA-LINE-ENDINGS.md). Since then Codex published
