@@ -14,15 +14,15 @@ Consumers (Oct 2 Supervisor): dcsa-compare acknowledged the VOI and doha-robot-l
 (no_relevant_change); Guidance Watch acknowledged the VOI; five comparison and six Guidance Watch
 events remain pending.
 
-DOHA REVIEW v9 merged (PR #24, 2026-10-03). It reads the caption/header variants, 1996-97 opening
-date lines, Board order and hearing conclusion wordings found among v8's 1,079 exceptions, and
-holds back SORs in the pre-1996 criteria lettering (docs/DOHA-INTAKE.md "Review v9"). Plan
-doha-plans\full-20261003-v9c: 584 planned, 495 exceptions. Two seeded spot-checks (40 decisions,
-sheets in the plan folder) found a v9 bug and the old lettering, both fixed; OWNER VERIFIED all 7
-verify rows (2026-10-03). Next: provenance append (dry run clean: 584 rows), build-candidate
---intake-plan, validate, evaluate, publish --dry-run, owner go-ahead, publish.
+DOHA REVIEW v9 PUBLISHED 2026-10-03 21:16 UTC on the owner's go-ahead ("publish"): release
+doha-v9-exceptions-20261003 adds the 584 decisions of plan doha-plans\full-20261003-v9c (review v9,
+PR #24; docs/DOHA-INTAKE.md "Review v9"). Candidate diffed against the live library: every store
+gains exactly the 584 planned rows, none removed or changed; change packet 584 added. 1,192 files
+copied, 17 snapshotted (rollback .custodian\rollback\20261003T211640345068Z). doctor healthy,
+0 DOHA era inconsistencies, check_texts clean; 33,082 documents. Owner verified the spot-check
+(40 decisions; sheets in the plan folder). Provenance rows (584) committed with this handoff.
 
-DOHA library: 31,495 decisions; line endings done (doha-robot-lf-20260929; all LF, validation
+DOHA library: 32,079 decisions; line endings done (doha-robot-lf-20260929; all LF, validation
 refuses CR). Builds re-derive held eras and dates, not held outcomes, topics or appeal fields
 (Next 0c). Manual `approve` records the same scope as autonomous publish (PR #21).
 
