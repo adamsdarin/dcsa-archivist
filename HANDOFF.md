@@ -45,7 +45,9 @@ up (tests/_workspace.py), so they run from worktrees too.
       migration so appeal fields are searchable). Put on the sheet the Atlas's three (06-15770.a1
       and 12-01038.a1 remanded, 14-04825.a1 reversed; ruling followed the digest over the Order)
       and v9's four: 04-11414.a1 (same pattern), 08-07803.h1 and 10-03757.h1 (outcome conflicts),
-      06-20964.a1 (appealed_by probably Department Counsel).
+      06-20964.a1 (appealed_by probably Department Counsel). Also the published ones v9 holds back
+      for the pre-1996 lettering (topic I there is poor judgment): 95-00566.h1, 95-00622.a1,
+      95-00817.a1, 95-00818.a1, 95-00904.a1, 95-00918.a1, and 96-00460.h1 (check).
    d. Coverage: Librarian doha-provenance reverse check; only 06-25928.h1 should remain.
    e. Owner to decide: the appeal-link fallback that ignores dates; the SOC source that reads any
       letter in the first 8000 chars; whether CAC decisions stay in DOHA_DECISIONS.
@@ -66,11 +68,9 @@ None open.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
-2026-10-03 Claude — Owner said "continue"/"resume": 0b by review v9, written from samples of
-each v8 exception reason and measured against v8 on every published and held text before any
-re-plan. Spot-checks are stratified by the v8 reason a decision came from, so each new reading
-is checked; the first found a v9 bug, the second the pre-1996 lettering gap. 0c goes to the
-"Fix approve command" session once v9 is on main.
+2026-10-03 Claude — 0b by review v9: rules from samples of each v8 exception reason, measured
+against v8 on every text before any re-plan; spot-checks stratified by v8 reason (first found a
+v9 bug, second the pre-1996 lettering). 0c: the session that took it has ended; see Next 0c.
 2026-09-29 Claude — test_source_requests and test_workspace_pipeline counted parent folders to
 find the workspace, which fails in a worktree; tests/_workspace.py walks up instead. 165 pass.
 2026-09-29 Claude — Owner merged PR #20. Candidate diffed against the live library: only the
