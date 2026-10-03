@@ -40,8 +40,8 @@ installed package points at the main checkout); cross-repo tests find the worksp
       (listing-label typos, redacted captions), ~160 unsettled topics (not yet diagnosed), the
       pre-1996 lettering (owner: reviewed mapping or exceptions?), 22 suffixed keys, 5 scans.
       Refetch 10-03426.h1 via Librarian doha-acquire resume.
-   c. Held library (unassigned; the session that took it ended): re-run doha-recheck with v9
-      rules; owner reviews disagreements; build the reviewed change (ruling backfills, accepted
+   c. Held library (the "Fix approve command" Claude session has it; recheck with v9 rules from
+      main 24d6f98 running 2026-10-03, output under doha-plans): owner reviews disagreements; build the reviewed change (ruling backfills, accepted
       outcome/topic corrections that rename file and ID, a reviewed index migration so appeal
       fields are searchable). On the sheet: the Atlas's three (06-15770.a1 and 12-01038.a1
       remanded, 14-04825.a1 reversed; ruling followed the digest over the Order); v9's four:
