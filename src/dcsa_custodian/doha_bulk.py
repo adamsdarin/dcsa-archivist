@@ -57,8 +57,12 @@ BARE_KEY = re.compile(r"^\s*(\d{2})-(\d{4,6})\.([ha]\d)\s*$", re.M | re.I)
 CAPTION = re.compile(rf"(?<![A-Za-z])(?:D?ISCR|ICSR|CR|ADP|CAC)(?:\s+OSD)?(?:\s*\d)?(?:\s+Case)?"
                      rf"(?:\s+No\.?(?:\s*\d(?=\s))?|\s+Number)?\s*[:.]?\s*(\d{{2}})\s*[{DASHES}]{{1,2}}\s*(\d{{3,6}})", re.I)
 KEYWORD = re.compile(r"^\s*KEYWORD:\s*(.+)$", re.M | re.I)
-# "Guideline F" since 1997; "Criterion F" in earlier decisions. The letters mean the same.
+# "Guideline F" since 1997; "Criterion F" in earlier decisions. The letters mean the same, except in
+# SORs under the criteria in force before 1996 ("Criterion N - Drug Abuse", "Criterion I - Poor
+# Judgment"), which topics() refuses to read (review v9, after 95-00863.h1).
 GUIDELINE_LETTER = re.compile(r"\b(?:Guideline|Criterion)\s+([A-M])\b")
+OLD_LETTERING = re.compile(r"\bCriteri(?:on|a)\s+N\b|\bCriterion\s+(?!H\b)[A-M]\s*[-–(:]\s*Drug\s+Abuse"
+                           r"|\bCriterion\s+I\s*[-–(:]\s*Poor\s+Judgment", re.I)
 # Older decisions write "AGAINST THE APPLICANT" / "For the Applicant".
 FORMAL_FINDING = re.compile(r"(?:Guideline|Criterion)\s+([A-M])\b[^\n:]{0,60}:\s*(?:FOR|AGAINST)\s+(?:THE\s+)?APPLICANT", re.I)
 # Formal findings without a colon, e.g. "Paragraph 1, Guideline F (Financial Considerations)   FOR APPLICANT".
@@ -519,7 +523,12 @@ def topics(text: str, taxonomy: dict[str, Any]) -> tuple[list[str], str]:
     guideline, or the formal findings name one that nothing else in the decision names while
     the Statement of the Case names others ("Paragraph 1. Guideline F" where paragraph 1 is
     criminal conduct), which is a typo for a person to resolve. The plan holds such a
-    decision back as an exception."""
+    decision back as an exception. So is (review v9) a decision whose SOR uses the criteria
+    lettering in force before 1996, where the letters do not mean what the Guideline letters
+    mean ("Criterion N - Drug Abuse", "Criterion I - Poor Judgment"): mapping them needs review."""
+    old = OLD_LETTERING.search(text[:60000])
+    if old:
+        return [], f"the SOR uses the pre-1996 criteria lettering ('{_flat(old.group(0))}'); its letters need a reviewed mapping"
     guidelines = validate_taxonomy(taxonomy)
     codes: set[str] = set()
     parts = []

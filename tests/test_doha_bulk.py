@@ -588,6 +588,17 @@ class ReviewV9WordingTests(unittest.TestCase):
         ruling = appeal_ruling(partial)
         self.assertEqual((ruling["disposition"], ruling["reviewed_outcome"], ruling["outcome"]), ("affirmed", "denied", "denied"))
 
+    def test_the_pre_1996_criteria_lettering_is_held_back_for_a_reviewed_mapping(self) -> None:
+        # 95-00863.h1: its "Criterion I" is Poor Judgment, not Guideline I (Psychological Conditions).
+        old = ("Paragraph 1 (Criterion N - Drug Abuse). The Government alleges ... Paragraph 2 (Criterion I - Poor "
+               "Judgment). ... Paragraph 1. Criterion N: For the Applicant.\n")
+        codes, basis = topics(old, TAXONOMY_BODY)
+        self.assertEqual(codes, [])
+        self.assertIn("pre-1996 criteria lettering", basis)
+        # The 1996-97 criteria use today's letters and are still read.
+        self.assertEqual(topics("Paragraph 1 (Criterion F - Financial Considerations). AGAINST APPLICANT\n",
+                                TAXONOMY_BODY)[0], ["F"])
+
     def test_the_appellant_is_named_by_the_burden_of_showing_error_not_by_the_merits_burden(self) -> None:
         order = "Order\nAccordingly, the Board affirms the Administrative Judge's January 10, 2001 decision.\n"
         self.assertEqual(outcome("Applicant has failed to meet his burden on appeal of demonstrating error below. " + order,
