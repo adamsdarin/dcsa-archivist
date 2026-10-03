@@ -13,7 +13,7 @@ found a v9 bug (97-00752.a1, a reversed finding read as a reversed decision; fix
 (seed 20261004, full-20260929-v9b\spotcheck-v9.csv): Claude's pre-marks 19/20; the N, 95-00863.h1
 (pre-1996 lettering), is now held back. Final plan doha-plans\full-20261003-v9c: 584 planned, 495
 exceptions (= v9b less 95-00863.h1). Sheets there: spotcheck-v9c-premarked.csv (40), -verify.csv
-(7 for the owner). Next: owner verifies and merges the v9 PR; then provenance append,
+(7). OWNER VERIFIED all 7 rows (2026-10-03). Next: v9 on main (PR #24); then provenance append,
 build-candidate --intake-plan, validate, evaluate, owner go-ahead, publish.
 
 Line endings done (doha-robot-lf-20260929; docs/DOHA-LINE-ENDINGS.md). Since then Codex published
