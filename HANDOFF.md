@@ -1,53 +1,54 @@
 # HANDOFF — dcsa-archivist
 
-Last updated: 2026-09-29 by Claude
+Last updated: 2026-10-03 by Claude (merged with Codex's uncommitted 2026-10-02 handoff)
 
 ## Current State
-2026-10-03: DOHA REVIEW v9, IN PROGRESS (branch claude/doha-review-v9, rebased on main; nothing
-built or published). v9 reads the caption/header variants, 1996-97 opening date lines, Board order
-and hearing conclusion wordings found among v8's exceptions, and holds back SORs in the pre-1996
-criteria lettering (docs/DOHA-INTAKE.md "Review v9"). Against v8 on every text: held decisions
-only gain readings; four published ones read differently (on the 0c sheet). Re-plan
-doha-plans\full-20260929-v9b: 585 planned, 494 exceptions (of 1,079). Spot-check 1 (seed 20261003)
-found a v9 bug (97-00752.a1, a reversed finding read as a reversed decision; fixed). Spot-check 2
-(seed 20261004, full-20260929-v9b\spotcheck-v9.csv): Claude's pre-marks 19/20; the N, 95-00863.h1
-(pre-1996 lettering), is now held back. Final plan doha-plans\full-20261003-v9c: 584 planned, 495
-exceptions (= v9b less 95-00863.h1). Sheets there: spotcheck-v9c-premarked.csv (40), -verify.csv
-(7). OWNER VERIFIED all 7 rows (2026-10-03). Next: v9 on main (PR #24); then provenance append,
-build-candidate --intake-plan, validate, evaluate, owner go-ahead, publish.
+Archivist validates source identity, parity, taxonomy, lifecycle, retrieval quality and release
+readiness; it is the only system that publishes approved-library releases, after all gates pass.
 
-Line endings done (doha-robot-lf-20260929; docs/DOHA-LINE-ENDINGS.md). Since then Codex published
-voi-20260930-v3 (2026-10-01; 32,498 documents), which touched no DOHA store.
+Current release voi-20260930-v3 (Codex, 2026-10-01): the September 2026 VOI passed identity,
+provenance, byte retention, parity, validation and retrieval evaluation and was published
+autonomously; 32,498 documents, 16,112 chunks, doctor healthy, eight verified indexes. The other
+monthly-scan packages stay outside it (2026-10-01: 7 exact duplicates, 73 blocked on coverage).
+Consumers (Oct 2 Supervisor): dcsa-compare acknowledged the VOI and doha-robot-lf-20260929
+(no_relevant_change); Guidance Watch acknowledged the VOI; five comparison and six Guidance Watch
+events remain pending.
 
-Library: 31,495 DOHA decisions since doha-bulk-all-20260928 (2026-09-28 20:24 UTC). The
-superseded batch 1 and v1 pilot candidates were recycled at the owner's request; the four
-.custodian\doha-pilot-20260927* plan folders remain. Builds re-derive held eras and dates, not
-held outcomes, topics or appeal fields (Next 0c). The manual `approve` command now records the
-same scope as autonomous publish (release.approval_scope, PR #21).
+DOHA REVIEW v9 PUBLISHED 2026-10-03 21:16 UTC on the owner's go-ahead ("publish"): release
+doha-v9-exceptions-20261003 adds the 584 decisions of plan doha-plans\full-20261003-v9c (review v9,
+PR #24; docs/DOHA-INTAKE.md "Review v9"). Candidate diffed against the live library: every store
+gains exactly the 584 planned rows, none removed or changed; change packet 584 added. 1,192 files
+copied, 17 snapshotted (rollback .custodian\rollback\20261003T211640345068Z). doctor healthy,
+0 DOHA era inconsistencies, check_texts clean; 33,082 documents. Owner verified the spot-check
+(40 decisions; sheets in the plan folder). Provenance rows (584) committed with this handoff.
+
+DOHA library: 32,079 decisions; line endings done (doha-robot-lf-20260929; all LF, validation
+refuses CR). Builds re-derive held eras and dates, not held outcomes, topics or appeal fields
+(Next 0c). Manual `approve` records the same scope as autonomous publish (PR #21).
 
 Owner rules: no DOHA publish without the owner's explicit go-ahead; a DOHA bulk batch needs an
 owner spot-check of its plan first. Tests in a worktree need PYTHONPATH=<worktree>\src (the
-installed package points at the main checkout); the cross-repo tests find the workspace by walking
-up (tests/_workspace.py), so they run from worktrees too.
+installed package points at the main checkout); cross-repo tests find the workspace by walking up.
 
 ## Next
 0. DOHA, in order (docs/DOHA-INTAKE.md, docs/DOHA-LINE-ENDINGS.md):
-   a. Line endings: DONE (doha-robot-lf-20260929). Its review for Guidance Watch/comparison is
-      "line endings only; the text every reader gets is unchanged". Atlas may drop its CRLF shim.
-   b. Exceptions (the v9 session's): v9 settles 585 of v8's 1,079. Of the rest: 7 WordPerfect
-      files DOHA serves as .pdf (need a converter), ~100 that state no date anywhere (owner: plan
-      with a listing-bounded era and no date?), identity conflicts for a person (listing-label
-      typos, redacted captions), ~160 unsettled topics (not yet diagnosed), 22 suffixed keys,
-      5 scans. Refetch 10-03426.h1 via Librarian doha-acquire resume.
-   c. Held library (Claude takes it once review v9 is on main; 0b is the v9 session's): re-run
-      doha-recheck with v9 rules; owner reviews disagreements; build the reviewed change (ruling
-      backfills, accepted outcome/topic corrections that rename file and ID, a reviewed index
-      migration so appeal fields are searchable). Put on the sheet the Atlas's three (06-15770.a1
-      and 12-01038.a1 remanded, 14-04825.a1 reversed; ruling followed the digest over the Order)
-      and v9's four: 04-11414.a1 (same pattern), 08-07803.h1 and 10-03757.h1 (outcome conflicts),
-      06-20964.a1 (appealed_by probably Department Counsel). Also the published ones v9 holds back
-      for the pre-1996 lettering (topic I there is poor judgment): 95-00566.h1, 95-00622.a1,
-      95-00817.a1, 95-00818.a1, 95-00904.a1, 95-00918.a1, and 96-00460.h1 (check).
+   a. Line endings: DONE (doha-robot-lf-20260929); comparison acknowledged it. Atlas may drop its
+      CRLF shim.
+   b. Exceptions: v9 published 584 (Current State). Of the 495 left: 7 WordPerfect files
+      DOHA serves as .pdf (owner: convert with LibreOffice?), ~100 that state no date anywhere
+      (owner: plan with a listing-bounded era and no date?), identity conflicts for a person
+      (listing-label typos, redacted captions), ~160 unsettled topics (not yet diagnosed), the
+      pre-1996 lettering (owner: reviewed mapping or exceptions?), 22 suffixed keys, 5 scans.
+      Refetch 10-03426.h1 via Librarian doha-acquire resume.
+   c. Held library (the "Fix approve command" Claude session has it; recheck with v9 rules from
+      main 24d6f98 running 2026-10-03, output under doha-plans): owner reviews disagreements; build the reviewed change (ruling backfills, accepted
+      outcome/topic corrections that rename file and ID, a reviewed index migration so appeal
+      fields are searchable). On the sheet: the Atlas's three (06-15770.a1 and 12-01038.a1
+      remanded, 14-04825.a1 reversed; ruling followed the digest over the Order); v9's four:
+      04-11414.a1 (same pattern), 08-07803.h1 and 10-03757.h1 (outcome conflicts), 06-20964.a1
+      (appealed_by probably Department Counsel); and the published ones v9 holds back for the
+      pre-1996 lettering (topic I there is poor judgment): 95-00566.h1, 95-00622.a1, 95-00817.a1,
+      95-00818.a1, 95-00904.a1, 95-00918.a1, and 96-00460.h1 (check).
    d. Coverage: Librarian doha-provenance reverse check; only 06-25928.h1 should remain.
    e. Owner to decide: the appeal-link fallback that ignores dates; the SOC source that reads any
       letter in the first 8000 chars; whether CAC decisions stay in DOHA_DECISIONS.
@@ -57,44 +58,38 @@ up (tests/_workspace.py), so they run from worktrees too.
    source. Decide whether publication syncs decided lifecycle; re-check WHS for DTM 24-004.
 2. DOHA era changes raise no per-document comparison events; decide whether Question Bot should
    revalidate answers citing a precedent that moved era.
-3. Guidance Watch and comparison owe reviews of older release events (Oct 2 Supervisor: five
-   comparison, six Guidance Watch); comparison acknowledged doha-robot-lf-20260929 as no relevant
-   change. Acknowledge only with hashed receipts.
-4. When the Librarian's ledger has verified provenance rows: import-provenance, then
+3. Preserve voi-20260930-v3's rollback and event evidence. Guidance Watch's six and comparison's
+   five older events stay pending until their own full-source, citation and coverage gates pass;
+   acknowledge only with separate hashed receipts.
+4. Monthly-scan packages: 73 blocked on incomplete coverage (Codex, 2026-10-01); no build.
+5. When the Librarian's ledger has verified provenance rows: import-provenance, then
    build/validate/evaluate/publish (the Rebuilder's 749 retained-bytes-only records).
 
 ## Open Questions
-None open.
+The DOHA policy questions in Next 0b and 0e wait on the owner.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-10-03 Claude — Owner said "publish": published doha-v9-exceptions-20261003 (584 decisions)
+after validate, evaluate 18/18, a store-by-store diff and a dry run; doctor healthy.
+2026-10-03 Claude — Merged Codex's uncommitted 2026-10-02 rewrite of this file (VOI release and
+consumer state) with the DOHA state from PR #24; Codex's archive additions kept. Three older
+Claude entries moved to the archive.
 2026-10-03 Claude — 0b by review v9: rules from samples of each v8 exception reason, measured
 against v8 on every text before any re-plan; spot-checks stratified by v8 reason (first found a
-v9 bug, second the pre-1996 lettering). 0c: the session that took it has ended; see Next 0c.
+v9 bug, second the pre-1996 lettering). Owner verified the spot-check and merged PR #24.
+2026-10-02 Codex — Verified the hash-bound dcsa-compare receipt for doha-robot-lf-20260929; the
+Supervisor reports five comparison and six Guidance Watch events pending. Guidance Watch's
+separate September VOI receipt is complete; no older blocked event was acknowledged.
+2026-10-01 Codex — Published scoped release voi-20260930-v3 after validation and 18/18 retrieval
+evaluation passed. Post-publication doctor healthy (32,498 documents; 16,112 chunks; eight
+verified indexes). Comparison acknowledged; Guidance Watch pending on its own coverage gate.
+2026-10-01 Codex — Recorded 81-package review dispositions and an incomplete-coverage blocker:
+seven exact duplicates, one verified September VOI pending full coverage, 73 packages still
+blocked; no build or publication. Integrity audit passed (32,497, no findings).
 2026-09-29 Claude — test_source_requests and test_workspace_pipeline counted parent folders to
 find the workspace, which fails in a worktree; tests/_workspace.py walks up instead. 165 pass.
-2026-09-29 Claude — Owner merged PR #20. Candidate diffed against the live library: only the
-planned fields change (robot_sha256; index content_sha256/content_bytes; corpus text and topics
-identical; change packet = the 20,862 planned, robot_content_sha256 only). Enriched records of the
-new decisions also gain current_group/doha_group/retrieval_priority, absent since the intake build
-(values agree with the era manifest). Merging is the owner's step (auto mode refuses self-merge).
-Owner said "publish": published doha-robot-lf-20260929; doctor healthy; library all LF.
+2026-09-29 Claude — Owner merged PR #20; candidate diffed against the live library (only the
+planned fields change). Owner said "publish": published doha-robot-lf-20260929; doctor healthy.
 2026-09-29 Claude — Manual `approve` hardcoded scope derived_artifacts_only; it and autonomous
-publish now share release.approval_scope (LIBRARY_STATE source_intake_files decides).
-tests/test_approval_scope.py covers both kinds (fails on the old code); 165 tests pass. PR #21.
-2026-09-29 Claude — Owner said "go do the things". Implemented the LF rewrite as a reviewed input
-(like retirements: rows stay after publication and then count as already applied; the build
-fails closed if a text no longer matches its row) rather than a one-off script, so the change is
-built, validated and published like any other. Code only in doha_release/release/cli, not in the
-modules the Rebuilder vendors. The patches share one staged copy of documents.jsonl and the topic
-index with the era patch, and the index's full text is not touched (already LF). Test fixtures
-that wrote DOHA text with platform line endings now write LF; the new check caught one. Rows
-generated from the live library match last night's survey hash for hash (20,862/20,862).
-Trimmed this file to the 100-line cap (it was ~495 lines).
-2026-09-28 Claude (Atlas rebuild) — Findings from rebuilding the Adjudication Atlas on this
-release (Atlas REPORT.md v1.9): the CRLF texts (since fixed); and in 3 of 4,311 new appeals the
-intake's ruling follows DOHA's digest where it contradicts the Board's Order (Next 0c).
-2026-09-28 Claude (local) — Owner said "Go ahead": dry run first (41,750 changed files; no
-existing decision overwritten), then published doha-bulk-all-20260928 (8 min). doctor healthy.
-DOHA intake of the 20,862 acquired decisions is complete; exceptions and held-library
-corrections remain. Provenance rows committed (PR #19).
+publish now share release.approval_scope (LIBRARY_STATE source_intake_files decides). PR #21.
