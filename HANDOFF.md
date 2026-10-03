@@ -16,8 +16,7 @@ exceptions (= v9b less 95-00863.h1). Sheets there: spotcheck-v9c-premarked.csv (
 (7 for the owner). Next: owner verifies and merges the v9 PR; then provenance append,
 build-candidate --intake-plan, validate, evaluate, owner go-ahead, publish.
 
-Line endings done: doha-robot-lf-20260929 (2026-09-29, owner's go-ahead), all 31,495 DOHA texts
-LF; validation refuses CR in DOHA text (docs/DOHA-LINE-ENDINGS.md). Since then Codex published
+Line endings done (doha-robot-lf-20260929; docs/DOHA-LINE-ENDINGS.md). Since then Codex published
 voi-20260930-v3 (2026-10-01; 32,498 documents), which touched no DOHA store.
 
 Library: 31,495 DOHA decisions since doha-bulk-all-20260928 (2026-09-28 20:24 UTC). The
