@@ -53,7 +53,7 @@ retained bytes are those fetched from that official URL) before building, then
 `build-candidate --intake-plan <out>\intake-plan.json`, `validate`, `evaluate`.
 
 Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
-`doha-intake-plan rule-based review v8` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only; v5 failed its accuracy sample; v6 read guideline names and the decision's own date line; v7 fixed appeal links and double postings; v8 drops guidelines the decision says were not alleged). Do not `publish` a DOHA bulk batch until
+`doha-intake-plan rule-based review v9` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only; v5 failed its accuracy sample; v6 read guideline names and the decision's own date line; v7 fixed appeal links and double postings; v8 drops guidelines the decision says were not alleged; v9 reads the caption and header variants, 1996-97 opening date lines, later and earlier Board order wordings and summary dispositions found among v8's exceptions, see "Review v9" below). Do not `publish` a DOHA bulk batch until
 the owner has spot-checked a sample of its plan items against their PDFs.
 
 ### Ruling types and the decision an appeal reviews (owner decision 2026-09-27)
@@ -163,3 +163,35 @@ date of its own. The two disagree in 35 of the 4,300 planned decisions carrying 
 12 held ones, usually by a day or a mistyped year; none changes era. The rule lives in
 `doha_era`, which the release build applies to every held decision, so the next
 candidate corrects those 12 held dates too.
+
+### Review v9 (2026-09-29): reading what v8 held back
+
+v9 was written from samples of v8's 1,079 exceptions. Each change reads a wording v8 did
+not, and is measured against v8 on the same texts (every published and held decision):
+
+- Identity: captions with en/em or doubled dashes, "ISCR Case:", "ISCR No.", the "ICSR"
+  typo, "CR" where extraction lost "IS", CAC, a footnote digit ("ADP1 Case No."), and
+  DOHA's CASENO header run into the line before or without its colon. A one-character
+  typo in the CASENO header is accepted only when the caption names the listed case
+  exactly. A number is still accepted only when it is the listed case's, so a cited case
+  can never become an identity.
+- Date: the 1996-97 layouts' date line above "Appearances" ("November 7, 1996",
+  "Date: _August 22, 1997_"), used only when no caption date line exists. It changes no
+  published or held date.
+- Hearing outcomes: "consistent with national interest" without "the", "interests", "a
+  position of trust is granted", and the 2016-17 summary dispositions ("he met his
+  ultimate burden of persuasion ... This case is decided for Applicant"). "whether it is
+  clearly consistent" (the question a hearing decides) and 10 U.S.C. 986's "unless a
+  waiver is granted" are boilerplate, not outcomes.
+- Board orders: "The decision in ISCR Case No. ... is AFFIRMED", "The decision of the
+  Judge is ...", "The judgment of the Administrative Judge granting ... is ...", "The
+  case is REMANDED", "the Board reverses the Administrative Judge's favorable ...". The
+  appellant is also named by the appellate burden ("Applicant has failed to meet his
+  burden on appeal of demonstrating error"), never by the merits burden of persuasion.
+
+Against v8, v9 reads no held decision differently where v8 read it at all (it only reads
+more). Of the 20,862 published decisions it reads four differently, each a finding for the
+held-library review rather than a regression: 04-11414.a1 (its digest says a favorable
+decision was remanded, its Order that the judgment denying a clearance was), 08-07803.h1
+and 10-03757.h1 (each contradicts itself), and 06-20964.a1 (the Order names Department
+Counsel's burden, so the appellant is corrected).
