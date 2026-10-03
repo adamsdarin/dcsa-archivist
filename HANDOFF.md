@@ -34,7 +34,7 @@ installed package points at the main checkout); cross-repo tests find the worksp
 0. DOHA, in order (docs/DOHA-INTAKE.md, docs/DOHA-LINE-ENDINGS.md):
    a. Line endings: DONE (doha-robot-lf-20260929); comparison acknowledged it. Atlas may drop its
       CRLF shim.
-   b. Exceptions: v9 candidate in progress (Current State). Of the 495 left: 7 WordPerfect files
+   b. Exceptions: v9 published 584 (Current State). Of the 495 left: 7 WordPerfect files
       DOHA serves as .pdf (owner: convert with LibreOffice?), ~100 that state no date anywhere
       (owner: plan with a listing-bounded era and no date?), identity conflicts for a person
       (listing-label typos, redacted captions), ~160 unsettled topics (not yet diagnosed), the
@@ -70,6 +70,8 @@ The DOHA policy questions in Next 0b and 0e wait on the owner.
 
 ## Log
 Older entries, and this file as it stood before the 2026-09-29 trim: HANDOFF-archive.md.
+2026-10-03 Claude — Owner said "publish": published doha-v9-exceptions-20261003 (584 decisions)
+after validate, evaluate 18/18, a store-by-store diff and a dry run; doctor healthy.
 2026-10-03 Claude — Merged Codex's uncommitted 2026-10-02 rewrite of this file (VOI release and
 consumer state) with the DOHA state from PR #24; Codex's archive additions kept. Three older
 Claude entries moved to the archive.
