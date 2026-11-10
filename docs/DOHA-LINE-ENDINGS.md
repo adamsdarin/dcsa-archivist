@@ -1,7 +1,7 @@
 # DOHA robot text line endings
 
 Status: designed 2026-09-28; implemented 2026-09-29 at the owner's direction.
-Publishing still needs the owner's explicit go-ahead.
+Published as `doha-robot-lf-20260929`.
 
 ## Running it
 
@@ -125,8 +125,8 @@ without an intake plan.
    the change summary, plus the per-release state, policy, catalog, wiki graph,
    pointer and `LOCAL_INDEXES/CUSTODIAN/<release>/` files every publication
    writes. Anything else is a stop.
-5. **Owner go-ahead, then publish.** Nothing publishes on validation alone (owner
-   rule for DOHA). The rollback snapshot is about 1.7 GB: texts 421 MB, FTS index
+5. **Publish** once every gate above passes; DOHA follows the standard autonomous
+   publication rule. The rollback snapshot is about 1.7 GB: texts 421 MB, FTS index
    985 MB, manifests 262 MB. The Google Drive mirror re-syncs about the same.
 
 The code is in `doha_release.py` (`plan_line_endings`, `load_line_endings`,

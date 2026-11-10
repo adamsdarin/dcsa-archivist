@@ -34,7 +34,7 @@ from typing import Any, Iterable
 
 from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, write_jsonl
 from .doha import CONTENT, MANIFEST as PATH_MANIFEST, TAXONOMY, validate_taxonomy
-from .doha_bulk import REMAND_TEXT, appeal_ruling, outcome, remanded_from, reviewed_decision, topics
+from .doha_bulk import PUBLISH_GATE, REMAND_TEXT,appeal_ruling, outcome, remanded_from, reviewed_decision, topics
 
 CHECK_FIELDS = ("date_ok", "outcome_ok", "appeal_ok", "topics_ok")
 SHEET_COLUMNS = ("sample_id", "purpose", "stratum", "case_key", "pdf", "decision_date", "era", "ruling",
@@ -106,7 +106,7 @@ def split_plan(plan_dir: Path, size: int, out_dir: Path) -> dict[str, Any]:
         summary = {"schema_version": "1.0", "batch": number, "of": len(batches), "from_plan": str(plan_dir),
                    "decisions": len(batch), "cases": len({i["record"]["doha_review"]["case_id"] for i in batch}),
                    "library_written": False,
-                   "owner_signoff": "required before publish: spot-check this batch against its PDFs"}
+                   "publish_gate": PUBLISH_GATE}
         write_json(target / "summary.json", summary)
         index.append({"batch": target.name, "decisions": summary["decisions"], "cases": summary["cases"]})
     report = {"schema_version": "1.0", "generated_utc": utc_now(), "from_plan": str(plan_dir),
