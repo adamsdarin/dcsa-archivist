@@ -25,12 +25,11 @@ from __future__ import annotations
 
 import collections
 import difflib
-import json
 import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
 from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json, write_jsonl
 from .doha import MANIFEST as DOHA_MANIFEST, TAXONOMY, validate_taxonomy

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import contextlib
 import sqlite3
 import tempfile

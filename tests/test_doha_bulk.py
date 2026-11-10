@@ -6,7 +6,6 @@ by one that returns prepared text, so pdftotext is not needed.
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 import tempfile
 import unittest

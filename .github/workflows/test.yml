@@ -1,0 +1,41 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e . ruff
+      - name: Lint
+        run: ruff check .
+      # Eight tests build a candidate with the real embedding model, which fastembed
+      # downloads from Hugging Face on first use; cache it so reruns stay offline.
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/dcsa-fastembed
+          key: fastembed-bge-small-en-v1.5-${{ runner.os }}
+      - name: Test
+        # The cross-repository tests (test_source_requests, test_workspace_pipeline)
+        # need the sibling FSO workspace repositories and report as skipped here.
+        env:
+          DCSA_FASTEMBED_CACHE: ${{ runner.temp }}/dcsa-fastembed
+          # Windows runners hand out an 8.3 short temp path (RUNNER~1) that pathlib cannot relate to its resolved form.
+          TMP: ${{ runner.temp }}
+          TEMP: ${{ runner.temp }}
+        run: python -m unittest discover -s tests

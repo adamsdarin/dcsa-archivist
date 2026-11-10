@@ -6,7 +6,7 @@ import sqlite3
 import tempfile
 import unittest
 
-from dcsa_custodian.common import read_json, sha256_file, write_json
+from dcsa_custodian.common import read_json, sha256_file
 from dcsa_custodian.doha import (CONTENT, MANIFEST, PATHS, TAXONOMY, append_cases,
                                 review_metadata, validate_cases)
 
