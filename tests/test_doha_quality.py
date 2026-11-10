@@ -54,6 +54,9 @@ class QualityTests(unittest.TestCase):
             rows = [row["document_id"] for _, row in iter_jsonl(batch / "doha_source_urls.additions.jsonl")]
             self.assertEqual(sorted(rows), sorted(i["record"]["document_id"] for i in items))
             stage_intake(self.library, self.out.parent / f"staged-{entry['batch']}", batch / "intake-plan.json")
+            summary = read_json(batch / "summary.json")
+            self.assertNotIn("owner_signoff", summary, "DOHA batches publish on the standard gates (2026-10-09)")
+            self.assertEqual(summary["publish_gate"], bulk.PUBLISH_GATE)
         self.assertEqual(len(by_case["19-01234"]), 1, "an appeal and the hearing it reviewed share a batch")
         self.assertEqual(len(report["batches"]), 3)
 

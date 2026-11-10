@@ -53,8 +53,12 @@ retained bytes are those fetched from that official URL) before building, then
 `build-candidate --intake-plan <out>\intake-plan.json`, `validate`, `evaluate`.
 
 Owner rule for this intake (2026-09-27): the metadata is rule-derived and signed
-`doha-intake-plan rule-based review v9` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only; v5 failed its accuracy sample; v6 read guideline names and the decision's own date line; v7 fixed appeal links and double postings; v8 drops guidelines the decision says were not alleged; v9 reads the caption and header variants, 1996-97 opening date lines, later and earlier Board order wordings and summary dispositions found among v8's exceptions, see "Review v9" below). Do not `publish` a DOHA bulk batch until
-the owner has spot-checked a sample of its plan items against their PDFs.
+`doha-intake-plan rule-based review v9` (v1 before the 2026-09-27 topic fix; v2 before hearing outcomes were cross-checked; v3 misread older layouts; v4 took topics from one source only; v5 failed its accuracy sample; v6 read guideline names and the decision's own date line; v7 fixed appeal links and double postings; v8 drops guidelines the decision says were not alleged; v9 reads the caption and header variants, 1996-97 opening date lines, later and earlier Board order wordings and summary dispositions found among v8's exceptions, see "Review v9" below).
+
+Publishing (owner decision 2026-10-09, replacing the 2026-09-27 spot-check rule): a DOHA
+bulk batch publishes under the same gates as every other release, once `validate` and
+`evaluate` pass with no publication blockers. No owner go-ahead or plan spot-check is
+required. Each plan and batch `summary.json` records this as `publish_gate`.
 
 ### Ruling types and the decision an appeal reviews (owner decision 2026-09-27)
 
@@ -116,7 +120,7 @@ asks no DOHA questions. Accuracy is therefore measured, not assumed (`doha_quali
    and the hearing it reviewed are published together. Files are hard-linked where the
    disk allows. For each batch: `doha-append-provenance --additions <batch>\doha_source_urls.additions.jsonl`
    (refuses a conflicting row), `build-candidate --intake-plan <batch>\intake-plan.json`,
-   `validate`, `evaluate`, owner spot-check, then publish.
+   `validate`, `evaluate`, then publish when every gate passes.
 5. **Coverage**: after the last batch, rerun the Librarian's `doha-provenance` reverse
    check; the only decision DOHA lists that the library should lack is 06-25928.h1, which
    DOHA publishes as a digest only.

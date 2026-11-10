@@ -38,6 +38,8 @@ from .doha_era import classify
 
 REVIEWER = "doha-intake-plan rule-based review v9"
 PROVENANCE_BASIS = "acquisition_bytes_identical"
+# Owner decision 2026-10-09: DOHA batches publish under the same gates as every other release.
+PUBLISH_GATE = "standard: publish when validate and evaluate pass; no owner sign-off"
 DOCUMENTS = "ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl"
 HUMAN_ROOT = "HUMAN_READABLE_DIRECTORY/PERSONNEL_VETTING/DOHA_DECISIONS"
 ROBOT_ROOT = "ROBOT_READABLE_DIRECTORY/TEXT/PERSONNEL_VETTING/DOHA_DECISIONS"
@@ -914,6 +916,6 @@ def build_plan(library: Path, run_dir: Path, not_held: Path, out_dir: Path,
                "library_root": str(library), "reviewer": REVIEWER, "selection":
                {"group": group, "era": era, "limit": limit, "pilot": pilot},
                "counts": dict(sorted(counts.items())), "library_written": False,
-               "owner_signoff": "required before publish: spot-check a sample of plan items against their PDFs"}
+               "publish_gate": PUBLISH_GATE}
     write_json(out_dir / "summary.json", summary)
     return summary

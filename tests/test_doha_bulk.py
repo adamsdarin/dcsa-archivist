@@ -13,7 +13,7 @@ import unittest
 
 from dcsa_custodian.common import iter_jsonl, read_json, sha256_file, write_json, write_jsonl
 from dcsa_custodian.doha import MANIFEST, TAXONOMY, append_cases
-from dcsa_custodian.doha_bulk import appeal_ruling, build_plan, identity, outcome, topics
+from dcsa_custodian.doha_bulk import PUBLISH_GATE, appeal_ruling,build_plan, identity, outcome, topics
 from dcsa_custodian.intake import stage_intake
 
 DOHA = "https://doha.ogc.osd.mil/Industrial-Security-Program/Industrial-Security-Clearance-Decisions"
@@ -155,6 +155,23 @@ class DohaBulkTests(unittest.TestCase):
 
     def test_selection_by_group_era_and_pilot(self) -> None:
         self.assertEqual(self.build(group="appeals")["counts"]["planned"], 1)
+
+    def test_a_plan_asks_for_no_owner_sign_off(self) -> None:
+        # Owner decision 2026-10-09: DOHA publishes on validate and evaluate alone.
+        summary = self.build()
+        self.assertEqual(read_json(self.out / "summary.json"), summary)
+        self.assertNotIn("owner_signoff", summary)
+        self.assertEqual(summary["publish_gate"], PUBLISH_GATE)
+        self.assertNotIn("required", summary["publish_gate"])
+
+    def test_the_docs_and_variance_report_ask_for_no_owner_go_ahead(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        for name in ("docs/DOHA-INTAKE.md", "docs/DOHA-LINE-ENDINGS.md", "src/dcsa_custodian/release.py",
+                     "src/dcsa_custodian/doha_bulk.py", "src/dcsa_custodian/doha_quality.py"):
+            text = " ".join((root / name).read_text(encoding="utf-8").split()).lower()
+            for phrase in ("explicit go-ahead", "owner go-ahead, then publish", "owner spot-check, then publish",
+                           "until the owner has spot-checked", "receives explicit approval", "owner_signoff"):
+                self.assertNotIn(phrase, text, f"{name} still asks for owner sign-off: {phrase!r}")
 
     def test_an_existing_output_directory_is_refused(self) -> None:
         self.out.mkdir()
