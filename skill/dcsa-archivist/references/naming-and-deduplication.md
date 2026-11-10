@@ -1,5 +1,11 @@
 # Human-readable naming and deduplication
 
+## Contents
+- Naming convention
+- Duplicate resolution
+- Known gotchas
+- Status
+
 Evidence Reviewer owns normalization proposals. New intake uses normalized paths
 in its reviewed plan and Release Manager installs them through staged publication.
 The historical remediation notes below describe pitfalls, not permission to edit

@@ -1,47 +1,34 @@
 ---
 name: dcsa-archivist
-description: Review quarantined DCSA sources, organize and maintain library evidence, and validate and publish governed releases. Use for archival preparation, provenance, lifecycle and retrieval quality; acquisition belongs to Librarian and substantive FSO questions belong to Question Bot.
+description: Reviews quarantined DCSA sources, organizes and maintains library evidence, and validates and publishes governed releases. Use for archival preparation, provenance, lifecycle, and retrieval quality; acquisition belongs to the DCSA Librarian and substantive FSO questions belong to the FSO Question Bot.
 ---
 
 # DCSA Archivist
 
-Operate as the archivist for a governed DCSA retrieval library. The framework is model-agnostic: apply these rules regardless of the model, agent host, or automation runner. Accept only validated intake candidates from the DCSA Librarian; never treat untrusted discovery results as production records.
+Act as the archivist for a governed DCSA retrieval library: the maintenance plane that keeps it a trustworthy, portable retrieval dataset. This skill doesn't answer questions from the corpus.
 
-Maintain the DCSA Library as a trustworthy, portable retrieval dataset. This skill is the maintenance plane; it does not answer questions from the corpus.
+Everything here runs from the Archivist repository; if this is a standalone copy of the skill, locate that repository first. Its `AGENTS.md` is the operating contract and applies in full: library-root resolution, audit before builds, read-only production, release staging, limits on human artifacts, autonomous publication, no automated deletion, and agent routing. Read it before acting.
 
-## Invariants
+## Hard rules
 
-1. Resolve the library root from `custodian.config.json` or an explicit user-confirmed path. Never hardcode a producer path.
-2. Run `python custodian.py audit` before proposing or building changes.
-3. Production is read-only by default. Build all proposed artifacts under `.custodian/releases/<release-id>/`.
-4. Consumer bots remain robot-only. Custodian access to human artifacts is limited to maintenance: existence, format, hash, approved extraction, and parity. Never use human content as answer evidence.
-5. Treat currency, supersession, applicability, and contractor binding as explicit metadata. Do not infer them from filenames or similarity.
-6. Exclude duplicates, unresolved currency, unclassified active content, historical material, and broken parity from default answer indexes.
-7. Use authority/lifecycle gates before lexical or semantic relevance. Guidance cannot independently create an obligation.
-8. Keep `human_source_path` unindexed and citation-only. Chunks and quotations come exclusively from robot content.
-9. Publishing requires a valid and publishable candidate, regression pass, an approval receipt, and rollback snapshot. Structural validity is not publication readiness. Publishing is autonomous: once validation and retrieval evaluation pass with no publication blockers, the pipeline records `approved_by: autonomous-pipeline` in `APPROVAL.json` itself and proceeds â€” a human may still run `approve` first to record a reviewed approval instead, but it is optional. This matches `AGENTS.md` invariant 8; keep the two in sync.
-10. Never delete production source artifacts automatically.
+These add to `AGENTS.md`:
 
-## Modes
+1. Accept only validated intake candidates from the DCSA Librarian. Untrusted discovery results never become production records.
+2. Consumer bots stay robot-only. `human_source_path` stays unindexed and citation-only; chunks and quotations come only from robot content.
+3. Default answer indexes exclude duplicates, unresolved currency, unclassified active content, historical material, and broken parity.
+4. Apply authority and lifecycle gates before lexical or semantic relevance. Guidance can't independently create an obligation.
+5. Structural validity isn't publication readiness: publishing also needs a regression pass, an approval receipt, and a rollback snapshot.
+6. Run `audit` before proposing changes, not only before building a candidate.
+7. When the host runs the agent roles in sequence, say so rather than claiming separate agents ran.
 
-In the repository, route full cycles through `agents/conductor.md` (Library
-Coordinator), source preparation and normalization through `agents/evidence-reviewer.md`,
-and audits/builds/publication through `agents/release-manager.md`. These paths are
-relative to the Archivist repository root. `MAINTAINER_START_HERE.json` declares
-the entries; `docs/AGENT-ROLES.md` defines their handoffs. If using a standalone
-copy of this skill, resolve the repository before invoking these agents. Do not
-claim separate agents ran when the host executed their roles sequentially.
+## Commands and references
 
-- For health, parity, duplicates, metadata conflicts, or index integrity, run `audit`; read [references/audit-and-remediation.md](references/audit-and-remediation.md).
-- For a proposed metadata/chunk/index refresh, run `build-candidate`, then `validate`; read [references/release-workflow.md](references/release-workflow.md).
-- For official currency checks or missing evidence, read [references/currency-and-acquisition.md](references/currency-and-acquisition.md). Route acquisition to Librarian within existing authorization.
-- For authority roles, answer eligibility, and consumer retrieval policy, read [references/authority-and-retrieval.md](references/authority-and-retrieval.md).
-- For human-readable filename conventions or resolving duplicate source files, read [references/naming-and-deduplication.md](references/naming-and-deduplication.md) first â€” it covers case-insensitive-filesystem and stale-metadata traps that are easy to get wrong.
+Run commands as `python custodian.py <command>` from the repository root. The library root comes from `custodian.config.json` or a path the user confirms.
 
-Use the project-local Python runtime command shape:
+- Health, parity, duplicates, metadata conflicts, or index integrity: run `audit` and read [references/audit-and-remediation.md](references/audit-and-remediation.md).
+- Metadata, chunk, or index refresh: run `build-candidate`, then `validate`, and read [references/release-workflow.md](references/release-workflow.md).
+- Official currency checks or missing evidence: read [references/currency-and-acquisition.md](references/currency-and-acquisition.md), and route acquisition to the Librarian within existing authorization.
+- Authority roles, answer eligibility, and consumer retrieval policy: read [references/authority-and-retrieval.md](references/authority-and-retrieval.md).
+- Human-readable filename conventions or duplicate source files: read [references/naming-and-deduplication.md](references/naming-and-deduplication.md) before acting; it covers case-insensitive-filesystem and stale-metadata traps that are easy to get wrong.
 
-```powershell
-python custodian.py <command>
-```
-
-Report candidate findings and unresolved records. `publish` auto-approves only after validation and evaluation pass; optional `approve` records a prior human review.
+Finish by reporting candidate findings and unresolved records.
