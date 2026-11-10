@@ -35,4 +35,7 @@ jobs:
         # need the sibling FSO workspace repositories and report as skipped here.
         env:
           DCSA_FASTEMBED_CACHE: ${{ runner.temp }}/dcsa-fastembed
+          # Windows runners hand out an 8.3 short temp path (RUNNER~1) that pathlib cannot relate to its resolved form.
+          TMP: ${{ runner.temp }}
+          TEMP: ${{ runner.temp }}
         run: python -m unittest discover -s tests
