@@ -116,7 +116,7 @@ asks no DOHA questions. Accuracy is therefore measured, not assumed (`doha_quali
    and the hearing it reviewed are published together. Files are hard-linked where the
    disk allows. For each batch: `doha-append-provenance --additions <batch>\doha_source_urls.additions.jsonl`
    (refuses a conflicting row), `build-candidate --intake-plan <batch>\intake-plan.json`,
-   `validate`, `evaluate`, owner spot-check, then publish.
+   `validate`, `evaluate`, then publish when every gate passes.
 5. **Coverage**: after the last batch, rerun the Librarian's `doha-provenance` reverse
    check; the only decision DOHA lists that the library should lack is 06-25928.h1, which
    DOHA publishes as a digest only.

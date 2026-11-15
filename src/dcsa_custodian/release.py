@@ -75,7 +75,7 @@ def _variance_markdown(audit: dict[str, Any], records: list[dict[str, Any]], chu
         "",
         "## Publication blockers",
         "",
-        "The candidate must not replace the production default retrieval route until currency-unresolved controlling sources are reviewed and the candidate receives explicit approval.",
+        "The candidate must not replace the production default retrieval route until currency-unresolved controlling sources are reviewed and validation and retrieval evaluation pass.",
     ])
     return "\n".join(lines) + "\n"
 
