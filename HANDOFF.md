@@ -1,10 +1,12 @@
 # HANDOFF — dcsa-archivist
 
-Last updated: 2026-11-03 by Claude
+Last updated: 2026-11-14 by Claude
 
 ## Current State
 
-Current approved release is `doha-new-20261103`, published 2026-11-03 on the owner's go-ahead (33,202 documents, doctor healthy). It adds 119 DOHA decisions and brings the October 2026 VOI, which was in the live manifest outside any release, under a governed release. Its comparison and Guidance Watch event is pending. 11 decisions are held out pending reviewed values proposed to the owner. The paragraph below is the older state of the v9 release.
+Current approved release is `voi-rename-20261114`, published 2026-11-14 (33,202 documents, doctor healthy, 18/18 retrieval cases). It renames the August, September and October 2026 VOIs to the collection pattern `Voice of Industry - <Month> <YYYY> Newsletter`; IDs are unchanged and nothing else moved. Its comparison and Guidance Watch event is pending (three path/title changes, no content change). The code behind it is committed on branch `fix/voi-naming-rule` (not pushed, not merged to main): `naming.py` (collection filename patterns, checked by intake and rename staging), `renames.py` and `build-candidate --rename-plan` (staged renames; publication retires the old path into the rollback only when its bytes equal the installed ones). The paragraph below is the prior release.
+
+Prior release `doha-new-20261103`, published 2026-11-03 on the owner's go-ahead (33,202 documents, doctor healthy). It adds 119 DOHA decisions and brings the October 2026 VOI, which was in the live manifest outside any release, under a governed release. Its comparison and Guidance Watch event is pending. 11 decisions are held out pending reviewed values proposed to the owner. The paragraph below is the older state of the v9 release.
 
 Current approved release `doha-v9-exceptions-20261003` adds 584 tier-5 DOHA adjudicative-precedent records only; all are marked not independently binding and exact-case-only, and no existing record changed. The new release event remains pending for both consumers because full-source/citation/product-coverage review and receipts are incomplete. The interrupted Librarian retry left 109 quarantined packages from four sources for identity, parity, and lifecycle review; do not build a candidate until those gates and monthly-source coverage are complete.
 
@@ -58,6 +60,8 @@ up (tests/_workspace.py), so they run from worktrees too.
 None open.
 
 ## Log
+2026-11-14 Claude - Owner asked why three VOIs were off the naming convention and to fix it. Cause: August 2026 kept a one-off script's name through the September cleanup, and the next two reviews copied it as "the convention"; nothing checked a VOI name. Added an enforced collection pattern (src/dcsa_custodian/naming.py) and staged renames (--rename-plan), because publication could add a file but not move one and the contract forbids renaming production directly. Published voi-rename-20261114 from .custodian/incoming/voi-rename-20261114/plan.json; old files are in rollback 20261114T233039617695Z. The August metadata decision's robot path was updated in the same change. 177 tests pass. Committed on fix/voi-naming-rule (not pushed); the three pre-existing edits (two DOHA docs, one release.py line: autonomous-publication wording) went in as their own commit. Not done: a stray 261030_VOI_Newsletter.pdf in the library root, and dcsa-librarian/scripts/intake_voi.py still hardcodes the old August name (historical helper).
+
 2026-10-31 Claude - Guidance Watch completed October 2026 VOI processing (release voi-20261030-v1). Library publication of VOI October 2026 was done in a prior session; Guidance Watch produced 8 findings, 4 new + 3 updated catalog entries, 9 products. Website import succeeded; deployment pending push.
 
 2026-10-05 Claude - Skill-standards audit: skill/dcsa-archivist/SKILL.md now defers to AGENTS.md for the operating contract and keeps only rules AGENTS.md lacks (dropped the 'keep in sync' copy of invariant 8), fixed two mis-encoded dashes, and references/naming-and-deduplication.md gained a contents list. Owner question raised in chat: the skill and AGENTS.md call publication autonomous, while Current State records an owner go-ahead rule for DOHA publishes. Uncommitted.

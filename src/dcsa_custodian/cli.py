@@ -92,6 +92,7 @@ def parser() -> argparse.ArgumentParser:
         if name == "build-candidate":
             cmd.add_argument("--release-id")
             cmd.add_argument("--intake-plan", type=Path, help="Reviewed, hash-bound quarantine additions; stage before publication")
+            cmd.add_argument("--rename-plan", type=Path, help="Reviewed renames of existing sources; stage before publication")
     validate = commands.add_parser("validate")
     validate.add_argument("--library-root")
     validate.add_argument("--release-id", required=True)
@@ -203,7 +204,7 @@ def main() -> int:
             print(json.dumps({"output": str(output), "summary": report["summary"], "quality_blockers": report["quality_blockers"]}, indent=2))
             return 0 if report["summary"]["integrity_healthy"] else 2
         if args.command == "build-candidate":
-            result = build_candidate(PROJECT_ROOT, library_root, config, args.release_id, args.deep, args.intake_plan)
+            result = build_candidate(PROJECT_ROOT, library_root, config, args.release_id, args.deep, args.intake_plan, args.rename_plan)
             print(json.dumps(result, indent=2))
             return 0 if result["validation"]["valid"] else 2
         if args.command == "validate":

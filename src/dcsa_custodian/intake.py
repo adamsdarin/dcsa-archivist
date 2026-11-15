@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from .common import iter_jsonl, read_json, sha256_file, write_jsonl
+from .naming import check_collection_name
 from .release_contract import bounded_path
 from .doha import append_cases, review_metadata, validate_cases, TAXONOMY
 
@@ -71,6 +72,7 @@ def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
                 raise ValueError("intake may not overwrite a source; use a new edition path")
             record[key] = relative
             used.add(relative.casefold())
+        check_collection_name(record)
         record.update(canonical_source_uri=package["resolved_source_uri"],
                       canonical_source_url=package["resolved_source_uri"],
                       source_sha256=package["source_sha256"], robot_sha256=item["robot_sha256"],

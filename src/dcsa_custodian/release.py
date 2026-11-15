@@ -25,6 +25,7 @@ from .semantic import MODEL_NAME, VECTOR_DIM, embed_texts, embed_texts_cached
 from .events import SUMMARY_DIR, build_changes, reconcile_event, summary_history
 from .wiki import build_graph, lint_report
 from .intake import stage_intake
+from .renames import stage_renames
 from .publication_lock import publication_lock
 from .release_contract import STATE, POINTER, CATALOG, QUERY, CONFIG, POLICY, ROUTER, approved_release
 
@@ -193,22 +194,30 @@ def _build_doha_eras(project_root: Path, config: dict[str, Any], root: Path, rel
     return report
 
 
-def build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False, intake_plan: Path | None = None) -> dict[str, Any]:
-    if intake_plan is not None:
+def build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False,
+                    intake_plan: Path | None = None, rename_plan: Path | None = None) -> dict[str, Any]:
+    if intake_plan is not None and rename_plan is not None:
+        raise ValueError("build additions and renames as separate releases")
+    if intake_plan is not None or rename_plan is not None:
         audit = audit_library(root, deep=True)
         if audit["errors"]:
-            raise RuntimeError("production audit failed before intake staging")
+            raise RuntimeError("production audit failed before staging")
         state_root = project_root / config.get("state_directory", ".custodian")
         state_root.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="intake-", dir=state_root) as temporary:
             staged = Path(temporary) / "library"
-            changed = stage_intake(root.resolve(), staged, intake_plan.resolve())
-            return _build_candidate(project_root, staged, config, release_id, True, changed, root)
+            renames = None
+            if intake_plan is not None:
+                changed = stage_intake(root.resolve(), staged, intake_plan.resolve())
+            else:
+                changed, renames = stage_renames(root.resolve(), staged, rename_plan.resolve())
+            return _build_candidate(project_root, staged, config, release_id, True, changed, root, renames)
     return _build_candidate(project_root, root, config, release_id, deep)
 
 
 def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False,
-                     source_files: list[str] | None = None, target_root: Path | None = None) -> dict[str, Any]:
+                     source_files: list[str] | None = None, target_root: Path | None = None,
+                     renames: list[dict[str, str]] | None = None) -> dict[str, Any]:
     release_id = release_id or release_id_now()
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", release_id):
         raise ValueError("invalid release ID")
@@ -318,6 +327,7 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
         "generated_utc": utc_now(),
         "library_root_at_build": str((target_root or root).resolve()),
         "source_intake_files": source_files or [],
+        "source_renames": renames or [],
         "production_integrity_healthy": audit["summary"]["integrity_healthy"],
         "production_response_ready": audit["summary"]["production_response_ready"],
         "candidate_response_ready": not publication_blockers,
@@ -633,26 +643,54 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
         if not target.is_file() or sha256_file(source) != sha256_file(target):
             changed.append(relative)
     changed.sort(key=lambda relative: (relative == POINTER, relative))
-    plan = {"release_id": release_id, "changed_files": changed, "unchanged_files": len(sources) - len(changed),
+    # A reviewed rename retires its old path. It is a move, never a deletion: the
+    # bytes leaving must be the bytes this release installs at the new path.
+    retire = []
+    for move in state.get("source_renames", []):
+        old, new = norm(move["from"]), norm(move["to"])
+        target = (root / old).resolve()
+        if not target.is_relative_to(root.resolve()) or not old.startswith((HUMAN_PREFIX, ROBOT_PREFIX + "TEXT/")):
+            raise ValueError(f"publication path escape: {old}")
+        if old in sources or new not in sources:
+            raise ValueError(f"rename is not a move this release installs: {old}")
+        if target.is_file():
+            if sha256_file(target) != sha256_file(sources[new]):
+                raise RuntimeError(f"source changed since its rename was staged; rebuild the candidate: {old}")
+            retire.append(old)
+    plan = {"release_id": release_id, "changed_files": changed, "retired_files": retire, "unchanged_files": len(sources) - len(changed),
             "overlay": str(overlay), "rollback_snapshot": str(rollback_dir)}
     write_json(overlay.parent / f"{timestamp}-plan.json", plan)
     if dry_run:
         return {"status": "ready_to_publish", **plan}
-    for relative in changed:
+
+    def snapshot(relative: str) -> None:
+        backup = rollback_dir / relative
+        backup.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(root / relative, backup)
+        snapshots.append(relative)
+
+    def install(relative: str) -> None:
         target = root / relative
         if target.exists():
-            backup = rollback_dir / relative
-            backup.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(target, backup)
-            snapshots.append(relative)
+            snapshot(relative)
         target.parent.mkdir(parents=True, exist_ok=True)
         temp = target.with_suffix(target.suffix + ".publishing")
         shutil.copy2(sources[relative], temp)
         os.replace(temp, target)
         copied.append(relative)
+
+    for relative in changed:
+        if relative != POINTER:
+            install(relative)
+    # Old paths go once their replacements are in place and before the pointer commits.
+    for relative in retire:
+        snapshot(relative)
+        (root / relative).unlink()
+    if POINTER in changed:
+        install(POINTER)
     health = approved_release(root, check_integrity=True)
     write_json(overlay.parent / f"{timestamp}-verification.json", {"release_id": release_id, "index_checks": health["index_checks"]})
     write_json(overlay.parent / f"{timestamp}-retrieval-evaluation.json", fresh_evaluation)
     event = reconcile_event(project_root, config, root, release_dir)
-    return {"status": "published", "release_id": release_id, "copied": copied, "snapshots": snapshots, "pointer": pointer,
+    return {"status": "published", "release_id": release_id, "copied": copied, "retired": retire, "snapshots": snapshots, "pointer": pointer,
             "production_response_ready": True, "verified_indexes": len(health["index_checks"]), "handoff": event}

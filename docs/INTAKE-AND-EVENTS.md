@@ -57,8 +57,35 @@ python custodian.py events --library-root "<library>" --consumer fso-guidance-wa
 
 Intake builds currently copy the existing corpus into temporary staging. Budget
 disk space for a corpus copy plus indexes. They support new additions/editions,
-not in-place source replacement. Existing naming remediation remains a separate
-maintenance operation. Empty-root bootstrap is not implemented by this command.
+not in-place source replacement. Empty-root bootstrap is not implemented by this command.
+
+A collection with a filename pattern (`src/dcsa_custodian/naming.py`; today the
+Voice of Industry) refuses an intake path that breaks it. An existing source is
+renamed with a rename plan, built as its own release and staged the same way:
+
+```json
+{
+  "schema_version": "1.0",
+  "renames": [{
+    "document_id": "<existing ID; it does not change>",
+    "human_source_path": "HUMAN_READABLE_DIRECTORY/<collection>/<new name>.pdf",
+    "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/<collection>/<new name>.txt",
+    "title": "<optional new display title>",
+    "review": {"reviewed_by": "<agent or reviewer>", "reviewed_utc": "<ISO timestamp>", "reason": "<naming-rule basis>"}
+  }]
+}
+```
+
+```powershell
+python custodian.py build-candidate --library-root "<library>" --release-id <id> --rename-plan "<plan.json>"
+```
+
+Publication installs the new paths, then retires each old one into the rollback
+snapshot, and only when the bytes leaving equal the bytes installed. The record
+keeps its ID and gains a `rename_history` entry. A metadata decision is bound to
+its record's `robot_text_path`, so update `decisions/metadata_decisions.json` in
+the same change. A path shared by several records, a DOHA decision, a file-type
+change and a case-only rename are refused.
 The constructor still needs the existing manifests, access policies, and DOHA
 router/index framework. Always supply `--library-root`; the old `..` default is
 not the user's evidence corpus.

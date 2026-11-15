@@ -9,9 +9,11 @@
 Evidence Reviewer owns normalization proposals. New intake uses normalized paths
 in its reviewed plan and Release Manager installs them through staged publication.
 The historical remediation notes below describe pitfalls, not permission to edit
-production directly. Existing-file renames/replacements unsupported by release
-tooling remain explicit tooling blockers with proposed old/new paths and required
-reference updates. AGENTS.md's publication-only invariant takes precedence.
+production directly. An existing source is renamed with a reviewed rename plan
+(`build-candidate --rename-plan`, format in `docs/INTAKE-AND-EVENTS.md`), which
+moves the pair, updates both manifests and writes `rename_history`. Replacements
+and case-only renames remain tooling blockers with proposed old/new paths and
+required reference updates. AGENTS.md's publication-only invariant takes precedence.
 
 This reference exists because every rule below was learned the hard way in one long session
 (2026-09-03, see `HANDOFF.md` for the full narrative) and would otherwise only live in that
@@ -39,6 +41,18 @@ superseded-marker convention yet, that's still open. Always preserve the pre-ren
 `rename_history` list field on the manifest record
 (`{previous_human_source_path, previous_robot_text_path, renamed_utc, renamed_by}`) so a future
 re-scrape can still match the document against its old name.
+
+**Collection patterns (enforced):** where a whole collection follows one pattern, take the
+name from the pattern, not from the newest sibling. `src/dcsa_custodian/naming.py` holds the
+patterns and both intake and rename staging refuse a path that breaks one.
+
+- `voi`: `Voice of Industry - <Month> <YYYY> Newsletter.pdf` (`Bulletin` or `Special Bulletin`
+  when DCSA issued one instead), with the robot text under the same name as `.txt`. Read the
+  month and year from the issue's first page, not from DCSA's download filename.
+
+The August 2026 issue kept a one-off script's name (`2026-08 VOI.pdf`) through the September
+cleanup, and the next two intakes copied it as "the established convention". Add a pattern
+here when a collection settles on one, so the next intake cannot repeat that.
 
 ## Duplicate resolution
 

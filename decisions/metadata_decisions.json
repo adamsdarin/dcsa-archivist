@@ -5109,7 +5109,7 @@
     },
     {
       "source_document_id": "dcsa-voi-2026-08-voi",
-      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY_VOI/2026-08 VOI.txt",
+      "robot_text_path": "ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY_VOI/Voice of Industry - August 2026 Newsletter.txt",
       "decision": "verified_current",
       "verified_utc": "2026-09-06T13:37:41Z",
       "verified_by": "dcsa-archivist-currency-sync (record already carried canonical_source_url + Darin's own prior approval)",

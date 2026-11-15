@@ -40,9 +40,10 @@ Use the published catalog for collection paths and taxonomy. Preserve originals.
    disposition per document: ready, unchanged, or blocked with reason/owner/next
    action. No fabricated review evidence or silent omission of blocked items.
 
-Existing-file renames, title overrides and source replacements that the current
-release tooling cannot stage are tooling blockers. Record the proposed old/new
-paths and required manifest/relationship/decision updates for Release Manager;
+Rename an existing source with a reviewed rename plan (`docs/INTAKE-AND-EVENTS.md`)
+and update any metadata decision bound to its old robot path in the same change.
+Source replacements and anything else the release tooling cannot stage are tooling
+blockers. Record the proposed old/new paths and required updates for Release Manager;
 never rename production directly or claim the rename is complete. Automatic
 duplicate handling retains source artifacts. Do not delete production sources.
 

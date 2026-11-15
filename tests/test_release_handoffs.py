@@ -28,8 +28,8 @@ class HandoffTests(unittest.TestCase):
             'source_sha256': sha256_file(folder / 'source.pdf'), 'source_bytes': (folder / 'source.pdf').stat().st_size,
         })
         record = {'document_id': 'new-voi', 'collection_id': 'voi', 'domain': 'industrial_security', 'authority_tier': 7,
-                  'current_status': 'current', 'human_source_path': 'HUMAN_READABLE_DIRECTORY/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY/2026-09_VOI.pdf',
-                  'robot_text_path': 'ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY/2026-09_VOI.txt'}
+                  'current_status': 'current', 'human_source_path': 'HUMAN_READABLE_DIRECTORY/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY/Voice of Industry - September 2026 Newsletter.pdf',
+                  'robot_text_path': 'ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY/Voice of Industry - September 2026 Newsletter.txt'}
         item = {'package': 'source.pdf.intake.json', 'robot_file': 'robot.txt', 'robot_sha256': sha256_file(folder / 'robot.txt'),
                 'record': record, 'review': {k: 'synthetic evidence' for k in ('identity','provenance','extraction','parity','taxonomy','lifecycle')}}
         item['review'].update(reviewed_by='test-agent', reviewed_utc='2026-09-11T00:00:00Z')
@@ -59,6 +59,86 @@ class HandoffTests(unittest.TestCase):
             packet = next(p for p in packets if p['event']['event_id'] == 'intake-test')
             self.assertEqual([c['document_id'] for c in packet['changes']['changes']], ['new-voi'])
             self.assertFalse(comparison_report(packet['changes'])['supersession_verified'])
+
+    def test_intake_refuses_a_voi_name_off_the_collection_pattern(self):
+        self.publish()
+        plan, record = self.plan()
+        folder = 'INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY'
+        for human, robot, message in (
+                ('2026-09 VOI.pdf', '2026-09 VOI.txt', 'filename must be'),
+                ('Voice of Industry - September 2026 Newsletter.pdf', '2026-09 VOI.txt', "share the source's name")):
+            content = read_json(plan)
+            content['items'][0]['record'].update(human_source_path=f'HUMAN_READABLE_DIRECTORY/{folder}/{human}',
+                                                 robot_text_path=f'ROBOT_READABLE_DIRECTORY/TEXT/{folder}/{robot}')
+            write_json(plan, content)
+            with self.assertRaisesRegex(ValueError, message):
+                self.build(plan, 'misnamed')
+        self.assertFalse((self.project / '.custodian/releases/misnamed').exists())
+
+    def rename_plan(self, **item):
+        folder = self.project / 'renames'
+        folder.mkdir(exist_ok=True)
+        entry = {'document_id': 'rule', 'human_source_path': 'HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/32 CFR Part 117.pdf',
+                 'robot_text_path': 'ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/32 CFR Part 117.txt', 'title': '32 CFR Part 117',
+                 'review': {'reviewed_by': 'test-agent', 'reviewed_utc': '2026-11-14T00:00:00Z', 'reason': 'name the rule by its citation'}}
+        entry.update(item)
+        write_json(folder / 'plan.json', {'schema_version': '1.0', 'renames': [entry]})
+        return folder / 'plan.json', entry
+
+    def build_rename(self, plan, identity='rename-test'):
+        with patch('dcsa_custodian.release.embed_texts', side_effect=lambda texts: [bytes(1536) for _ in texts]):
+            return build_candidate(self.project, self.root, self.config, identity, rename_plan=plan)
+
+    def test_rename_stays_staged_then_publication_moves_the_pair(self):
+        self.publish()
+        plan, entry = self.rename_plan()
+        manifest = self.root / 'ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl'
+        old = {key: json.loads(manifest.read_text(encoding='utf-8').splitlines()[0])[key] for key in ('human_source_path', 'robot_text_path')}
+        bytes_before = {key: sha256_file(self.root / path) for key, path in old.items()}
+        before = {str(p.relative_to(self.root)): sha256_file(p) for p in self.root.rglob('*') if p.is_file()}
+        release = Path(self.build_rename(plan)['release_directory'])
+        self.assertEqual(before, {str(p.relative_to(self.root)): sha256_file(p) for p in self.root.rglob('*') if p.is_file()})
+        preview = publish_candidate(self.project, self.root, self.config, release, dry_run=True)
+        self.assertEqual(sorted(preview['retired_files']), sorted(old.values()))
+        self.assertTrue(all((self.root / path).is_file() for path in old.values()))
+        published = publish_candidate(self.project, self.root, self.config, release)
+        self.assertTrue(readiness(self.root)['ready'])
+        self.assertEqual(published['copied'][-1], 'ROBOT_READABLE_DIRECTORY/STATE/CURRENT_CUSTODIAN_RELEASE.json')
+        for key, path in old.items():
+            self.assertFalse((self.root / path).exists())
+            self.assertEqual(sha256_file(self.root / entry[key]), bytes_before[key])
+            self.assertEqual(sha256_file(Path(published['pointer']['rollback_snapshot']) / path), bytes_before[key])
+        record = json.loads(manifest.read_text(encoding='utf-8').splitlines()[0])
+        self.assertEqual((record['document_id'], record['title'], record['human_source_path']), ('rule', '32 CFR Part 117', entry['human_source_path']))
+        self.assertEqual(record['rename_history'][-1]['previous_human_source_path'], old['human_source_path'])
+        pair = json.loads((self.root / 'ROBOT_READABLE_DIRECTORY/MANIFESTS/relationships.jsonl').read_text(encoding='utf-8').splitlines()[0])
+        self.assertEqual(pair['robot_text_path'], entry['robot_text_path'])
+        changes = read_json(release / 'reports/RELEASE_CHANGES.json')['changes']
+        self.assertEqual([(c['document_id'], c['kind']) for c in changes], [('rule', 'changed')])
+        # publishing the same release again finds nothing left to retire
+        self.assertEqual(publish_candidate(self.project, self.root, self.config, release)['retired'], [])
+
+    def test_rename_refuses_overwrites_type_changes_and_unknown_documents(self):
+        self.publish()
+        taken = 'HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/taken.pdf'
+        (self.root / taken).write_bytes(b'%PDF-other')
+        for item, message in (({'human_source_path': taken}, 'may not overwrite'),
+                              ({'human_source_path': 'HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/rule.docx'}, 'file type'),
+                              ({'document_id': 'absent'}, 'exactly one manifest record'),
+                              ({'review': {'reviewed_by': 'test-agent'}}, 'review receipt')):
+            plan, _ = self.rename_plan(**item)
+            with self.assertRaisesRegex(ValueError, message):
+                self.build_rename(plan, 'bad-rename')
+        self.assertTrue((self.root / 'HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/rule.pdf').is_file())
+
+    def test_rename_is_not_published_once_the_source_bytes_change(self):
+        self.publish()
+        plan, _ = self.rename_plan()
+        release = Path(self.build_rename(plan)['release_directory'])
+        (self.root / 'HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/rule.pdf').write_bytes(b'%PDF-edited-after-staging')
+        with self.assertRaisesRegex(RuntimeError, 'source changed since its rename was staged'):
+            publish_candidate(self.project, self.root, self.config, release)
+        self.assertTrue((self.root / 'HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/rule.pdf').is_file())
 
     def test_change_summaries_are_published_bound_and_cumulative(self):
         self.publish()

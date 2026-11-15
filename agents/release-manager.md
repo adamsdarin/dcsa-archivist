@@ -17,8 +17,9 @@ authorizes a publication. Reviewed maintenance cycles retain autonomous publicat
    and add `--intake-plan <plan>` for reviewed additions. This uses the existing
    deterministic chunk, index, embedding, directive, DOHA and navigation tools;
    do not replace their results with generated summaries. Never use the legacy
-   Librarian direct-writing intake helper. Unsupported production rename or
-   replacement proposals remain blocked pending staged-tool support.
+   Librarian direct-writing intake helper. Reviewed renames are their own release:
+   `--rename-plan <plan>` instead of `--intake-plan`. Replacement proposals remain
+   blocked pending staged-tool support.
 3. Inspect candidate audit, applied decisions, remediation queue, variance and
    change reports. Check that the actual change set matches the assigned scope;
    unexplained source-manifest changes must be reconciled before publication.
