@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import collections
 import contextlib
+import copy
 import json
 import os
 import shutil
 import sqlite3
 import tempfile
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
-from .audit import audit_library
+from . import runcache
+from .audit import approved_release_once, audit_library
 from .chunks import build_chunks
-from .common import HUMAN_PREFIX, ROBOT_PREFIX, iter_jsonl, norm, read_json, sha256_file, sha256_text, utc_now, write_json, write_jsonl
+from .common import (HUMAN_PREFIX, ROBOT_PREFIX, decode_text, hash_files, iter_jsonl, map_ordered, norm, read_json,
+                     sha256_bytes, sha256_file, sha256_text, utc_now, write_json, write_jsonl)
+from .staging import remove_files, verify_untouched
 from .decisions import apply_metadata_decisions, load_metadata_decisions
 from .directive_splits import build_directive_splits
 from . import doha_release
@@ -27,7 +31,8 @@ from .wiki import build_graph, lint_report
 from .intake import stage_intake
 from .renames import stage_renames
 from .publication_lock import publication_lock
-from .release_contract import STATE, POINTER, CATALOG, QUERY, CONFIG, POLICY, ROUTER, approved_release
+from .release_contract import STATE, POINTER, CATALOG, QUERY, CONFIG, POLICY, ROUTER, approved_release, bounded_path
+from .catalog import catalog_differences, collection_catalog
 
 
 def release_id_now() -> str:
@@ -194,12 +199,53 @@ def _build_doha_eras(project_root: Path, config: dict[str, Any], root: Path, rel
     return report
 
 
+def embedding_cache_path(project_root: Path, config: dict[str, Any]) -> Path:
+    """Config `embedding_cache`, else `<state_directory>/embedding_cache.sqlite`.
+
+    The cache is keyed by model and text hash, so it is valid for any library. A run with
+    its own `state_directory` otherwise starts with an empty cache and embeds every chunk.
+    """
+    configured = config.get("embedding_cache")
+    if configured:
+        return project_root / configured
+    return project_root / config.get("state_directory", ".custodian") / "embedding_cache.sqlite"
+
+
+def seed_embedding_cache(project_root: Path, config: dict[str, Any], cache: Path) -> dict[str, Any] | None:
+    """Start a cache that does not exist yet from config `embedding_cache_seed`, read-only.
+
+    For a run that must not write to the cache it borrows from (a rehearsal beside the
+    live state): the seed is opened read-only and copied once; new vectors go to `cache`.
+    """
+    configured = config.get("embedding_cache_seed")
+    if not configured or cache.exists():
+        return None
+    seed = project_root / configured
+    if not seed.is_file() or seed.resolve() == cache.resolve():
+        return {"seed": str(seed), "copied": False, "reason": "seed not found"}
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with contextlib.closing(sqlite3.connect(f"file:{seed.as_posix()}?mode=ro", uri=True)) as source, \
+                contextlib.closing(sqlite3.connect(cache)) as target:
+            source.backup(target)
+    except sqlite3.Error as exc:
+        cache.unlink(missing_ok=True)
+        return {"seed": str(seed), "copied": False, "reason": f"seed unreadable: {exc}"}
+    return {"seed": str(seed), "copied": True}
+
+
 def build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False,
                     intake_plan: Path | None = None, rename_plan: Path | None = None) -> dict[str, Any]:
     if intake_plan is not None and rename_plan is not None:
         raise ValueError("build additions and renames as separate releases")
     if intake_plan is not None or rename_plan is not None:
-        audit = audit_library(root, deep=True)
+        # The gate before staging: the library must audit clean before it is copied. It runs
+        # without `deep` because that flag adds no check, only the human-file hashes the
+        # enrichment needs, and those are taken from the staged copy below (a full byte
+        # copy of this library plus the reviewed change). Every error this audit can raise
+        # is raised with or without them, so the gate is the same and about five minutes
+        # of re-reading 13 GB are not spent twice.
+        audit = audit_library(root, deep=False)
         if audit["errors"]:
             raise RuntimeError("production audit failed before staging")
         state_root = project_root / config.get("state_directory", ".custodian")
@@ -207,17 +253,25 @@ def build_candidate(project_root: Path, root: Path, config: dict[str, Any], rele
         with tempfile.TemporaryDirectory(prefix="intake-", dir=state_root) as temporary:
             staged = Path(temporary) / "library"
             renames = None
-            if intake_plan is not None:
-                changed = stage_intake(root.resolve(), staged, intake_plan.resolve())
-            else:
-                changed, renames = stage_renames(root.resolve(), staged, rename_plan.resolve())
-            return _build_candidate(project_root, staged, config, release_id, True, changed, root, renames)
+            # Unchanged files are staged as hard links to the library's own bytes, not as a
+            # second 13 GB copy (staging.py). `staging` records how, and what each linked
+            # library file looked like, so the build can prove before sealing that it
+            # wrote nothing through a link.
+            staging: dict[str, Any] = {}
+            try:
+                if intake_plan is not None:
+                    changed = stage_intake(root.resolve(), staged, intake_plan.resolve(), staging)
+                else:
+                    changed, renames = stage_renames(root.resolve(), staged, rename_plan.resolve(), staging)
+                return _build_candidate(project_root, staged, config, release_id, True, changed, root, renames, staging)
+            finally:
+                remove_files(staged)  # in parallel; the temporary directory removes what is left
     return _build_candidate(project_root, root, config, release_id, deep)
 
 
 def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], release_id: str | None = None, deep: bool = False,
                      source_files: list[str] | None = None, target_root: Path | None = None,
-                     renames: list[dict[str, str]] | None = None) -> dict[str, Any]:
+                     renames: list[dict[str, str]] | None = None, staging: dict[str, Any] | None = None) -> dict[str, Any]:
     release_id = release_id or release_id_now()
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", release_id):
         raise ValueError("invalid release ID")
@@ -237,7 +291,15 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
         live = target_root / doha_release.ERA_MANIFEST
         held = {row["document_id"] for _, row in iter_jsonl(live)} if live.is_file() else set()
         pending = {row["document_id"] for _, row in iter_jsonl(root / doha_release.PATH_MANIFEST)} - held
-    audit = audit_library(root, deep=deep, pending_doha=pending)
+    staged_additions = None
+    if target_root is not None:
+        # Documents this build staged are in no published derived artifact yet; anything
+        # else the derived artifacts lack or still hold is drift and is reported.
+        def manifest_ids(library: Path) -> set[str]:
+            documents = read_json(library / "START_HERE_FOR_ROBOTS.json")["documents"]
+            return {str(row.get("document_id")) for _, row in iter_jsonl(library / norm(documents))}
+        staged_additions = manifest_ids(root) - manifest_ids(target_root)
+    audit = audit_library(root, deep=deep, pending_doha=pending, pending_intake=staged_additions)
     if audit["errors"]:
         raise RuntimeError(f"production integrity audit failed with {len(audit['errors'])} blocking errors")
     write_json(release_dir / "reports/PRODUCTION_AUDIT.json", audit)
@@ -257,6 +319,12 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     doha_report = _build_doha_eras(project_root, config, root, release_dir, records)
     enriched_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl"
     write_jsonl(enriched_path, records)
+    catalog_relative = entry.get("catalog")
+    if catalog_relative:
+        # Derived like everything else here, so a tool-only intake keeps the counts right.
+        catalog_source = bounded_path(root, catalog_relative, ROBOT_PREFIX)
+        existing_catalog = read_json(catalog_source) if catalog_source.is_file() else None
+        write_json(release_dir / "production" / norm(catalog_relative), collection_catalog(records, existing_catalog))
     remediation_queue = _remediation_queue(records)
     write_jsonl(release_dir / "reports/REMEDIATION_QUEUE.jsonl", remediation_queue)
 
@@ -292,8 +360,11 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     write_json(release_dir / "reports/WIKI_LINT.json", lint_report(records, f"candidate:{release_id}"))
 
     # DCSA_EMBED_CACHE=0 embeds everything afresh, e.g. to rule the cache out.
-    cache = None if os.environ.get("DCSA_EMBED_CACHE", "1").strip() == "0" else state_root / "embedding_cache.sqlite"
+    cache = None if os.environ.get("DCSA_EMBED_CACHE", "1").strip() == "0" else embedding_cache_path(project_root, config)
+    seeded = seed_embedding_cache(project_root, config, cache) if cache is not None else None
     embedded_vectors, embedding_stats = embed_texts_cached([chunk["content"] for chunk in chunks], cache, embed_texts)
+    if seeded:
+        embedding_stats["seed"] = seeded
     write_json(release_dir / "reports/EMBEDDING_CACHE.json", embedding_stats)
     chunk_vectors = {chunk["chunk_id"]: vector for chunk, vector in zip(chunks, embedded_vectors)}
 
@@ -353,9 +424,16 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     (release_dir / "reports/VARIANCE_REPORT.md").write_text(_variance_markdown(audit, records, chunks, catalog), encoding="utf-8", newline="\n")
     evaluation = evaluate_candidate(release_dir, project_root / "evals/golden_queries.json")
     write_json(release_dir / "reports/RETRIEVAL_EVALUATION.json", evaluation)
-    manifest_files = []
-    for path in sorted(p for p in release_dir.rglob("*") if p.is_file()):
-        manifest_files.append({"path": path.relative_to(release_dir).as_posix(), "sha256": sha256_file(path), "bytes": path.stat().st_size})
+    if staging is not None and target_root is not None:
+        # Before the candidate is sealed: every library file that was linked into the
+        # staged root is still the file it was. A change raises and no manifest is written.
+        write_json(release_dir / "reports/STAGING.json", {
+            "schema_version": "1.0", **{key: value for key, value in staging.items() if key != "guard"},
+            "library_untouched": verify_untouched(target_root, staging),
+        })
+    sealed = sorted(p for p in release_dir.rglob("*") if p.is_file())
+    manifest_files = [{"path": path.relative_to(release_dir).as_posix(), "sha256": digest, "bytes": path.stat().st_size}
+                      for path, digest in zip(sealed, runcache.current().sha256_many(sealed, fresh=True))]
     release_manifest = {
         "schema_version": "1.0", "release_id": release_id, "status": "candidate_unapproved",
         "created_utc": utc_now(), "files": manifest_files,
@@ -366,15 +444,81 @@ def _build_candidate(project_root: Path, root: Path, config: dict[str, Any], rel
     return {"release_id": release_id, "release_directory": str(release_dir), "validation": validation, "state": state}
 
 
+BOUND_FOLDERS = ("production", "indexes", "reports")
+
+
+def candidate_bindings(release_dir: Path) -> dict[str, str]:
+    """SHA-256 of every candidate file validation can read: the manifest and all of production/, indexes/ and reports/."""
+    files = [release_dir / "RELEASE_MANIFEST.json"]
+    for folder in BOUND_FOLDERS:
+        files.extend(sorted(path for path in (release_dir / folder).rglob("*") if path.is_file()))
+    return {path.relative_to(release_dir).as_posix(): digest
+            for path, digest in zip(files, runcache.current().sha256_many(files))}
+
+
+def library_bindings(root: Path, relatives: Iterable[str]) -> dict[str, str | None]:
+    """SHA-256 (None when absent) of each library file a validation resolved to the library."""
+    cache = runcache.current()
+    relatives = sorted(relatives)
+
+    def bind(relative: str) -> str | None:
+        path = root / relative
+        return cache.sha256(path) if path.is_file() else None
+
+    return dict(zip(relatives, map_ordered(bind, relatives)))
+
+
 def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
+    """Validate a candidate. The same validation is not computed twice in one run.
+
+    A validation is a function of the candidate's files, the library files it resolves
+    through the candidate, this code and the day. The first validation in a process
+    records exactly those inputs by SHA-256. A later one in the same process (the
+    ``validate`` step after the build, the dry run, the publication) binds every one of
+    them again: each candidate file and each library file must be the same file with the
+    same size and modification time as when this run read and hashed it, or it is read
+    and hashed again. When every hash is equal the earlier report is returned with
+    ``reused`` naming what it was bound to; when anything differs, or with
+    ``DCSA_REREAD=1``, the validation is computed again in full. Nothing is kept
+    between processes.
+    """
+    cache = runcache.current()
+    if not (release_dir / "RELEASE_MANIFEST.json").is_file():
+        return {"valid": False, "errors": ["missing RELEASE_MANIFEST.json"]}
+    candidate = candidate_bindings(release_dir)
+    slot = str(release_dir.resolve())
+    circumstances = (runcache.code_fingerprint(), date.today().isoformat())
+    held = cache.peek("validation", slot) if cache.trust_unchanged else None
+    if held and held["circumstances"] == circumstances and held["candidate"] == candidate \
+            and library_bindings(root, held["library"]) == held["library"]:
+        cache.counts["validation_reused"] += 1
+        return {**copy.deepcopy(held["report"]), "reused": {
+            "validated_utc": held["report"]["validated_utc"], "checked_utc": utc_now(),
+            "bound_to": {"candidate_files": len(candidate), "candidate_sha256": runcache.fingerprint(candidate),
+                         "library_files": len(held["library"]), "library_sha256": runcache.fingerprint(held["library"]),
+                         "code_sha256": circumstances[0], "day": circumstances[1]},
+            "proof": "every bound file is the same file, size and modification time as when this process read and "
+                     "hashed it, or was read and hashed again; all hashes equal the validated ones",
+        }}
+    with doha_release.track_library_reads() as reads:
+        report = _validate(root, release_dir, candidate, reads)
+    if cache.trust_unchanged and report.get("valid"):  # a failure is always computed again
+        cache.put("validation", slot, {"circumstances": circumstances, "candidate": candidate,
+                                       "library": library_bindings(root, reads), "report": copy.deepcopy(report)})
+    else:
+        cache.put("validation", slot, None)
+    return report
+
+
+def _validate(root: Path, release_dir: Path, candidate: dict[str, str], reads: set[str]) -> dict[str, Any]:
+    cache = runcache.current()
     errors: list[str] = []
     manifest_path = release_dir / "RELEASE_MANIFEST.json"
-    if not manifest_path.is_file():
-        return {"valid": False, "errors": ["missing RELEASE_MANIFEST.json"]}
     manifest = read_json(manifest_path)
     for item in manifest["files"]:
         path = release_dir / item["path"]
-        if not path.is_file() or sha256_file(path) != item["sha256"]:
+        digest = candidate.get(item["path"]) or (cache.sha256(path) if path.is_file() else None)
+        if digest != item["sha256"]:
             errors.append(f"release file hash mismatch: {item['path']}")
     evaluation_path = release_dir / "reports/RETRIEVAL_EVALUATION.json"
     if not evaluation_path.is_file() or not read_json(evaluation_path).get("passed"):
@@ -398,6 +542,15 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
         if record.get("duplicate_of") and record.get("answer_eligibility") != "excluded_duplicate":
             errors.append(f"duplicate not excluded: {record.get('document_id')}")
 
+    # A candidate that carries the collection catalog must carry one that counts its own records.
+    entry_path = root / "START_HERE_FOR_ROBOTS.json"
+    reads.update(("START_HERE_FOR_ROBOTS.json", doha_release.PATH_MANIFEST, doha_release.CONTENT))
+    catalog_relative = read_json(entry_path).get("catalog") if entry_path.is_file() else None
+    staged_catalog = release_dir / "production" / norm(catalog_relative) if catalog_relative else None
+    if staged_catalog is not None and staged_catalog.is_file():
+        for difference in catalog_differences(read_json(staged_catalog), records):
+            errors.append(f"collection catalog disagrees with the candidate manifest: {difference['collection_id']}")
+
     # Every candidate of a library holding DOHA decisions must carry eras that follow
     # the decision date, consistently in every store, recomputed from the text.
     production = release_dir / "production"
@@ -410,14 +563,36 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
         errors.extend(doha_release.check_texts(production, root, enriched_path))
 
     chunks_path = release_dir / "production/ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
-    source_cache: dict[str, str] = {}
+    def source_text(robot_rel: str) -> str:
+        staged_source = release_dir / "production" / robot_rel
+        if staged_source.is_file():
+            path = staged_source
+        else:
+            reads.add(robot_rel)
+            path = root / robot_rel
+        token, _ = cache.lookup(path)
+        data = path.read_bytes()
+        cache.store(token, sha256_bytes(data))
+        return decode_text(data)
+
+    def read_ahead(robot_rel: str) -> str | None:
+        try:
+            return source_text(robot_rel)
+        except OSError:
+            return None  # read again below, where a missing source raises as it always did
+
+    # The robot source of every chunked record is read once, on every core, before the
+    # chunks are checked against it in order.
+    chunked = list(dict.fromkeys(norm(record.get("robot_text_path")) for record in records
+                                 if record.get("collection_id") != "doha_decisions" and not record.get("duplicate_of")))
+    source_cache: dict[str, str] = {robot_rel: text for robot_rel, text in zip(chunked, map_ordered(read_ahead, chunked))
+                                    if text is not None}
     chunk_count = 0
     for _, chunk in iter_jsonl(chunks_path):
         chunk_count += 1
         robot_rel = norm(chunk["robot_text_path"])
         if robot_rel not in source_cache:
-            staged_source = release_dir / "production" / robot_rel
-            source_cache[robot_rel] = (staged_source if staged_source.is_file() else root / robot_rel).read_text(encoding="utf-8", errors="replace")
+            source_cache[robot_rel] = source_text(robot_rel)
         if chunk["content"] not in source_cache[robot_rel]:
             errors.append(f"chunk not found verbatim in robot source: {chunk['chunk_id']}")
         if sha256_text(chunk["content"]) != chunk["content_sha256"]:
@@ -449,23 +624,29 @@ def validate_candidate(root: Path, release_dir: Path) -> dict[str, Any]:
             if sha256_text(body) != section["body_sha256"]:
                 errors.append(f"{directive}: {section['file']} body hash does not match manifest.json")
 
-    index_results = []
-    for index_path in sorted((release_dir / "indexes").glob("*.sqlite")):
+    def check_index(index_path: Path) -> tuple[list[str], dict[str, Any]]:
+        problems: list[str] = []
         with contextlib.closing(sqlite3.connect(f"file:{index_path.as_posix()}?mode=ro", uri=True)) as conn:
             integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
             count = conn.execute("SELECT count(*) FROM corpus").fetchone()[0]
             if integrity != "ok":
-                errors.append(f"index integrity failure: {index_path.name}")
+                problems.append(f"index integrity failure: {index_path.name}")
             bad_paths = conn.execute("SELECT count(*) FROM corpus WHERE robot_text_path NOT LIKE 'ROBOT_READABLE_DIRECTORY/%' OR human_source_path NOT LIKE 'HUMAN_READABLE_DIRECTORY/%'").fetchone()[0]
             if bad_paths:
-                errors.append(f"index path boundary failure: {index_path.name} ({bad_paths})")
+                problems.append(f"index path boundary failure: {index_path.name} ({bad_paths})")
             vector_count = conn.execute("SELECT count(*) FROM vectors").fetchone()[0]
             if vector_count != count:
-                errors.append(f"vector coverage mismatch: {index_path.name} ({vector_count} vectors for {count} chunks)")
+                problems.append(f"vector coverage mismatch: {index_path.name} ({vector_count} vectors for {count} chunks)")
             orphan_vectors = conn.execute("SELECT count(*) FROM vectors WHERE chunk_id NOT IN (SELECT chunk_id FROM corpus)").fetchone()[0]
             if orphan_vectors:
-                errors.append(f"orphaned vectors with no corpus chunk: {index_path.name} ({orphan_vectors})")
-            index_results.append({"path": index_path.name, "integrity": integrity, "chunks": count, "vectors": vector_count})
+                problems.append(f"orphaned vectors with no corpus chunk: {index_path.name} ({orphan_vectors})")
+        return problems, {"path": index_path.name, "integrity": integrity, "chunks": count, "vectors": vector_count}
+
+    # Every index gets every check; the indexes are checked side by side and reported in name order.
+    index_results = []
+    for problems, result in map_ordered(check_index, sorted((release_dir / "indexes").glob("*.sqlite"))):
+        errors.extend(problems)
+        index_results.append(result)
     valid = not errors
     return {
         "schema_version": "1.0",
@@ -540,8 +721,8 @@ def _publish_candidate(project_root: Path, root: Path, config: dict[str, Any], r
     # staged, reproducible overlay, never a copy of candidate_unapproved state.
     overlay = release_dir / "publication" / timestamp
     catalog = read_json(production_root / CATALOG)
-    for item in catalog["indexes"]:
-        item["sha256"] = sha256_file(release_dir / item["path"])
+    for item, digest in zip(catalog["indexes"], hash_files([release_dir / item["path"] for item in catalog["indexes"]])):
+        item["sha256"] = digest
     query = read_json(production_root / QUERY)
     query["indexes"] = catalog["indexes"]
     state = read_json(production_root / STATE)
@@ -635,13 +816,22 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
         sources[f"LOCAL_INDEXES/CUSTODIAN/{release_id}/{source.name}"] = source
     # Reject path escapes before writing anything. Install the pointer last so a
     # partially completed publication cannot appear to be a coherent new release.
-    changed = []
-    for relative, source in sources.items():
+    targets: dict[str, Path] = {}
+    library = root.resolve()
+    for relative in sources:
         target = (root / relative).resolve()
-        if not target.is_relative_to(root.resolve()):
+        if not target.is_relative_to(library):
             raise ValueError(f"publication path escape: {relative}")
-        if not target.is_file() or sha256_file(source) != sha256_file(target):
-            changed.append(relative)
+        targets[relative] = target
+
+    def differs(relative: str) -> bool:
+        # Both sides are read in full here, whatever this run has read before: this
+        # comparison decides which bytes publication installs.
+        target = targets[relative]
+        return not target.is_file() or sha256_file(sources[relative]) != sha256_file(target)
+
+    names = list(sources)
+    changed = [relative for relative, different in zip(names, map_ordered(differs, names)) if different]
     changed.sort(key=lambda relative: (relative == POINTER, relative))
     # A reviewed rename retires its old path. It is a move, never a deletion: the
     # bytes leaving must be the bytes this release installs at the new path.
@@ -658,7 +848,9 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
                 raise RuntimeError(f"source changed since its rename was staged; rebuild the candidate: {old}")
             retire.append(old)
     plan = {"release_id": release_id, "changed_files": changed, "retired_files": retire, "unchanged_files": len(sources) - len(changed),
-            "overlay": str(overlay), "rollback_snapshot": str(rollback_dir)}
+            "overlay": str(overlay), "rollback_snapshot": str(rollback_dir),
+            # Whether this step computed the validation or reused this run's, and what a reused one was bound to.
+            "validation": {"validated_utc": validation["validated_utc"], "reused": validation.get("reused")}}
     write_json(overlay.parent / f"{timestamp}-plan.json", plan)
     if dry_run:
         return {"status": "ready_to_publish", **plan}
@@ -688,7 +880,9 @@ Automated consumers must use `START_HERE_FOR_ROBOTS.json` as the canonical entry
         (root / relative).unlink()
     if POINTER in changed:
         install(POINTER)
-    health = approved_release(root, check_integrity=True)
+    # The published library is verified in full here; the event step below asks the same
+    # question of the same bytes and is given this answer (audit.approved_release_once).
+    health = approved_release_once(root, check_integrity=True)
     write_json(overlay.parent / f"{timestamp}-verification.json", {"release_id": release_id, "index_checks": health["index_checks"]})
     write_json(overlay.parent / f"{timestamp}-retrieval-evaluation.json", fresh_evaluation)
     event = reconcile_event(project_root, config, root, release_dir)

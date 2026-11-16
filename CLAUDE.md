@@ -1,5 +1,18 @@
 # dcsa-archivist
 
+The operating contract and agent routing are in `AGENTS.md`; read it after
+`HANDOFF.md`.
+
+## Monthly Voice of Industry intake
+
+One command sequence, no hand-written JSON and no direct library write:
+`audit --deep` → `voi-intake-plan` → `build-candidate --deep --intake-plan` →
+`validate` → `evaluate` → `publish --dry-run` → `publish` → `doctor` → `events`.
+Exact command lines (with the global `--config`), the receipt contract including
+`completed_with_gaps`, and the configuration keys are in
+`docs/INTAKE-AND-EVENTS.md`. Pass the Librarian's `.intake.json` path explicitly;
+its downloads are named with underscores (`261030_VOI_Newsletter.pdf`).
+
 
 <!-- HANDOFF-PROTOCOL:BEGIN -->
 ## Session handoff — read this first

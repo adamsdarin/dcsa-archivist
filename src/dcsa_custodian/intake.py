@@ -8,11 +8,15 @@ from urllib.parse import urlparse
 from .common import iter_jsonl, read_json, sha256_file, write_jsonl
 from .naming import check_collection_name
 from .release_contract import bounded_path
-from .doha import append_cases, review_metadata, validate_cases, TAXONOMY
+from .doha import ARTIFACTS as DOHA_ARTIFACTS, append_cases, review_metadata, validate_cases, TAXONOMY
+from .staging import stage_tree
 
 
-def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
-    """Copy a library and apply hash-bound, reviewed additions to that copy.
+def stage_intake(root: Path, destination: Path, plan_path: Path, staging: dict | None = None) -> list[str]:
+    """Stage a library root and apply hash-bound, reviewed additions to that staged root.
+
+    ``staging``, when given, receives how the root was staged (links, copies and the
+    record ``staging.verify_untouched`` checks before the candidate is sealed).
 
     The agent supplies taxonomy/identity/lifecycle and a checked robot extraction.
     This function does not pretend a PDF extractor can establish those facts.
@@ -62,6 +66,11 @@ def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
         for key in ("document_id", "collection_id", "domain", "authority_tier", "current_status"):
             if record.get(key) in (None, ""):
                 raise ValueError(f"missing reviewed record field: {key}")
+        # A record without a title publishes as `title: null` and every reader falls back to
+        # the ID. The reviewer states it in the plan; intake never derives or invents one.
+        if not isinstance(record.get("title"), str) or not record["title"].strip():
+            raise ValueError("missing reviewed record field: title")
+        record["title"] = record["title"].strip()
         if record["document_id"] in ids:
             raise ValueError("new editions require a unique document ID")
         ids.add(record["document_id"])
@@ -80,10 +89,16 @@ def stage_intake(root: Path, destination: Path, plan_path: Path) -> list[str]:
                       intake_review=review, intake_provenance=package)
         additions.append((record, source, robot))
     # No production writes or partial staging before every item passes.
-    # A full copy is deliberate: existing audit/index contracts see a coherent root.
-    # Exclude operational history; never use hard links for mutable manifests.
-    shutil.copytree(root, destination, ignore=shutil.ignore_patterns(".custodian", "OPERATIONS", ".git"))
+    # A full root is deliberate: existing audit/index contracts see a coherent root.
+    # Unchanged files are hard links to the library's own bytes (staging.py); operational
+    # history is excluded; every file this function rewrites or appends to is a real copy,
+    # never a link: both manifests, and for a DOHA intake the stores append_cases opens
+    # for writing.
     changed = [manifest.relative_to(root).as_posix(), relationships.relative_to(root).as_posix()]
+    rewritten = changed + (list(DOHA_ARTIFACTS) if cases else [])
+    record_of_staging = stage_tree(root, destination, copy=rewritten)
+    if staging is not None:
+        staging.update(record_of_staging)
     for record, source, robot in additions:
         for key, artifact in (("human_source_path", source), ("robot_text_path", robot)):
             target = destination / record[key]

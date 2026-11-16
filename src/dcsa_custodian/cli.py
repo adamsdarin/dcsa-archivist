@@ -6,12 +6,13 @@ import sys
 from pathlib import Path
 
 from .audit import audit_library
-from .common import iter_jsonl, read_json, resolve_library_root, utc_now, write_json
+from .common import iter_jsonl, read_json, resolve_library_root, write_json
 from .evals import evaluate_candidate
+from .pipeline import audit_output, doctor_result, events_result, run_release
 from .release import approve_candidate, build_candidate, publish_candidate, validate_candidate
 from .semantic import semantic_search
 from .wiki import build_graph, lint_report
-from .events import CONSUMERS, reconcile_event, pending_events, comparison_report, acknowledge
+from .events import CONSUMERS, acknowledge, acknowledgment_states
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -53,6 +54,16 @@ def parser() -> argparse.ArgumentParser:
     bulk.add_argument("--limit", type=int, help="Stop after this many planned decisions")
     bulk.add_argument("--pilot", type=int, help="Plan a spread sample of this many decisions")
     bulk.add_argument("--pdftotext", help="Path to pdftotext if it is not on PATH")
+    voi = commands.add_parser("voi-intake-plan",
+                              help="Build the reviewed intake plan for a Voice of Industry issue from a Librarian "
+                                   "quarantine package; writes only --out, never the library")
+    voi.add_argument("--library-root")
+    voi.add_argument("--package", type=Path, required=True, help="The Librarian's <source file>.intake.json, beside its source")
+    voi.add_argument("--out", type=Path, required=True, help="New (or empty) folder for the plan, robot text and parity report")
+    voi.add_argument("--confirm-period", type=Path,
+                     help="Librarian confirm-period marker (<librarian state>/watch/<job>/<YYYY-MM>.json) or its receipt")
+    voi.add_argument("--reviewed-by", help="Name recorded as the reviewer; default names this command")
+    voi.add_argument("--pdftotext", help="Path to pdftotext for the parity check if it is not on PATH")
     batches = commands.add_parser("doha-plan-batches", help="Split a DOHA intake plan into batches; a case stays in one batch")
     batches.add_argument("--plan", type=Path, required=True)
     batches.add_argument("--size", type=int, default=5500, help="Decisions per batch (a case is never split)")
@@ -93,6 +104,26 @@ def parser() -> argparse.ArgumentParser:
             cmd.add_argument("--release-id")
             cmd.add_argument("--intake-plan", type=Path, help="Reviewed, hash-bound quarantine additions; stage before publication")
             cmd.add_argument("--rename-plan", type=Path, help="Reviewed renames of existing sources; stage before publication")
+    release = commands.add_parser(
+        "release", help="The whole gated sequence in one process: audit --deep, [voi-intake-plan], build-candidate --deep, "
+                        "validate, evaluate, publish --dry-run, publish, doctor, events; stops at the first failed gate")
+    release.add_argument("--library-root", required=True)
+    release.add_argument("--release-id", required=True)
+    release.add_argument("--package", type=Path, help="A Voice of Industry issue: the Librarian's <source file>.intake.json; "
+                                                       "the plan is written to --out as voi-intake-plan writes it")
+    release.add_argument("--out", type=Path, help="With --package: new (or empty) folder for the plan, robot text and parity report")
+    release.add_argument("--confirm-period", type=Path, help="With --package: Librarian confirm-period marker or its receipt")
+    release.add_argument("--reviewed-by", help="With --package: name recorded as the reviewer")
+    release.add_argument("--pdftotext", help="With --package: path to pdftotext if it is not on PATH")
+    release.add_argument("--intake-plan", type=Path, help="A reviewed intake plan, instead of --package")
+    release.add_argument("--rename-plan", type=Path, help="A reviewed rename plan, instead of an intake")
+    release.add_argument("--events-output", type=Path, help="Folder for events-<consumer>.json, one per consumer")
+    release.add_argument("--stop-before-publish", action="store_true",
+                         help="Stop after the dry run; publish, doctor and events are then run as single commands")
+    release.add_argument("--allow-changes-outside-plan", action="store_true",
+                         help="Publish although the candidate changes documents the intake plan does not add")
+    release.add_argument("--reread", action="store_true",
+                         help="Read every file again at every step, as the single commands run one after another do")
     validate = commands.add_parser("validate")
     validate.add_argument("--library-root")
     validate.add_argument("--release-id", required=True)
@@ -162,6 +193,12 @@ def main() -> int:
                                  limit=args.limit, pilot=args.pilot)
             print(json.dumps(summary, indent=2))
             return 0 if summary["counts"].get("planned") else 2
+        if args.command == "voi-intake-plan":
+            from .voi_intake import build_voi_plan, pdftotext_pages
+            summary = build_voi_plan(library_root, args.package, args.out, pdftotext_pages(args.pdftotext),
+                                     confirm_period=args.confirm_period, reviewed_by=args.reviewed_by)
+            print(json.dumps(summary, indent=2))
+            return 0
         if args.command in ("doha-plan-batches", "doha-accuracy-sample", "doha-accuracy-score",
                             "doha-recheck", "doha-append-provenance"):
             from . import doha_quality as quality
@@ -192,14 +229,23 @@ def main() -> int:
             print(json.dumps({**summary, "rows": len(rows), "written_to": None if args.dry_run or not rows else str(target),
                               "next": "review, then build-candidate --deep, validate, evaluate, publish --dry-run" if rows else None}, indent=2))
             return 2 if summary["refused"] else 0
-        if args.command == "doctor":
-            report = audit_library(library_root, deep=False)
-            result = {"library_root": str(library_root), "integrity_healthy": report["summary"]["integrity_healthy"], "production_response_ready": report["summary"]["production_response_ready"], "quality_blockers": report["quality_blockers"], "release_metadata_errors": report["release_metadata_errors"], "verified_indexes": len(report["approved_indexes"])}
+        if args.command == "release":
+            code, result = run_release(
+                PROJECT_ROOT, config, library_root, args.release_id, lambda identity: _release_dir(config, identity),
+                package=args.package, out=args.out, confirm_period=args.confirm_period, reviewed_by=args.reviewed_by,
+                pdftotext=args.pdftotext, intake_plan=args.intake_plan, rename_plan=args.rename_plan,
+                events_output=args.events_output.resolve() if args.events_output else None,
+                stop_before_publish=args.stop_before_publish,
+                allow_changes_outside_plan=args.allow_changes_outside_plan, reread=args.reread)
             print(json.dumps(result, indent=2))
-            return 0 if result["integrity_healthy"] and result["production_response_ready"] else 2
+            return code
+        if args.command == "doctor":
+            code, result = doctor_result(audit_library(library_root, deep=False), library_root)
+            print(json.dumps(result, indent=2))
+            return code
         if args.command == "audit":
             report = audit_library(library_root, deep=args.deep)
-            output = Path(args.output).resolve() if args.output else PROJECT_ROOT / config.get("state_directory", ".custodian") / "reports" / f"audit_{utc_now().replace(':', '').replace('+00:00', 'Z')}.json"
+            output = Path(args.output).resolve() if args.output else audit_output(PROJECT_ROOT, config)
             write_json(output, report)
             print(json.dumps({"output": str(output), "summary": report["summary"], "quality_blockers": report["quality_blockers"]}, indent=2))
             return 0 if report["summary"]["integrity_healthy"] else 2
@@ -225,18 +271,7 @@ def main() -> int:
             print(json.dumps(result, indent=2))
             return 0
         if args.command == "events":
-            from .release_contract import approved_release
-            current = approved_release(library_root)["release_id"]
-            release = _release_dir(config, current)
-            if (release / "reports/RELEASE_CHANGES.json").is_file():
-                reconcile_event(PROJECT_ROOT, config, library_root, release)
-            packets = pending_events(PROJECT_ROOT, config, library_root, args.consumer)
-            if args.consumer == "dcsa-compare":
-                for packet in packets:
-                    packet["comparison"] = comparison_report(packet["changes"])
-            result = {"consumer": args.consumer, "pending": packets,
-                      "status": "review_required" if packets else "no_pending_events",
-                      "legacy_release_without_event": not (release / "reports/RELEASE_CHANGES.json").is_file()}
+            result = events_result(PROJECT_ROOT, config, library_root, args.consumer, lambda identity: _release_dir(config, identity))
             if args.output:
                 write_json(args.output.resolve(), result)
             print(json.dumps(result, indent=2))
@@ -284,7 +319,8 @@ def main() -> int:
                 if path.is_dir():
                     releases.append({"release_id": path.name, "valid": (path / "VALIDATION.json").is_file() and read_json(path / "VALIDATION.json").get("valid"), "approved": (path / "APPROVAL.json").is_file()})
             pointer_path = library_root / "ROBOT_READABLE_DIRECTORY/STATE/CURRENT_CUSTODIAN_RELEASE.json"
-            print(json.dumps({"releases": releases, "published": read_json(pointer_path) if pointer_path.is_file() else None}, indent=2))
+            print(json.dumps({"releases": releases, "published": read_json(pointer_path) if pointer_path.is_file() else None,
+                              "consumer_acknowledgments": acknowledgment_states(PROJECT_ROOT, config, library_root)}, indent=2))
             return 0
     except (OSError, ValueError, KeyError, json.JSONDecodeError, RuntimeError, PermissionError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

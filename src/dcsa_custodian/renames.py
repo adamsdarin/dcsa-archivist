@@ -9,18 +9,19 @@ Document IDs never change, so citations by ID keep resolving.
 from __future__ import annotations
 
 import os
-import shutil
 from pathlib import Path, PurePosixPath
 
 from .common import iter_jsonl, norm, read_json, utc_now, write_jsonl
 from .naming import check_collection_name
 from .release_contract import bounded_path
+from .staging import stage_tree
 
 PATHS = (("human_source_path", "HUMAN_READABLE_DIRECTORY/"), ("robot_text_path", "ROBOT_READABLE_DIRECTORY/TEXT/"))
 
 
-def stage_renames(root: Path, destination: Path, plan_path: Path) -> tuple[list[str], list[dict[str, str]]]:
-    """Copy a library and apply reviewed renames to that copy.
+def stage_renames(root: Path, destination: Path, plan_path: Path,
+                  staging: dict | None = None) -> tuple[list[str], list[dict[str, str]]]:
+    """Stage a library root and apply reviewed renames to that staged root.
 
     Returns the files the release must install and the {from, to} moves publication
     must complete by retiring each old path.
@@ -91,13 +92,17 @@ def stage_renames(root: Path, destination: Path, plan_path: Path) -> tuple[list[
                 pair.update(new)
                 if "human_readable_path" in pair:
                     pair["human_readable_path"] = new["human_source_path"]
-    # No production writes or partial staging before every item passes.
-    shutil.copytree(root, destination, ignore=shutil.ignore_patterns(".custodian", "OPERATIONS", ".git"))
+    # No production writes or partial staging before every item passes. Unchanged files
+    # are hard links (staging.py); the two manifests rewritten below are real copies. A
+    # move renames the staged link, which leaves the library's own name and bytes alone.
+    changed = [manifest.relative_to(root).as_posix(), relationships.relative_to(root).as_posix()]
+    record_of_staging = stage_tree(root, destination, copy=changed)
+    if staging is not None:
+        staging.update(record_of_staging)
     for move in moves:
         target = destination / move["to"]
         target.parent.mkdir(parents=True, exist_ok=True)
         os.replace(destination / move["from"], target)
-    changed = [manifest.relative_to(root).as_posix(), relationships.relative_to(root).as_posix()]
     write_jsonl(destination / changed[0], records)
     write_jsonl(destination / changed[1], pairs)
     return changed + [move["to"] for move in moves], moves

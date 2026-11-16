@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable
 
-from .common import sha256_text
+from .common import map_ordered, sha256_text
 
 
 def _page_chunks(text: str, target: int, maximum: int, overlap: int) -> Iterable[tuple[int, int, str]]:
@@ -31,11 +31,12 @@ def _page_chunks(text: str, target: int, maximum: int, overlap: int) -> Iterable
 
 def build_chunks(root: Path, records: list[dict[str, Any]], target: int, maximum: int, overlap: int) -> list[dict[str, Any]]:
     chunks: list[dict[str, Any]] = []
-    for record in records:
-        if record.get("collection_id") == "doha_decisions" or record.get("duplicate_of"):
-            continue
+    chunked = [record for record in records
+               if not (record.get("collection_id") == "doha_decisions" or record.get("duplicate_of"))]
+    # The same texts are read, on every core; chunks are cut and listed in record order.
+    texts = map_ordered(lambda record: (root / record["robot_text_path"]).read_text(encoding="utf-8", errors="replace"), chunked)
+    for record, text in zip(chunked, texts):
         robot_rel = record["robot_text_path"]
-        text = (root / robot_rel).read_text(encoding="utf-8", errors="replace")
         pages = text.split("\f")
         has_page_markers = len(pages) > 1
         for page_number, page in enumerate(pages, 1):

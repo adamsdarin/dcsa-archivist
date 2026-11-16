@@ -46,6 +46,9 @@ and audits, candidate builds and publication to **Release Manager**
 Hosts with delegation use separate specialist contexts; other hosts follow the
 roles sequentially. The stable conductor path preserves existing host entry points.
 
+A monthly Voice of Industry issue gets its plan from
+`voi-intake-plan --package <.intake.json> --out <new folder>` (pinned extraction,
+parity check, masthead period check; no hand-written JSON).
 Staged source additions use `build-candidate --intake-plan`; successful publication
 emits durable events for comparison and Guidance Watch. Publication enforces a
 per-library OS lock across preflight, writes and verification, including dry runs.

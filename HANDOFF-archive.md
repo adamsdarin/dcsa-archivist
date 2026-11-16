@@ -1414,3 +1414,21 @@ and release roles, deterministic build/validation tools, and single-writer publi
 Current publish checks stale baselines but has no enclosing publisher lock. Naming and
 intake instructions also need reconciliation. Workspace health check passed; no runtime
 tests or production audit performed, and no code/library changes made.
+
+Moved from HANDOFF.md on 2026-11-15 to keep it under the 100-line cap:
+2026-09-29 Claude — Owner said "go do the things". Implemented the LF rewrite as a reviewed input
+(like retirements: rows stay after publication and then count as already applied; the build
+fails closed if a text no longer matches its row) rather than a one-off script, so the change is
+built, validated and published like any other. Code only in doha_release/release/cli, not in the
+modules the Rebuilder vendors. The patches share one staged copy of documents.jsonl and the topic
+index with the era patch, and the index's full text is not touched (already LF). Test fixtures
+that wrote DOHA text with platform line endings now write LF; the new check caught one. Rows
+generated from the live library match last night's survey hash for hash (20,862/20,862).
+Trimmed this file to the 100-line cap (it was ~495 lines).
+2026-09-28 Claude (Atlas rebuild) — Findings from rebuilding the Adjudication Atlas on this
+release (Atlas REPORT.md v1.9): the CRLF texts (since fixed); and in 3 of 4,311 new appeals the
+intake's ruling follows DOHA's digest where it contradicts the Board's Order (Next 0c).
+2026-09-28 Claude (local) — Owner said "Go ahead": dry run first (41,750 changed files; no
+existing decision overwritten), then published doha-bulk-all-20260928 (8 min). doctor healthy.
+DOHA intake of the 20,862 acquired decisions is complete; exceptions and held-library
+corrections remain. Provenance rows committed (PR #19).

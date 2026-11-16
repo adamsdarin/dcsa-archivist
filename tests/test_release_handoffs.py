@@ -27,7 +27,7 @@ class HandoffTests(unittest.TestCase):
             'mime_type': 'application/pdf', 'source_filename': 'source.pdf',
             'source_sha256': sha256_file(folder / 'source.pdf'), 'source_bytes': (folder / 'source.pdf').stat().st_size,
         })
-        record = {'document_id': 'new-voi', 'collection_id': 'voi', 'domain': 'industrial_security', 'authority_tier': 7,
+        record = {'document_id': 'new-voi', 'title': 'Voice of Industry - September 2026 Newsletter', 'collection_id': 'voi', 'domain': 'industrial_security', 'authority_tier': 7,
                   'current_status': 'current', 'human_source_path': 'HUMAN_READABLE_DIRECTORY/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY/Voice of Industry - September 2026 Newsletter.pdf',
                   'robot_text_path': 'ROBOT_READABLE_DIRECTORY/TEXT/INDUSTRIAL_SECURITY/VOICE_OF_INDUSTRY/Voice of Industry - September 2026 Newsletter.txt'}
         item = {'package': 'source.pdf.intake.json', 'robot_file': 'robot.txt', 'robot_sha256': sha256_file(folder / 'robot.txt'),
@@ -52,7 +52,9 @@ class HandoffTests(unittest.TestCase):
         publish_candidate(self.project, self.root, self.config, release)
         self.assertTrue(readiness(self.root)['ready'])
         self.assertTrue((self.root / record['robot_text_path']).exists())
-        wiki = read_json(self.root / 'ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json')
+        published = [json.loads(line) for line in (self.root / 'ROBOT_READABLE_DIRECTORY/MANIFESTS/documents.jsonl').read_text(encoding='utf-8').splitlines()]
+        self.assertEqual(next(r['title'] for r in published if r['document_id'] == 'new-voi'), record['title'])
+        wiki =read_json(self.root / 'ROBOT_READABLE_DIRECTORY/WIKI/GRAPH.json')
         self.assertEqual(wiki['release_id'], 'intake-test')
         for consumer in ('dcsa-compare', 'fso-guidance-watch'):
             packets = pending_events(self.project, self.config, self.root, consumer)
@@ -202,6 +204,15 @@ class HandoffTests(unittest.TestCase):
         write_json(plan, broken)
         with self.assertRaisesRegex(ValueError, 'parity'):
             self.build(plan)
+        # a record without a title would publish as `title: null`
+        for missing in (None, '', '   '):
+            untitled = read_json(plan)
+            untitled['items'][0]['review'] = original['items'][0]['review']
+            untitled['items'][0]['record']['title'] = missing
+            write_json(plan, untitled)
+            with self.assertRaisesRegex(ValueError, 'record field: title'):
+                self.build(plan, 'untitled')
+        self.assertFalse((self.project / '.custodian/releases/untitled').exists())
         write_json(plan, original)
         (plan.parent / 'source.pdf').write_bytes(b'tampered')
         with self.assertRaisesRegex(ValueError, 'hash/size'):

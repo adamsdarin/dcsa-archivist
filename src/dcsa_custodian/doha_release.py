@@ -25,6 +25,7 @@ import contextlib
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -32,7 +33,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from .common import iter_jsonl, read_json, utc_now, write_json, write_jsonl
+from . import runcache
+from .common import decode_text, iter_jsonl, map_ordered, read_json, utc_now, write_json, write_jsonl
 from .doha_era import ERA_RULE, ERAS, SEAD4_EFFECTIVE, classify, era_for
 
 ERA_MANIFEST = "ROBOT_READABLE_DIRECTORY/MANIFESTS/DOHA_SEAD4_ERA.jsonl"
@@ -187,19 +189,29 @@ def _apply_line_endings(root: Path, production: Path, line_endings: dict[str, di
     """
     hashes: dict[str, tuple[str, int]] = {}
     written, already = [], []
-    for identity, item in sorted(line_endings.items()):
+    ordered = sorted(line_endings.items())
+
+    def held(pair: tuple[str, dict[str, Any]]) -> tuple[str, int] | None:
+        source = root / pair[1]["robot_text_path"]
+        return text_facts(source)[:2] if source.is_file() else None
+
+    # Each reviewed text is read and hashed as before, on every core; the rows are then
+    # judged in the same order, so the first problem reported is the same one.
+    for (identity, item), found in zip(ordered, map_ordered(held, ordered)):
         row = by_id.get(identity)
         if row is None or row["robot_text_path"] != item["robot_text_path"]:
             raise ValueError(f"DOHA line-ending row names a decision or path the library does not have: {identity}")
         source = root / item["robot_text_path"]
-        if not source.is_file():
+        if found is None:
             raise ValueError(f"DOHA line-ending row names robot text the library does not hold: {identity}")
-        data = source.read_bytes()
         hashes[identity] = (item["after_sha256"], item["after_bytes"])
-        if (_sha256(data), len(data)) == hashes[identity]:
+        if found == hashes[identity]:
             already.append(identity)
             continue
-        if (_sha256(data), len(data)) != (item["before_sha256"], item["before_bytes"]):
+        if found != (item["before_sha256"], item["before_bytes"]):
+            raise ValueError(f"DOHA robot text changed since its line-ending review: {identity}")
+        data = source.read_bytes()
+        if (_sha256(data), len(data)) != found:
             raise ValueError(f"DOHA robot text changed since its line-ending review: {identity}")
         converted, problem = to_lf(data)
         if problem or (_sha256(converted), len(converted)) != hashes[identity]:
@@ -253,13 +265,176 @@ def _retire(root: Path, rows: list[dict[str, Any]],
     return [row for row in rows if row["document_id"] not in retirements], already
 
 
+# Library-relative paths a tracked validation resolved to the library rather than to the
+# candidate. release.validate_candidate sets it to learn exactly which library files its
+# result depends on; it is None everywhere else.
+_library_reads: set[str] | None = None
+
+
+@contextlib.contextmanager
+def track_library_reads() -> Any:
+    global _library_reads
+    previous, _library_reads = _library_reads, set()
+    try:
+        yield _library_reads
+    finally:
+        _library_reads = previous
+
+
 def _resolve(production: Path, root: Path, relative: str) -> Path:
     staged = production / relative
-    return staged if staged.is_file() else root / relative
+    if staged.is_file():
+        return staged
+    if _library_reads is not None:
+        _library_reads.add(relative)
+    return root / relative
 
 
 def _read_only(path: Path) -> sqlite3.Connection:
     return sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+
+
+def _rows(path: Path, sql: str) -> list[tuple]:
+    """Every row of a read-only query, once per run for the same database bytes.
+
+    The database file is read and hashed each time (unless this run has already read
+    these bytes); the query is repeated only when the bytes differ. A database with a
+    journal or write-ahead log beside it is always queried afresh.
+    """
+    def compute() -> list[tuple]:
+        with contextlib.closing(_read_only(path)) as db:
+            return db.execute(sql).fetchall()
+
+    if any(path.with_name(path.name + suffix).exists() for suffix in ("-wal", "-journal")):
+        return compute()
+    cache = runcache.current()
+    return cache.result("doha_rows", (sqlite3.sqlite_version, cache.sha256(path), sql), compute)
+
+
+CORPUS_GROUPS = "SELECT rowid,document_id,current_group FROM corpus"
+
+
+def _corpus_text_hashes(path: Path) -> list[tuple[str, str]]:
+    """(document_id, SHA-256 of the indexed text) for every full-text row; one scan per run for the same bytes."""
+    def compute() -> list[tuple[str, str]]:
+        with contextlib.closing(_read_only(path)) as db:
+            return [(identity, _sha256(content.encode("utf-8")))
+                    for identity, content in db.execute("SELECT document_id,content FROM corpus")]
+
+    if any(path.with_name(path.name + suffix).exists() for suffix in ("-wal", "-journal")):
+        return compute()
+    cache = runcache.current()
+    return cache.result("doha_corpus_text_sha256", (sqlite3.sqlite_version, cache.sha256(path)), compute)
+
+
+def text_facts(path: Path) -> tuple[str, int, bool]:
+    """(SHA-256, size, has a carriage return) of a robot text, from one read of its bytes."""
+    cache = runcache.current()
+    token, held = cache.lookup(path)
+    facts = cache.peek("doha_text_facts", held) if held else None
+    if facts is None:
+        data = path.read_bytes()
+        held = _sha256(data)
+        cache.store(token, held)
+        facts = cache.result("doha_text_facts", held, lambda: (len(data), b"\r" in data))
+    return held, facts[0], facts[1]
+
+
+PROCESS_THRESHOLD = 2000
+
+
+def classify_processes(count: int) -> int:
+    """Worker processes for classifying ``count`` decisions; 0 or 1 classifies on threads in this process.
+
+    Classification is regular-expression work that holds the interpreter lock, about
+    2 ms a decision, so a library of 32,000 takes over a minute on one core however many
+    threads read the files. DCSA_CLASSIFY_PROCESSES overrides: 0 or 1 = this process
+    only, N = N processes whatever the count.
+    """
+    setting = os.environ.get("DCSA_CLASSIFY_PROCESSES", "").strip()
+    if setting:
+        return max(0, int(setting))
+    return min(os.cpu_count() or 1, 16) if count >= PROCESS_THRESHOLD else 0
+
+
+def _classify_file(job: tuple[str, str, dict[str, Any] | None, str | None]) -> tuple[str, int, bool, dict[str, Any]]:
+    """Read one robot text and classify it: (SHA-256, size, has a carriage return, classification).
+
+    The hash is of the bytes that were classified, read once, here.
+    """
+    path, case_id, review, listing_title = job
+    data = Path(path).read_bytes()
+    return _sha256(data), len(data), b"\r" in data, classify(decode_text(data), case_id, review, listing_title)
+
+
+def _classify_files(jobs: list[tuple[str, str, dict[str, Any] | None, str | None]]) -> list[tuple[str, int, bool, dict[str, Any]]]:
+    """``_classify_file`` for every job, in order: on worker processes when there are many, else on threads.
+
+    The processes run the same function on the same files, so the results are the same.
+    If the pool cannot start, answer or finish (some Windows hosts refuse the handles a
+    worker needs), it is stopped and the work is done in this process instead.
+    """
+    workers = classify_processes(len(jobs))
+    if workers > 1 and jobs:
+        from concurrent.futures import ProcessPoolExecutor, TimeoutError as PoolTimeout
+        from concurrent.futures.process import BrokenProcessPool
+        pool = ProcessPoolExecutor(max_workers=min(workers, len(jobs)))
+        try:
+            pool.submit(os.getpid).result(timeout=60)  # the pool starts and answers, or it is not used
+            results = list(pool.map(_classify_file, jobs, chunksize=max(1, min(256, len(jobs) // (workers * 4) or 1)),
+                                    timeout=1800))
+            pool.shutdown(wait=True)
+            runcache.current().counts["doha_classified_on_processes"] += len(jobs)
+            return results
+        except (BrokenProcessPool, PoolTimeout, OSError, EOFError, ImportError):
+            _stop(pool)
+            runcache.current().counts["doha_classify_pool_failed"] += 1
+        except BaseException:
+            _stop(pool)  # a decision that cannot be classified raises here exactly as it does in this process
+            raise
+    return map_ordered(_classify_file, jobs)
+
+
+def _stop(pool: Any) -> None:
+    for process in list((getattr(pool, "_processes", None) or {}).values()):
+        with contextlib.suppress(Exception):
+            process.kill()
+    pool.shutdown(wait=False, cancel_futures=True)
+
+
+def classify_texts(jobs: list[tuple[Path, str, dict[str, Any] | None, str | None]]) -> list[dict[str, Any]]:
+    """``classify`` of each robot text, computed once per run for the same bytes, arguments and day.
+
+    ``classify`` is a function of the text, the case number, the review and the listing
+    title (and of today's date, which bounds a plausible decision date). Every text is
+    read and hashed (or is a file this run has already read, unchanged); the
+    classification is computed only for a (text, arguments) this process has not
+    classified today.
+    """
+    cache = runcache.current()
+    day = date.today().isoformat()
+    keys = [(case_id, json.dumps(review, sort_keys=True) if review is not None else None, listing_title, day)
+            for _, case_id, review, listing_title in jobs]
+    anything_held = cache.holds("doha_classify")
+
+    def known(item: tuple[tuple[Path, str, Any, Any], tuple]) -> tuple[Any, str | None, dict[str, Any] | None]:
+        (path, *_), key = item
+        token, held = cache.lookup(path)
+        if held is None and anything_held:
+            held = _sha256(path.read_bytes())  # read and hashed here, so an earlier classification of these bytes is found
+            cache.store(token, held)
+        return token, held, (cache.peek("doha_classify", (held, key)) if held else None)
+
+    found = map_ordered(known, list(zip(jobs, keys)))
+    missing = [index for index, (_, _, result) in enumerate(found) if result is None]
+    computed = _classify_files([(str(jobs[index][0]), *jobs[index][1:]) for index in missing])
+    results = [result for _, _, result in found]
+    for index, (digest, size, carriage_return, result) in zip(missing, computed):
+        cache.store(found[index][0], digest)
+        cache.result("doha_text_facts", digest, lambda: (size, carriage_return))
+        results[index] = cache.result("doha_classify", (digest, keys[index]), lambda: result)
+    cache.counts["doha_classify_reused"] += len(jobs) - len(missing)
+    return [{**result, "date_conflicts": list(result["date_conflicts"])} for result in results]
 
 
 def classify_rows(root: Path, reviews: dict[str, dict[str, Any]], provenance: dict[str, dict[str, Any]],
@@ -269,21 +444,31 @@ def classify_rows(root: Path, reviews: dict[str, dict[str, Any]], provenance: di
     ``overlay`` is a candidate's production tree; its files take precedence over the library's.
     """
     here = (lambda relative: _resolve(overlay, root, relative)) if overlay else (lambda relative: root / relative)
-    with contextlib.closing(_read_only(here(CONTENT))) as db:
-        case_ids = dict(db.execute("SELECT document_id,case_id FROM decisions"))
+    content = here(CONTENT)
+    case_ids = dict(_rows(content, "SELECT document_id,case_id FROM decisions"))
+    listed = [row for _, row in iter_jsonl(here(PATH_MANIFEST))]
+
+    def arguments(row: dict[str, Any]) -> tuple[str, dict[str, Any] | None, str | None]:
+        identity = row["document_id"]
+        return (case_ids.get(identity) or row["case_stem"].split(".")[0], reviews.get(identity),
+                provenance.get(identity, {}).get("source_listing_title"))
+
+    # Every decision's text is read and classified as before; the work is spread over
+    # every core and the rows are assembled in manifest order.
+    robots = map_ordered(lambda row: here(row["robot_text_path"]), listed)
+    present = map_ordered(Path.is_file, robots)
+    held = iter(classify_texts([(robot, *arguments(row)) for row, robot, there in zip(listed, robots, present) if there]))
+    classified = [next(held) if there else None for there in present]
+    with contextlib.closing(_read_only(content)) as db:
         rows = []
-        for _, row in iter_jsonl(here(PATH_MANIFEST)):
+        for row, result in zip(listed, classified):
             identity = row["document_id"]
-            robot = here(row["robot_text_path"])
-            if robot.is_file():
-                text, evidence = robot.read_text(encoding="utf-8", errors="replace"), "robot_text"
-            else:
+            evidence = "robot_text"
+            if result is None:
                 # The indexed copy is the exact text the DOHA stores already serve.
                 found = db.execute("SELECT content FROM corpus WHERE document_id=?", (identity,)).fetchone()
-                text, evidence = (found[0] if found else ""), "doha_index_copy_robot_file_missing"
+                result, evidence = classify(found[0] if found else "", *arguments(row)), "doha_index_copy_robot_file_missing"
             source = provenance.get(identity, {})
-            case_id = case_ids.get(identity) or row["case_stem"].split(".")[0]
-            result = classify(text, case_id, reviews.get(identity), source.get("source_listing_title"))
             era = result["sead4_era"]
             updated = dict(row)
             updated.update(current_group=ERAS[era], sead4_era=era, retrieval_priority=PRIORITY[era],
@@ -410,15 +595,15 @@ def _patch_index(root: Path, production: Path, relative: str, table: str, column
     """
     group_column, priority_column = columns
     retired = retired or set()
-    with contextlib.closing(_read_only(root / relative)) as db:
-        stale = [(row["current_group"], row["retrieval_priority"], identity)
-                 for identity, group, priority in db.execute(f"SELECT document_id,{group_column},{priority_column} FROM {table}")
-                 if (row := by_id.get(identity)) and (group, priority) != (row["current_group"], row["retrieval_priority"])]
-        removable = [(identity,) for identity, in db.execute(f"SELECT document_id FROM {table}") if identity in retired]
-        texts = db.execute(f"SELECT rowid,document_id,current_group FROM {fts_table}").fetchall() if fts_table else []
-        rehash = [(*wanted, identity) for identity, digest, size in
-                  db.execute(f"SELECT document_id,content_sha256,content_bytes FROM {table}")
-                  if (wanted := hashes.get(identity)) and (digest, size) != wanted] if hashes else []
+    index = root / relative
+    stale = [(row["current_group"], row["retrieval_priority"], identity)
+             for identity, group, priority in _rows(index, f"SELECT document_id,{group_column},{priority_column} FROM {table}")
+             if (row := by_id.get(identity)) and (group, priority) != (row["current_group"], row["retrieval_priority"])]
+    removable = [(identity,) for identity, in _rows(index, f"SELECT document_id FROM {table}") if identity in retired]
+    texts = _rows(index, f"SELECT rowid,document_id,current_group FROM {fts_table}") if fts_table else []
+    rehash = [(*wanted, identity) for identity, digest, size in
+              _rows(index, f"SELECT document_id,content_sha256,content_bytes FROM {table}")
+              if (wanted := hashes.get(identity)) and (digest, size) != wanted] if hashes else []
     regroup = [(row["current_group"], rowid, identity) for rowid, identity, group in texts
                if identity not in retired and (row := by_id.get(identity)) and group != row["current_group"]]
     dropped = [(rowid, identity) for rowid, identity, _ in texts if identity in retired]
@@ -492,10 +677,13 @@ def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | Non
     bad: collections.defaultdict[str, list[str]] = collections.defaultdict(list)
     for identity in sorted(set(retirements or {}) & era_rows.keys()):
         bad["retired row is still in the era manifest"].append(identity)
-    for identity, row in era_rows.items():
+    # Existence is asked of the file system for every row, on every core.
+    held = map_ordered(lambda row: _resolve(production, root, str(row.get("robot_text_path", ""))).is_file(),
+                       list(era_rows.values()))
+    for (identity, row), present in zip(era_rows.items(), held):
         # A row promising text the library does not hold sends every consumer to a dead
         # path. It is either a real decision to restore or a phantom to retire by review.
-        if not _resolve(production, root, str(row.get("robot_text_path", ""))).is_file():
+        if not present:
             bad["row points at robot text the library does not hold"].append(identity)
         era = row.get("sead4_era")
         if era not in ERAS or row.get("current_group") != ERAS[era] or row.get("retrieval_priority") != PRIORITY[era]:
@@ -516,14 +704,14 @@ def check(production: Path, root: Path, reviews: dict[str, dict[str, Any]] | Non
     expected = {identity: (row.get("current_group"), row.get("retrieval_priority")) for identity, row in era_rows.items()}
     for relative, query in ((PATHS, "SELECT document_id,current_group,authority_priority FROM current_paths"),
                             (CONTENT, "SELECT document_id,current_group,retrieval_priority FROM decisions")):
-        with contextlib.closing(_read_only(_resolve(production, root, relative))) as db:
-            for identity, group, priority in db.execute(query):
-                if identity not in pending and expected.get(identity) != (group, priority):
-                    bad[f"{relative} disagrees with the era manifest"].append(identity)
-            if relative == CONTENT:
-                for identity, group in db.execute("SELECT document_id,current_group FROM corpus"):
-                    if identity not in pending and (expected.get(identity) or (None,))[0] != group:
-                        bad[f"{relative} corpus disagrees with the era manifest"].append(identity)
+        index = _resolve(production, root, relative)
+        for identity, group, priority in _rows(index, query):
+            if identity not in pending and expected.get(identity) != (group, priority):
+                bad[f"{relative} disagrees with the era manifest"].append(identity)
+        if relative == CONTENT:
+            for _, identity, group in _rows(index, CORPUS_GROUPS):
+                if identity not in pending and (expected.get(identity) or (None,))[0] != group:
+                    bad[f"{relative} corpus disagrees with the era manifest"].append(identity)
     for _, record in iter_jsonl(_resolve(production, root, DOCUMENTS)):
         if record.get("collection_id") == "doha_decisions" and record.get("document_id") in expected:
             group = expected[record["document_id"]][0]
@@ -557,27 +745,32 @@ def check_texts(production: Path, root: Path, enriched: Path | None = None) -> l
     """
     bad: collections.defaultdict[str, list[str]] = collections.defaultdict(list)
     files: dict[str, tuple[str, int]] = {}
-    for _, row in iter_jsonl(_resolve(production, root, ERA_MANIFEST)):
+    era_rows = [row for _, row in iter_jsonl(_resolve(production, root, ERA_MANIFEST))]
+
+    def facts(row: dict[str, Any]) -> tuple[str, int, bool] | None:
         path = _resolve(production, root, str(row.get("robot_text_path", "")))
-        if not path.is_file():
-            continue  # check() reports a missing text
-        data = path.read_bytes()
-        files[row["document_id"]] = (_sha256(data), len(data))
-        if b"\r" in data:
+        return text_facts(path) if path.is_file() else None  # check() reports a missing text
+
+    # Every text is read and hashed, on every core; the findings are listed in manifest order.
+    for row, found in zip(era_rows, map_ordered(facts, era_rows)):
+        if found is None:
+            continue
+        files[row["document_id"]] = found[:2]
+        if found[2]:
             bad["robot text has CR line ends (DOHA robot text is LF)"].append(row["document_id"])
     for _, record in iter_jsonl(_resolve(production, root, DOCUMENTS)):
         identity = record.get("document_id")
         if record.get("collection_id") == "doha_decisions" and identity in files and "robot_sha256" in record \
                 and record["robot_sha256"] != files[identity][0]:
             bad["documents.jsonl robot_sha256 differs from the robot text"].append(identity)
-    with contextlib.closing(_read_only(_resolve(production, root, CONTENT))) as db:
-        for identity, digest, size in db.execute("SELECT document_id,content_sha256,content_bytes FROM decisions"):
-            if identity in files and (digest, size) != files[identity]:
-                bad[f"{CONTENT} content_sha256/content_bytes differ from the robot text"].append(identity)
-        # An LF text's bytes are its UTF-8 encoding, so the indexed copy matches only if it is that text.
-        for identity, content in db.execute("SELECT document_id,content FROM corpus"):
-            if identity in files and _sha256(content.encode("utf-8")) != files[identity][0]:
-                bad[f"{CONTENT} corpus text differs from the robot text"].append(identity)
+    index = _resolve(production, root, CONTENT)
+    for identity, digest, size in _rows(index, "SELECT document_id,content_sha256,content_bytes FROM decisions"):
+        if identity in files and (digest, size) != files[identity]:
+            bad[f"{CONTENT} content_sha256/content_bytes differ from the robot text"].append(identity)
+    # An LF text's bytes are its UTF-8 encoding, so the indexed copy matches only if it is that text.
+    for identity, content_sha256 in _corpus_text_hashes(index):
+        if identity in files and content_sha256 != files[identity][0]:
+            bad[f"{CONTENT} corpus text differs from the robot text"].append(identity)
     if enriched is not None and enriched.is_file():
         for _, record in iter_jsonl(enriched):
             identity = record.get("source_document_id") or record.get("document_id")

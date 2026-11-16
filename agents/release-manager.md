@@ -9,9 +9,40 @@ Inputs: Evidence Reviewer's frozen intake plan or supported metadata decisions,
 per-item dispositions, and the requested operation. An audit-only request never
 authorizes a publication. Reviewed maintenance cycles retain autonomous publication.
 
+A monthly Voice of Industry intake is one fixed sequence; the exact command lines,
+with the global `--config` before the subcommand, are in
+`docs/INTAKE-AND-EVENTS.md` ("Monthly Voice of Industry intake"):
+`audit --deep` → `voi-intake-plan --package <.intake.json> --out <new folder>` →
+`build-candidate --deep --intake-plan <out>/plan.json` → `validate` → `evaluate` →
+`publish --dry-run` → `publish` → `doctor` → `events` for each consumer. Pass the
+package path explicitly (the Librarian names downloads with underscores, such as
+`261030_VOI_Newsletter.pdf`). No JSON is written by hand.
+
+Run that sequence as one command; it is the fastest documented path and runs every
+gate above in the same order, stopping at the first that fails with that
+command's exit code:
+
+```powershell
+python custodian.py --config "<config.json>" release --library-root "<library>" --release-id <id> --package "<the issue's .intake.json>" --out "<state_directory>\incoming\voi-<YYYY-MM>-<run>" --events-output "<folder for the two consumer packets>"
+```
+
+Use `--intake-plan <plan.json>` instead of `--package ... --out ...` for any other
+reviewed plan, and `--rename-plan <plan.json>` for a rename release. Then read
+`<state_directory>\reports\release_<id>.json`: it holds what steps 1 to 6 below
+ask you to inspect (audit summary, staging, validation and what it was bound to,
+the change set against the plan, the dry run's changed files, the published
+pointer's rollback snapshot, doctor and the pending packets). `release` stops
+before publication when the candidate changes a document the plan does not add;
+reconcile that as step 3 requires, then publish with the single commands. Add
+`--stop-before-publish` when you want to inspect the dry run yourself first. The
+single commands below remain the way to run or repeat any one step.
+
 1. Run `audit --library-root <root> --deep` and inspect integrity/quality findings.
    Return identity, extraction or lifecycle defects to Evidence Reviewer; route
    missing sources to Librarian. Preserve unresolved records as explicit findings.
+   `derived_artifact_drift` means the manifest and the published derived
+   artifacts hold different documents (an edit outside a release, or a stale
+   file); it does not block, and the candidate build is the repair.
 2. Build one candidate with a unique ID:
    `build-candidate --library-root <root> --release-id <id> --deep`
    and add `--intake-plan <plan>` for reviewed additions. This uses the existing
@@ -32,7 +63,7 @@ authorizes a publication. Reviewed maintenance cycles retain autonomous publicat
    human approval is required. Keep one publisher; a lock conflict means pending
    work, not permission to remove the lock file or bypass the publisher.
 5. Run `doctor --library-root <root>` after publication and verify release ID,
-   readiness and event output. On failure inspect the pointer and rollback evidence
+   readiness, `derived_artifacts_agree: true` and event output. On failure inspect the pointer and rollback evidence
    before retrying. Never report completion from an exit code or approval alone.
    A stale candidate must be rebuilt against the current release.
 6. Return release ID, verification/report paths, unresolved findings and pending
@@ -42,6 +73,12 @@ authorizes a publication. Reviewed maintenance cycles retain autonomous publicat
    `ack-event --library-root <root> --consumer <consumer> --event-id <id> --receipt <path>`.
    Preserve separate consumer statuses. A packet or publication alone is not a
    completed downstream review. Invalid receipts stay pending for that consumer.
+   A receipt with `status: "completed_with_gaps"` and a complete
+   `unheld_documents` list is recorded as `acknowledged_with_gaps`, stays visible
+   in `events` and `status`, and writes
+   `<state_directory>/acquisition-requests/<event_id>.<consumer>.json`; hand that
+   path to Coordinator for the Librarian. Report it as acknowledged with gaps,
+   never as plain completion.
 
 The OS lock covers publish preflight through post-publication verification and
 event emission, including dry runs. Its persistent coordination file is beside

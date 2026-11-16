@@ -6,8 +6,9 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from . import runcache
 from .authority import ROLE_PRIORITY, classify_authority, lifecycle_eligibility, parse_authority_header
-from .common import iter_jsonl, norm, normalize_domain, sha256_file, sha256_text
+from .common import decode_text, iter_jsonl, map_ordered, norm, normalize_domain, sha256_bytes, sha256_text
 
 
 def _doha_metadata(root: Path) -> dict[str, dict[str, Any]]:
@@ -41,15 +42,31 @@ def enrich_manifest(root: Path, manifest_path: Path, human_hashes: dict[str, str
     enriched: list[dict[str, Any]] = []
     original_id_counts: collections.Counter[str] = collections.Counter()
 
-    for ordinal, (_, source) in enumerate(iter_jsonl(manifest_path), 1):
+    sources = [source for _, source in iter_jsonl(manifest_path)]
+    cache = runcache.current()
+
+    def read(source: dict[str, Any]) -> tuple[str | None, dict[str, Any]]:
+        """The robot text's hash and authority header: the same reads as before, one per file."""
+        robot_path = root / norm(source["robot_text_path"])
+        doha_item = doha.get(str(source["document_id"]))
+        if source.get("collection_id") == "doha_decisions":
+            return (None if doha_item else cache.sha256(robot_path)), {}
+        token, held = cache.lookup(robot_path)
+        header = cache.peek("authority_header", held) if held else None
+        if header is None:
+            data = robot_path.read_bytes()
+            held = sha256_bytes(data)
+            cache.store(token, held)
+            header = cache.result("authority_header", held, lambda: parse_authority_header(decode_text(data)))
+        return held, header
+
+    for ordinal, (source, (robot_digest, header)) in enumerate(zip(sources, map_ordered(read, sources)), 1):
         record = dict(source)
         original_id = str(record["document_id"])
         original_id_counts[original_id] += 1
         robot_rel = norm(record["robot_text_path"])
-        robot_path = root / robot_rel
         doha_item = doha.get(original_id)
-        digest = doha_item["content_sha256"] if doha_item else sha256_file(robot_path)
-        header = {} if record.get("collection_id") == "doha_decisions" else parse_authority_header(robot_path.read_text(encoding="utf-8", errors="replace"))
+        digest = doha_item["content_sha256"] if doha_item else robot_digest
         role, contractor_binding = classify_authority(record, header)
         eligibility, eligibility_basis = lifecycle_eligibility(record, doha_item["answer_eligible"] if doha_item else None)
         proposed_id = original_id

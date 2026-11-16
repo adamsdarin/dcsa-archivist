@@ -24,7 +24,7 @@ class RegenerationTests(unittest.TestCase):
         review.update(reviewed_by='test', reviewed_utc='2026-09-14T00:00:00Z')
         write_json(self.base / 'plan.json', dict(schema_version='1.0', items=[dict(package='source.intake.json', robot_file='robot.txt',
             robot_sha256=sha256_file(self.base / 'robot.txt'), review=review,
-            record=dict(document_id='rule', collection_id='cfr', domain='authorities', authority_tier=1, current_status='current',
+            record=dict(document_id='rule', title='Synthetic rule', collection_id='cfr', domain='authorities', authority_tier=1, current_status='current',
                 human_source_path='HUMAN_READABLE_DIRECTORY/AUTHORITIES/CFR/rule.txt',
                 robot_text_path='ROBOT_READABLE_DIRECTORY/TEXT/AUTHORITIES/CFR/rule.txt'))]))
         write_json(self.base / 'eval.json', dict(schema_version='1.0', cases=[dict(id='safeguarding',

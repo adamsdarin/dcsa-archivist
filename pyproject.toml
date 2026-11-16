@@ -11,6 +11,11 @@ dependencies = [
     "fastembed>=0.8.0",
 ]
 
+[project.optional-dependencies]
+# voi-intake-plan refuses any other version: a different pypdf wraps lines differently,
+# which changes the robot text hash of unchanged content (src/dcsa_custodian/voi_intake.py).
+voi = ["pypdf==6.0.0"]
+
 [project.scripts]
 dcsa-custodian = "dcsa_custodian.cli:main"
 

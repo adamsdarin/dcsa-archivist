@@ -12,6 +12,10 @@ Use the published catalog for collection paths and taxonomy. Preserve originals.
    evidence. Extract complete robot text with stable page locators and inspect
    extraction quality, tables and parity. A populated review field is not proof.
    Follow `docs/DOHA-INTAKE.md` for case material and its dedicated lifecycle rules.
+   For a monthly Voice of Industry issue run `voi-intake-plan`
+   (`docs/INTAKE-AND-EVENTS.md`): it does the pinned extraction, the parity check,
+   the masthead period check and writes the plan. Do not extract or write that
+   plan by hand; if the command stops, report its reason as the blocker.
 2. Normalize proposed filenames and taxonomy using
    `skill/dcsa-archivist/references/naming-and-deduplication.md`. For new intake,
    place the normalized human/robot paths in the reviewed plan; Release Manager's

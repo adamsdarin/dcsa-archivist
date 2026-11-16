@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 
 ROBOT_PREFIX = "ROBOT_READABLE_DIRECTORY/"
@@ -49,6 +51,50 @@ def sha256_file(path: Path, block_size: int = 1024 * 1024) -> str:
 
 def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def decode_text(data: bytes, errors: str = "replace") -> str:
+    """The text ``Path.read_text(encoding="utf-8", errors=errors)`` gives for these bytes.
+
+    Universal newlines included, so a caller that has already read a file's bytes to hash
+    them gets the same string every other reader does without opening the file again.
+    """
+    return io.TextIOWrapper(io.BytesIO(data), encoding="utf-8", errors=errors).read()
+
+
+def hash_workers() -> int:
+    """Threads for file reading and hashing. DCSA_HASH_WORKERS overrides; 1 is serial."""
+    setting = os.environ.get("DCSA_HASH_WORKERS", "").strip()
+    if setting:
+        workers = int(setting)
+        if workers < 1:
+            raise ValueError("DCSA_HASH_WORKERS must be a positive worker count")
+        return workers
+    return max(1, min(32, os.cpu_count() or 1))
+
+
+def map_ordered(function: Callable[[Any], Any], items: Iterable[Any], workers: int | None = None) -> list[Any]:
+    """``[function(item) for item in items]`` on a thread pool, results in input order.
+
+    File reads, SHA-256 over more than a few kilobytes and SQLite statements release the
+    interpreter lock, so they run on every core. The first failing item, in input order,
+    raises the exception a serial loop would raise.
+    """
+    items = list(items)
+    workers = hash_workers() if workers is None else workers
+    if workers <= 1 or len(items) < 2:
+        return [function(item) for item in items]
+    with ThreadPoolExecutor(max_workers=min(workers, len(items))) as pool:
+        return list(pool.map(function, items))
+
+
+def hash_files(paths: Iterable[Path]) -> list[str]:
+    """SHA-256 of every file, read in full, in parallel; one digest per path, in order."""
+    return map_ordered(sha256_file, paths)
 
 
 def read_json(path: Path) -> Any:

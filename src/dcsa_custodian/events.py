@@ -7,13 +7,19 @@ import hashlib
 import re
 from pathlib import Path
 
+from .audit import approved_release_once as approved_release  # the contract's result, once per run for the same bytes
 from .common import iter_jsonl, read_json, sha256_file, utc_now, write_json
-from .release_contract import approved_release, bounded_path
+from .release_contract import bounded_path
 from .wiki import build_edges
 
 ENRICHED = "ROBOT_READABLE_DIRECTORY/MANIFESTS/DOCUMENTS_ENRICHED.jsonl"
 CHUNKS = "ROBOT_READABLE_DIRECTORY/CHUNKS/GENERAL_CITATION_SAFE_CHUNKS.jsonl"
 CONSUMERS = ("dcsa-compare", "fso-guidance-watch")
+# A consumer that reviewed the whole source but could not close every citation because
+# the library does not hold a cited document says so with this status and the list.
+GAPS_STATUS = "completed_with_gaps"
+UNHELD_FIELDS = ("title", "cited_at", "needed_for", "handling")
+ACQUISITION_DIR = "acquisition-requests"
 # Published, hash-bound, per-release change summaries. Consumers use them to tell a
 # release that touched nothing an answer depends on from one that did; they carry
 # identities and eligibility only, never content.
@@ -168,11 +174,31 @@ def validate_receipt(receipt, event, consumer):
         raise ValueError('Receipt must be an object')
     if receipt.get('event_id') != event['event_id'] or receipt.get('consumer') != consumer or receipt.get('changes_sha256') != event['changes_sha256']:
         raise ValueError('receipt does not match the consumer/event/change packet')
-    if receipt.get('status') not in ('completed', 'no_relevant_change') or not receipt.get('reviewed_by'):
+    status = receipt.get('status')
+    if status not in ('completed', 'no_relevant_change', GAPS_STATUS) or not receipt.get('reviewed_by'):
         raise ValueError('receipt needs reviewed completion or a reasoned no-change disposition')
-    for key in ('full_source_review', 'citation_closure', 'coverage_complete'):
-        if receipt.get(key) is not True:
-            raise ValueError(f'incomplete consumer gate: {key}')
+    gates = ('full_source_review', 'citation_closure', 'coverage_complete')
+    unheld = receipt.get('unheld_documents')
+    if unheld and status != GAPS_STATUS:
+        raise ValueError(f'unheld_documents requires status {GAPS_STATUS}; a receipt may not claim completion while listing documents the library does not hold')
+    if status == GAPS_STATUS:
+        # The reviewed source cites documents the library does not hold. The consumer read
+        # the whole source and says exactly what it could not close; nothing is waved through.
+        if receipt.get('full_source_review') is not True:
+            raise ValueError('incomplete consumer gate: full_source_review')
+        if not isinstance(unheld, list) or not unheld:
+            raise ValueError(f'{GAPS_STATUS} requires a non-empty unheld_documents list')
+        for item in unheld:
+            if not isinstance(item, dict) or any(not isinstance(item.get(key), str) or not item[key].strip() for key in UNHELD_FIELDS):
+                raise ValueError(f'each unheld document needs non-empty {", ".join(UNHELD_FIELDS)}')
+        if any(not isinstance(receipt.get(key), bool) for key in gates):
+            raise ValueError('citation_closure and coverage_complete must each be stated true or false')
+        if all(receipt.get(key) is True for key in gates):
+            raise ValueError('receipt claims every gate complete while listing unheld_documents')
+    else:
+        for key in gates:
+            if receipt.get(key) is not True:
+                raise ValueError(f'incomplete consumer gate: {key}')
     artifacts = receipt.get('artifacts')
     if not receipt.get('summary') or not isinstance(artifacts, list) or not artifacts:
         raise ValueError('receipt requires a summary and hashed review/output artifacts')
@@ -220,5 +246,55 @@ def acknowledge(project: Path, config: dict, root: Path, consumer: str, event_id
         target.write_bytes(payload)
         stored.append({'path': relative, 'sha256': artifact['sha256']})
     target = directory / f"{consumer}.receipt.json"
-    write_json(target, {**receipt, 'artifacts': stored, 'artifact_storage': 'event_local_v1', "recorded_utc": utc_now()})
-    return {"receipt": str(target), "status": receipt["status"]}
+    recorded = utc_now()
+    gaps = receipt["status"] == GAPS_STATUS
+    result = {"receipt": str(target), "status": receipt["status"],
+              "acknowledgment": "acknowledged_with_gaps" if gaps else "acknowledged"}
+    extra = {"acknowledgment": result["acknowledgment"]}
+    if gaps:
+        # The gap leaves here as a request the Librarian can read, before the receipt is stored.
+        request = acquisition_request_path(project, config, event_id, consumer)
+        if request.is_file() and read_json(request).get("library_root") != str(root.resolve()):
+            raise ValueError(f"an acquisition request for another library already exists: {request}")
+        write_json(request, {
+            "schema_version": "1.0", "type": "library.acquisition_request", "status": "open",
+            "event_id": event_id, "consumer": consumer, "library_root": str(root.resolve()),
+            "reviewed_by": receipt["reviewed_by"], "recorded_utc": recorded, "receipt": str(target),
+            "note": "Documents a reviewed source cites and the library does not hold. A request does not "
+                    "authorize acquisition outside the Librarian's registry and bounds.",
+            "requests": [{key: item[key].strip() for key in UNHELD_FIELDS} for item in receipt["unheld_documents"]],
+        })
+        extra["acquisition_request"] = result["acquisition_request"] = str(request)
+        result["unheld_documents"] = len(receipt["unheld_documents"])
+    write_json(target, {**receipt, 'artifacts': stored, 'artifact_storage': 'event_local_v1', "recorded_utc": recorded, **extra})
+    return result
+
+
+def acquisition_request_path(project: Path, config: dict, event_id: str, consumer: str) -> Path:
+    directory = project / config.get("state_directory", ".custodian") / ACQUISITION_DIR
+    return bounded_path(directory, f"{event_id}.{consumer}.json", "")
+
+
+def acknowledgment_states(project: Path, config: dict, root: Path) -> list[dict]:
+    """Every queued event with each consumer's state: pending, acknowledged or acknowledged_with_gaps."""
+    output = []
+    for path in sorted(event_directory(project, config, root).glob("*/event.json")):
+        event = read_json(path)
+        row = {"event_id": event["event_id"], "actionable": event["actionable"], "consumers": {}}
+        for consumer in CONSUMERS:
+            receipt_path = path.parent / f"{consumer}.receipt.json"
+            if not event["actionable"]:
+                state = {"state": "no_action_required"}
+            elif not verified_receipt(receipt_path, event, consumer):
+                state = {"state": "pending"}
+            else:
+                receipt = read_json(receipt_path)
+                gaps = receipt["status"] == GAPS_STATUS
+                state = {"state": "acknowledged_with_gaps" if gaps else "acknowledged",
+                         "status": receipt["status"], "recorded_utc": receipt.get("recorded_utc")}
+                if gaps:
+                    state["unheld_documents"] = receipt["unheld_documents"]
+                    state["acquisition_request"] = receipt.get("acquisition_request")
+            row["consumers"][consumer] = state
+        output.append(row)
+    return output
